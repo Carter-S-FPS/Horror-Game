@@ -1,28 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Silent Corridor</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Asylum 3D: The Endless Ward</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        #ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #800; font-family: monospace; }
+        canvas { display: block; }
+    </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="home-screen">
-            <h1>THE SILENT CORRIDOR</h1>
-            <button id="start-btn" onclick="startGame()">PLAY</button>
-        </div>
-
-        <div id="ui-layer" style="display: none;">
-            <p id="story-text"></p>
-            <div id="choices"></div>
-        </div>
+    <div id="ui">
+        <h1>BLACKWOOD ASYLUM</h1>
+        <button id="play-btn" style="padding: 20px; background: transparent; color: #800; border: 1px solid #800; cursor: pointer;">ENTER THE VOID</button>
     </div>
-
     <audio id="bg-music" loop>
         <source src="mixkit-horror-ambience-2482.wav" type="audio/wav">
     </audio>
-
-    <script src="script.js"></script>
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+    <script type="module" src="game.js"></script>
 </body>
 </html>
