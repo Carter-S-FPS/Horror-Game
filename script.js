@@ -1,103 +1,151 @@
 import * as THREE from 'three';
 
+// Global Variables
 let scene, camera, renderer, flashlight, surgeon;
-const music = document.getElementById('bg-music');
+let moveForward = 0, moveRight = 0;
+let isWalking = false;
+
+// Audio Elements
+const bgMusic = document.getElementById('bg-music');
+const footstepAudio = document.getElementById('footstep-audio');
+footstepAudio.volume = 0.4;
+
+// Joystick Elements
+const stick = document.getElementById('joystick-stick');
+const base = document.getElementById('joystick-base');
 
 document.getElementById('play-btn').addEventListener('click', () => {
     document.getElementById('ui').style.display = 'none';
-    music.play();
+    bgMusic.play();
     init();
 });
 
 function init() {
+    // 1. Scene Setup
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x000000, 0.15); // Fog makes it "Endless"
+    scene.fog = new THREE.FogExp2(0x000000, 0.15);
 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer({ antialias: false }); // Low-poly feel
+    renderer = new THREE.WebGLRenderer({ antialias: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    // Flashlight (The SpotLight)
-    flashlight = new THREE.SpotLight(0xffffff, 50);
+    // 2. Lighting (Flashlight)
+    flashlight = new THREE.SpotLight(0xffffff, 40);
     flashlight.angle = Math.PI / 6;
-    flashlight.penumbra = 0.5;
+    flashlight.penumbra = 0.6;
     camera.add(flashlight);
     flashlight.position.set(0, 0, 1);
     flashlight.target = camera;
     scene.add(camera);
 
+    // 3. Create Objects
     createAsylumHallway();
     createSurgeon();
+    setupMobileControls();
     animate();
 }
 
-// 3. The Low-Poly Surgeon (35x35x35 blocks)
 function createSurgeon() {
     surgeon = new THREE.Group();
-    const mat = new THREE.MeshLambertMaterial({ color: 0x445544 }); // Blood-stained green
-    
-    // Each part is a 0.35 unit cube (mapping to your 35x35x35 request)
-    const size = 0.35;
-    const parts = {
-        head:  new THREE.Mesh(new THREE.BoxGeometry(size, size, size), new THREE.MeshLambertMaterial({color: 0x222222})),
-        torso: new THREE.Mesh(new THREE.BoxGeometry(size, size * 1.5, size), mat),
-        lLeg:  new THREE.Mesh(new THREE.BoxGeometry(size/2, size, size/2), mat),
-        rLeg:  new THREE.Mesh(new THREE.BoxGeometry(size/2, size, size/2), mat),
-        lArm:  new THREE.Mesh(new THREE.BoxGeometry(size/2, size, size/2), mat),
-        rArm:  new THREE.Mesh(new THREE.BoxGeometry(size/2, size, size/2), mat)
-    };
+    const mat = new THREE.MeshLambertMaterial({ color: 0x445544 });
+    const size = 0.35; // Your 35x35x35 block size
 
-    // Position Parts
-    parts.head.position.y = 0.8;
-    parts.torso.position.y = 0.4;
-    parts.lLeg.position.set(-0.1, 0, 0);
-    parts.rLeg.position.set(0.1, 0, 0);
-    parts.lArm.position.set(-0.25, 0.5, 0);
-    parts.rArm.position.set(0.25, 0.5, 0);
+    const bodyParts = [
+        { name: 'head',  geo: [size, size, size], pos: [0, 0.8, 0] },
+        { name: 'torso', geo: [size, size * 1.5, size], pos: [0, 0.4, 0] },
+        { name: 'lLeg',  geo: [size/2, size, size/2], pos: [-0.1, 0, 0] },
+        { name: 'rLeg',  geo: [size/2, size, size/2], pos: [0.1, 0, 0] },
+        { name: 'lArm',  geo: [size/2, size, size/2], pos: [-0.25, 0.5, 0] },
+        { name: 'rArm',  geo: [size/2, size, size/2], pos: [0.25, 0.5, 0] }
+    ];
 
-    surgeon.add(parts.head, parts.torso, parts.lLeg, parts.rLeg, parts.lArm, parts.rArm);
-    surgeon.position.set(0, 0, -5);
+    bodyParts.forEach(p => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(...p.geo), mat);
+        mesh.position.set(...p.pos);
+        surgeon.add(mesh);
+    });
+
+    surgeon.position.set(0, 0, -8);
     scene.add(surgeon);
 }
 
-// 4. The Endless Hallway Logic
 function createAsylumHallway() {
-    const wallMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-    const floorMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
-
-    for (let i = 0; i < 10; i++) {
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(4, 10), floorMat);
+    const wallMat = new THREE.MeshLambertMaterial({ color: 0x1a1d1a });
+    for (let i = 0; i < 20; i++) {
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(5, 10), new THREE.MeshLambertMaterial({color: 0x050505}));
         floor.rotation.x = -Math.PI / 2;
         floor.position.z = -i * 10;
         scene.add(floor);
 
-        const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.1, 4, 10), wallMat);
-        leftWall.position.set(-2, 2, -i * 10);
-        scene.add(leftWall);
+        const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.1, 5, 10), wallMat);
+        lWall.position.set(-2.5, 2.5, -i * 10);
+        scene.add(lWall);
 
-        const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.1, 4, 10), wallMat);
-        rightWall.position.set(2, 2, -i * 10);
-        scene.add(rightWall);
+        const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.1, 5, 10), wallMat);
+        rWall.position.set(2.5, 2.5, -i * 10);
+        scene.add(rWall);
     }
+}
+
+// 4. Mobile Joystick Logic
+function setupMobileControls() {
+    let dragging = false;
+
+    const handleMove = (e) => {
+        if (!dragging) return;
+        const touch = e.touches[0];
+        const rect = base.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        let dx = touch.clientX - centerX;
+        let dy = touch.clientY - centerY;
+        const distance = Math.min(Math.sqrt(dx*dx + dy*dy), 50);
+        const angle = Math.atan2(dy, dx);
+
+        stick.style.transform = `translate(${Math.cos(angle)*distance}px, ${Math.sin(angle)*distance}px)`;
+
+        // Set movement speed based on joystick distance
+        moveForward = -Math.sin(angle) * (distance / 50) * 0.1;
+        moveRight = Math.cos(angle) * (distance / 50) * 0.1;
+        isWalking = distance > 5; 
+    };
+
+    base.addEventListener('touchstart', () => dragging = true);
+    window.addEventListener('touchend', () => {
+        dragging = false;
+        stick.style.transform = `translate(0,0)`;
+        moveForward = 0;
+        moveRight = 0;
+        isWalking = false;
+    });
+    window.addEventListener('touchmove', handleMove);
 }
 
 function animate() {
     requestAnimationFrame(animate);
 
-    // Surgeon Movement (Walking forward)
-    const time = Date.now() * 0.005;
-    surgeon.position.z += 0.01; 
-    
-    // Simple "Limb" swing animation
-    surgeon.children[2].rotation.x = Math.sin(time) * 0.5; // Left Leg
-    surgeon.children[3].rotation.x = -Math.sin(time) * 0.5; // Right Leg
-    surgeon.children[4].rotation.x = -Math.sin(time) * 0.5; // Left Arm
-    surgeon.children[5].rotation.x = Math.sin(time) * 0.5; // Right Arm
+    // Movement & Footsteps
+    if (isWalking) {
+        camera.position.z += moveForward;
+        camera.position.x += moveRight;
+        
+        // Head bobbing
+        camera.position.y = 1.6 + Math.sin(Date.now() * 0.008) * 0.05;
 
-    // Camera movement (Simulate walking)
-    camera.position.z -= 0.02;
-    camera.position.y = 1.6 + Math.sin(time) * 0.02; // Head bob
+        if (footstepAudio.paused) footstepAudio.play();
+    } else {
+        footstepAudio.pause();
+    }
+
+    // Surgeon Animation
+    const t = Date.now() * 0.005;
+    surgeon.children[2].rotation.x = Math.sin(t) * 0.5; // Left Leg
+    surgeon.children[3].rotation.x = -Math.sin(t) * 0.5; // Right Leg
+    surgeon.children[4].rotation.x = -Math.sin(t) * 0.5; // Left Arm
+    surgeon.children[5].rotation.x = Math.sin(t) * 0.5; // Right Arm
 
     renderer.render(scene, camera);
 }
