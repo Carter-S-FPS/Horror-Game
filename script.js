@@ -1,55 +1,53 @@
 import * as THREE from 'three';
 
-const loadingScreen = document.getElementById('loading-screen');
 const progressBar = document.getElementById('progress-bar');
 const loadingText = document.getElementById('loading-text');
+const loadingScreen = document.getElementById('loading-screen');
 const controls = document.getElementById('mobile-controls');
 const bgMusic = document.getElementById('bg-music');
 const footstepAudio = document.getElementById('footstep-audio');
 
 let scene, camera, renderer, surgeon;
 let moveForward = 0, moveRight = 0, isWalking = false;
-let gameReady = false;
+let isLoaded = false;
 
-// 1. Fake Loading Logic
-let progress = 0;
-const loadInterval = setInterval(() => {
-    progress += Math.random() * 15;
-    if (progress > 100) progress = 100;
-    
-    progressBar.style.width = `${progress}%`;
-    loadingText.innerText = `${Math.floor(progress)}%`;
+// --- SMOOTH LOADING LOGIC ---
+let currentProgress = 0;
+function fakeLoad() {
+    // Increment by very small amounts for smoothness
+    let increment = Math.random() * 0.5; 
+    currentProgress += increment;
 
-    if (progress === 100) {
-        clearInterval(loadInterval);
-        finishLoading();
+    if (currentProgress >= 100) {
+        currentProgress = 100;
+        progressBar.style.width = '100%';
+        loadingText.innerText = "READY. TAP SCREEN.";
+        loadingText.style.color = "#ff0000";
+        isLoaded = true;
+        initGame(); // Build 3D in background
+    } else {
+        progressBar.style.width = currentProgress + '%';
+        loadingText.innerText = "LOADING ASSETS... " + Math.floor(currentProgress) + "%";
+        requestAnimationFrame(fakeLoad);
     }
-}, 200);
-
-function finishLoading() {
-    loadingText.innerText = "TAP TO ENTER";
-    loadingText.style.color = "#f00";
-    gameReady = true;
-    
-    // Create the game in the background
-    initGame();
 }
+// Start the smooth crawl
+fakeLoad();
 
-// 2. Start Game on First Touch
-const startOnInteraction = () => {
-    if (!gameReady) return;
+// Start game on first touch after 100%
+const startPlay = () => {
+    if (!isLoaded) return;
     
-    loadingScreen.style.opacity = '0';
-    setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
+    loadingScreen.style.display = 'none';
     controls.style.display = 'block';
 
     bgMusic.play();
+    // Prime footsteps
     footstepAudio.play().then(() => footstepAudio.pause());
     
-    window.removeEventListener('touchstart', startOnInteraction);
+    window.removeEventListener('touchstart', startPlay);
 };
-
-window.addEventListener('touchstart', startOnInteraction);
+window.addEventListener('touchstart', startPlay);
 
 function initGame() {
     scene = new THREE.Scene();
@@ -75,7 +73,7 @@ function initGame() {
 
 function createSurgeon() {
     surgeon = new THREE.Group();
-    const mat = new THREE.MeshLambertMaterial({ color: 0x334433 });
+    const mat = new THREE.MeshLambertMaterial({ color: 0x3d443d });
     const s = 0.35; // 35x35x35 blocks
 
     const head = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), new THREE.MeshLambertMaterial({color: 0x000}));
@@ -83,13 +81,11 @@ function createSurgeon() {
     const lLeg = new THREE.Mesh(new THREE.BoxGeometry(s/2, s, s/2), mat);
     const rLeg = new THREE.Mesh(new THREE.BoxGeometry(s/2, s, s/2), mat);
 
-    head.position.y = 0.8;
-    torso.position.y = 0.4;
-    lLeg.position.set(-0.1, 0, 0);
-    rLeg.position.set(0.1, 0, 0);
+    head.position.y = 0.8; torso.position.y = 0.4;
+    lLeg.position.set(-0.1, 0, 0); rLeg.position.set(0.1, 0, 0);
 
     surgeon.add(head, torso, lLeg, rLeg);
-    surgeon.position.set(0, 0, -10);
+    surgeon.position.set(0, 0, -12);
     scene.add(surgeon);
 }
 
@@ -97,15 +93,11 @@ function createMap() {
     const wallMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
     for (let i = 0; i < 40; i++) {
         const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 10), new THREE.MeshLambertMaterial({color: 0x040404}));
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.z = -i * 10;
-        scene.add(floor);
-        const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.1, 6, 10), wallMat);
-        lWall.position.set(-3, 3, -i * 10);
-        scene.add(lWall);
-        const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.1, 6, 10), wallMat);
-        rWall.position.set(3, 3, -i * 10);
-        scene.add(rWall);
+        floor.rotation.x = -Math.PI / 2; floor.position.z = -i * 10; scene.add(floor);
+        const lW = new THREE.Mesh(new THREE.BoxGeometry(0.1, 6, 10), wallMat);
+        lW.position.set(-3, 3, -i * 10); scene.add(lW);
+        const rW = new THREE.Mesh(new THREE.BoxGeometry(0.1, 6, 10), wallMat);
+        rW.position.set(3, 3, -i * 10); scene.add(rW);
     }
 }
 
@@ -122,19 +114,16 @@ function setupJoystick() {
         const dy = t.clientY - (r.top + r.height/2);
         const d = Math.min(Math.sqrt(dx*dx + dy*dy), 40);
         const a = Math.atan2(dy, dx);
-
         stick.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
-        moveForward = -Math.sin(a) * (d/40) * 0.14;
-        moveRight = Math.cos(a) * (d/40) * 0.14;
+        moveForward = -Math.sin(a) * (d/40) * 0.15;
+        moveRight = Math.cos(a) * (d/40) * 0.15;
         isWalking = d > 5;
     };
 
     base.addEventListener('touchstart', (e) => { active = true; move(e); });
     window.addEventListener('touchend', () => {
-        active = false;
-        stick.style.transform = `translate(0,0)`;
-        isWalking = false;
-        moveForward = 0; moveRight = 0;
+        active = false; stick.style.transform = `translate(0,0)`;
+        isWalking = false; moveForward = 0; moveRight = 0;
     });
     window.addEventListener('touchmove', move, { passive: false });
 }
@@ -149,12 +138,9 @@ function animate() {
     } else {
         footstepAudio.pause();
     }
-
-    // Surgeon Stalker movement
     const t = Date.now() * 0.005;
-    surgeon.position.z += 0.007;
+    surgeon.position.z += 0.006;
     surgeon.children[2].rotation.x = Math.sin(t) * 0.5;
     surgeon.children[3].rotation.x = -Math.sin(t) * 0.5;
-
     renderer.render(scene, camera);
 }
