@@ -3,467 +3,454 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BLACKWOOD: THE SURGEON'S REACH (EXTENDED)</title>
+    <title>BLACKWOOD: THE SURGEON'S REACH - MASTER BRANCH v7.0</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 
     <style>
         :root { 
-            --horror-red: #8b0000; 
-            --terminal-green: #00ff41;
-            --ui-font: 'Courier New', Courier, monospace;
+            --horror-red: #bb0000; 
+            --ui-gold: #c5a059;
+            --terminal-font: 'Courier New', Courier, monospace;
         }
         
         * { 
             margin: 0; padding: 0; box-sizing: border-box; 
             touch-action: none; -webkit-tap-highlight-color: transparent; 
-            user-select: none; 
+            user-select: none; outline: none;
         }
 
         body, html { 
             width: 100%; height: 100%; background: #000; 
-            overflow: hidden; font-family: var(--ui-font); 
+            overflow: hidden; font-family: var(--terminal-font); 
         }
 
-        /* --- IMMERSIVE OVERLAY --- */
+        /* --- LOADING INTERFACE --- */
         #overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #111 0%, #000 100%);
+            background: linear-gradient(to bottom, #050505, #000);
             display: flex; justify-content: center; align-items: center;
-            z-index: 10000; transition: opacity 2s ease;
+            z-index: 10000; transition: opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #load-wrap { width: 85%; max-width: 500px; text-align: center; }
+        #load-container { width: 300px; text-align: left; position: relative; }
 
         h1 { 
-            color: var(--horror-red); letter-spacing: 12px; 
-            font-size: 1.4rem; margin-bottom: 40px; 
-            text-shadow: 0 0 10px rgba(139, 0, 0, 0.7);
-            animation: pulse 3s infinite; 
+            color: var(--horror-red); font-size: 0.9rem; 
+            letter-spacing: 5px; margin-bottom: 10px; 
+            text-transform: uppercase; font-weight: 100;
         }
 
-        #bar-bg { 
-            width: 100%; height: 4px; background: #111; 
-            border: 1px solid #222; margin-bottom: 20px; 
-            position: relative; overflow: hidden;
+        #progress-frame { 
+            width: 100%; height: 2px; background: #1a1a1a; 
+            position: relative; margin-bottom: 15px; 
         }
 
-        #bar-fill { 
+        #progress-bar { 
             width: 0%; height: 100%; background: var(--horror-red); 
-            box-shadow: 0 0 20px #f00; transition: width 0.2s; 
+            box-shadow: 0 0 15px #ff0000; transition: width 0.3s; 
         }
 
-        #status-text { 
-            color: #555; font-size: 0.75rem; 
-            text-transform: uppercase; letter-spacing: 3px; 
+        .meta-text { color: #444; font-size: 0.6rem; letter-spacing: 2px; margin-top: 5px; }
+
+        /* --- HUD & INTERFACE --- */
+        #game-ui { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            pointer-events: none; display: none; z-index: 100;
         }
 
-        /* --- GAMEPLAY UI --- */
-        #ui-layer { 
-            position: absolute; top: 0; left: 0; 
-            width: 100%; height: 100%; pointer-events: none; 
-            display: none; 
-        }
-
-        #vignette { 
+        #vignette-heavy { 
             position: absolute; width: 100%; height: 100%; 
-            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.95) 100%);
+            background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 70%, #000 100%);
         }
 
-        #crosshair {
-            position: absolute; top: 50%; left: 50%;
-            width: 4px; height: 4px; background: rgba(255,255,255,0.2);
-            border-radius: 50%; transform: translate(-50%, -50%);
+        #scanner-hud {
+            position: absolute; top: 30px; left: 30px;
+            border-left: 2px solid var(--horror-red);
+            padding-left: 15px; color: var(--horror-red);
+            font-size: 0.7rem; opacity: 0.6;
         }
 
         /* --- JOYSTICK SYSTEM --- */
-        #joystick-zone {
-            position: absolute; bottom: 50px; left: 50px;
+        #joy-wrapper {
+            position: absolute; bottom: 60px; left: 60px;
             width: 160px; height: 160px; pointer-events: auto;
         }
 
-        #joy-base { 
-            width: 100%; height: 100%; 
-            border: 2px solid rgba(255,255,255,0.03); 
-            border-radius: 50%; background: rgba(255,255,255,0.01);
-            backdrop-filter: blur(2px);
+        #joy-outer { 
+            width: 100%; height: 100%; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.05);
+            background: radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%);
         }
 
-        #joy-stick { 
+        #joy-inner { 
             position: absolute; top: 55px; left: 55px; 
-            width: 50px; height: 50px; background: rgba(139, 0, 0, 0.2); 
-            border-radius: 50%; border: 1px solid rgba(255, 0, 0, 0.3); 
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            width: 50px; height: 50px; border-radius: 50%;
+            background: rgba(187, 0, 0, 0.1); 
+            border: 1px solid rgba(255, 0, 0, 0.2);
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
 
-        /* --- NOISE/GRAIN FX --- */
-        #static-fx {
+        #grain-canvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://media.giphy.com/media/oEI9uWUicT3K8/giphy.gif');
-            opacity: 0.05; pointer-events: none; z-index: 5;
+            pointer-events: none; z-index: 50; opacity: 0.06;
         }
 
-        #terminal {
-            position: absolute; top: 20px; left: 20px;
-            color: var(--terminal-green); font-size: 0.7rem;
-            opacity: 0.6; text-shadow: 0 0 5px var(--terminal-green);
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
         }
-
-        @keyframes pulse { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
+        .glitch-anim { animation: glitch 0.2s infinite; }
     </style>
 </head>
 <body>
 
-    <div id="static-fx"></div>
-
     <div id="overlay">
-        <div id="load-wrap">
-            <h1 id="main-title">INITIATING BLACKWOOD</h1>
-            <div id="bar-bg"><div id="bar-fill"></div></div>
-            <p id="status-text">Synchronizing nervous system...</p>
+        <div id="load-container">
+            <h1 id="title-text">Establishing Connection</h1>
+            <div id="progress-frame"><div id="progress-bar"></div></div>
+            <p class="meta-text" id="status-sub">Allocating Memory...</p>
         </div>
     </div>
 
-    <div id="ui-layer">
-        <div id="vignette"></div>
-        <div id="crosshair"></div>
-        <div id="terminal">LOG: SECTOR_04 // SUBJECT_ACTIVE</div>
-        <div id="joystick-zone">
-            <div id="joy-base"><div id="joy-stick"></div></div>
+    <div id="game-ui">
+        <div id="vignette-heavy"></div>
+        <div id="scanner-hud">
+            <p>SENSORS: ONLINE</p>
+            <p id="dist-ui">PROXIMITY: NO_SIGNAL</p>
+            <p id="sanity-ui">SANITY: 100%</p>
+        </div>
+        <div id="joy-wrapper">
+            <div id="joy-outer"><div id="joy-inner"></div></div>
         </div>
     </div>
 
-    <audio id="sfx-ambience" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
-    <audio id="sfx-steps" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
-    <audio id="sfx-breath" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
+    <canvas id="grain-canvas"></canvas>
+
+    <audio id="aud-ambience" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
+    <audio id="aud-steps" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
+    <audio id="aud-breath" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
 
     <script>
         /**
-         * BLACKWOOD HORROR ENGINE v5.1
-         * Advanced Proximity Logic & Spatial Mapping
+         * BLACKWOOD HORROR ENGINE v7.5
+         * Deep Immersion Branch
          */
 
-        // --- GLOBAL ENGINE STATE ---
-        const ENGINE = {
-            isLoaded: false,
-            isStarted: false,
-            sanity: 100.0,
-            depth: 0,
-            controls: {
-                moving: false,
-                vector: new THREE.Vector3(),
-                rotation: 0
-            },
-            settings: {
-                fov: 75,
-                renderScale: Math.min(window.devicePixelRatio, 1.5),
-                viewDistance: 80,
-                proximityThreshold: 45
-            },
-            assets: {
-                segments: [],
-                surgeonParts: [],
-                clutter: []
-            }
+        const CONFIG = {
+            viewDist: 120,
+            segLength: 12,
+            segCount: 400,
+            flashlightPower: 180,
+            baseSanity: 100,
+            surgeonSpeedNormal: 0.04,
+            surgeonSpeedStalk: 9.5
         };
 
-        let scene, camera, renderer, clock, surgeon, flashlight, pulseLight;
-        let audioMap = {};
+        const WORLD = {
+            scene: null, camera: null, renderer: null, clock: null,
+            surgeon: null, flashlight: null, ambient: null,
+            segments: [], items: [], particles: [],
+            state: { loaded: false, started: false, moving: false, sanity: 100, moveVec: new THREE.Vector3() }
+        };
 
-        // --- 1. INITIALIZATION & LOADING ---
-        function initBootSequence() {
-            const bar = document.getElementById('bar-fill');
-            const status = document.getElementById('status-text');
-            const logs = [
-                "Decompressing environmental geometry...",
-                "Mapping auditory triggers...",
-                "Calibrating object impermanence...",
-                "Isolating the Surgeon's signature...",
-                "Reality check failed. Proceeding anyway."
-            ];
+        const SFX = { amb: null, steps: null, breath: null };
 
-            let progress = 0;
-            const step = () => {
-                progress += Math.random() * 2.5;
-                if (progress >= 100) {
-                    progress = 100;
-                    ENGINE.isLoaded = true;
-                    status.innerText = "MANIFESTATION COMPLETE. TAP TO AWAKEN.";
-                    status.style.color = "#ff0000";
-                    init3D();
+        // --- 1. BOOT SEQUENCE ---
+        function initializeEngine() {
+            const bar = document.getElementById('progress-bar');
+            const status = document.getElementById('status-sub');
+            const title = document.getElementById('title-text');
+            let p = 0;
+
+            const bootLoop = () => {
+                p += Math.random() * 0.8;
+                if (p >= 100) {
+                    p = 100;
+                    WORLD.state.loaded = true;
+                    title.innerText = "LINK ESTABLISHED";
+                    status.innerText = "TOUCH SCREEN TO INITIALIZE";
+                    status.style.color = "#fff";
+                    setup3D();
                 } else {
-                    bar.style.width = progress + "%";
-                    if (Math.floor(progress) % 20 === 0) {
-                        status.innerText = logs[Math.floor(progress / 20)];
-                    }
-                    requestAnimationFrame(step);
+                    bar.style.width = p + "%";
+                    if(p > 20) status.innerText = "Parsing Geometry Buffers...";
+                    if(p > 50) status.innerText = "Synthesizing Vocal Echoes...";
+                    if(p > 80) status.innerText = "Calculating The Surgeon's Reach...";
+                    requestAnimationFrame(bootLoop);
                 }
             };
-            step();
+            bootLoop();
         }
 
-        function startExperience() {
-            if (!ENGINE.isLoaded || ENGINE.isStarted) return;
-            ENGINE.isStarted = true;
-
+        const triggerAwake = () => {
+            if (!WORLD.state.loaded || WORLD.state.started) return;
+            WORLD.state.started = true;
+            
             document.getElementById('overlay').style.opacity = '0';
-            setTimeout(() => document.getElementById('overlay').style.display = 'none', 2000);
-            document.getElementById('ui-layer').style.display = 'block';
+            setTimeout(() => document.getElementById('overlay').style.display = 'none', 2500);
+            document.getElementById('game-ui').style.display = 'block';
 
-            // Audio Setup
-            audioMap.ambience = document.getElementById('sfx-ambience');
-            audioMap.steps = document.getElementById('sfx-steps');
-            audioMap.breath = document.getElementById('sfx-breath');
+            SFX.amb = document.getElementById('aud-ambience');
+            SFX.steps = document.getElementById('aud-steps');
+            SFX.breath = document.getElementById('aud-breath');
+            
+            SFX.amb.volume = 0.35;
+            SFX.steps.volume = 0;
+            SFX.breath.volume = 0;
+            
+            [SFX.amb, SFX.steps, SFX.breath].forEach(a => a.play().catch(()=>{}));
+        };
 
-            audioMap.ambience.volume = 0.4;
-            audioMap.steps.volume = 0;
-            audioMap.breath.volume = 0;
+        window.addEventListener('mousedown', triggerAwake);
+        window.addEventListener('touchstart', triggerAwake);
+        window.onload = initializeEngine;
 
-            Object.values(audioMap).forEach(track => track.play().catch(() => {}));
+        // --- 2. ARCHITECTURAL ASSEMBLY ---
+        function setup3D() {
+            WORLD.scene = new THREE.Scene();
+            WORLD.scene.fog = new THREE.FogExp2(0x050505, 0.07);
+
+            WORLD.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            WORLD.clock = new THREE.Clock();
+
+            WORLD.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+            WORLD.renderer.setSize(window.innerWidth, window.innerHeight);
+            WORLD.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            document.body.appendChild(WORLD.renderer.domElement);
+
+            // Lighting Logic
+            WORLD.ambient = new THREE.AmbientLight(0x222222, 0.3);
+            WORLD.scene.add(WORLD.ambient);
+
+            WORLD.flashlight = new THREE.SpotLight(0xfff9e0, CONFIG.flashlightPower);
+            WORLD.flashlight.angle = Math.PI / 6.5;
+            WORLD.flashlight.penumbra = 0.5;
+            WORLD.flashlight.decay = 2;
+            WORLD.flashlight.distance = 90;
+            
+            WORLD.camera.add(WORLD.flashlight);
+            WORLD.flashlight.position.set(0, 0, 0.1);
+            WORLD.flashlight.target.position.set(0, 0, -5);
+            WORLD.camera.add(WORLD.flashlight.target);
+            WORLD.scene.add(WORLD.camera);
+
+            createAsylumMesh();
+            createSurgeonMesh();
+            bindControls();
+            renderLoop();
         }
 
-        window.addEventListener('touchstart', startExperience);
-        window.addEventListener('mousedown', startExperience);
-        window.onload = initBootSequence;
+        function createAsylumMesh() {
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0x181818 });
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0x0a0a0a });
+            const detailMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
 
-        // --- 2. 3D CONSTRUCTS ---
-        function init3D() {
-            scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x000000, 0.14);
+            for (let i = 0; i < CONFIG.segCount; i++) {
+                const seg = new THREE.Group();
+                const z = -i * CONFIG.segLength;
 
-            camera = new THREE.PerspectiveCamera(ENGINE.settings.fov, window.innerWidth / window.innerHeight, 0.1, 1000);
-            clock = new THREE.Clock();
-
-            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(ENGINE.settings.renderScale);
-            document.body.appendChild(renderer.domElement);
-
-            // Lighting System
-            flashlight = new THREE.SpotLight(0xfff5e1, 150);
-            flashlight.angle = Math.PI / 8;
-            flashlight.penumbra = 0.6;
-            flashlight.decay = 2.5;
-            flashlight.distance = 60;
-            camera.add(flashlight);
-            flashlight.position.set(0, 0, 0.2);
-            flashlight.target.position.set(0, 0, -5);
-            camera.add(flashlight.target);
-
-            pulseLight = new THREE.PointLight(0x330000, 0, 10);
-            scene.add(pulseLight);
-            scene.add(camera);
-
-            buildEnvironment();
-            spawnSurgeon();
-            initInput();
-            mainLoop();
-        }
-
-        function buildEnvironment() {
-            const wallMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-            const floorMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
-            const pipeMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
-
-            // Create 500 meter long corridor sequence
-            for (let i = 0; i < 500; i++) {
-                const segment = new THREE.Group();
-                const zPos = -i * 10;
-
-                // Floor
-                const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorMat);
+                // Main Hallway
+                const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), floorMat);
                 floor.rotation.x = -Math.PI / 2;
-                segment.add(floor);
+                seg.add(floor);
 
-                // Walls with slight variation
-                const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 10), wallMat);
-                leftWall.position.set(-5, 4, 0);
-                segment.add(leftWall);
+                const ceil = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), wallMat);
+                ceil.rotation.x = Math.PI / 2; ceil.position.y = 8;
+                seg.add(ceil);
 
-                const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 10), wallMat);
-                rightWall.position.set(5, 4, 0);
-                segment.add(rightWall);
+                const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 12), wallMat);
+                lWall.position.set(-6, 4, 0);
+                seg.add(lWall);
 
-                // Add "Pipes" to walls periodically
-                if (i % 4 === 0) {
-                    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 10), pipeMat);
-                    pipe.rotation.x = Math.PI / 2;
-                    pipe.position.set(-4.7, 6, 0);
-                    segment.add(pipe);
+                const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 12), wallMat);
+                rWall.position.set(6, 4, 0);
+                seg.add(rWall);
+
+                // Procedural Side Rooms
+                if (i > 5 && Math.random() > 0.85) {
+                    const side = Math.random() > 0.5 ? 1 : -1;
+                    const room = new THREE.Mesh(new THREE.BoxGeometry(8, 6, 8), wallMat);
+                    room.position.set(10 * side, 3, 0);
+                    seg.add(room);
+                    
+                    // Interior Clutter
+                    const table = new THREE.Mesh(new THREE.BoxGeometry(3, 1, 3), detailMat);
+                    table.position.set(10 * side, 0.5, 0);
+                    seg.add(table);
                 }
 
-                // Random Doors
-                if (Math.random() > 0.9) {
-                    const door = new THREE.Mesh(new THREE.BoxGeometry(0.1, 4, 2), wallMat);
-                    door.position.set(4.8, 2, Math.random() * 4 - 2);
-                    segment.add(door);
+                // Electrical Fixtures (Visibility Aid)
+                if (i % 12 === 0) {
+                    const lightBox = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 0.4), new THREE.MeshBasicMaterial({color: 0x222222}));
+                    lightBox.position.set(0, 7.9, 0);
+                    seg.add(lightBox);
+
+                    const pLight = new THREE.PointLight(0xaa0000, 1.5, 15);
+                    pLight.position.set(0, 7.5, 0);
+                    seg.add(pLight);
                 }
 
-                segment.position.z = zPos;
-                scene.add(segment);
-                ENGINE.assets.segments.push(segment);
+                seg.position.z = z;
+                WORLD.scene.add(seg);
+                WORLD.segments.push(seg);
             }
         }
 
-        function spawnSurgeon() {
-            surgeon = new THREE.Group();
-            const darkMat = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
-            const paleMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
+        function createSurgeonMesh() {
+            WORLD.surgeon = new THREE.Group();
+            const skin = new THREE.MeshLambertMaterial({ color: 0x050505 });
+            const cloth = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
 
-            // Surgeon Anatomy - Vaguely humanoid but wrong
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.8, 0.3), darkMat);
-            body.position.y = 0.9;
-            
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.3), paleMat);
-            head.position.y = 1.9;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.5, 0.4), cloth);
+            body.position.y = 0.75;
 
-            const lArm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.2, 0.15), darkMat);
-            lArm.position.set(-0.4, 1.1, 0);
-            lArm.rotation.z = 0.1;
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.45, 0.35), skin);
+            head.position.y = 1.75;
 
-            const rArm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.2, 0.15), darkMat);
-            rArm.position.set(0.4, 1.1, 0);
-            rArm.rotation.z = -0.1;
+            const lArm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.3, 0.18), cloth);
+            lArm.position.set(-0.45, 1.0, 0);
 
-            surgeon.add(body, head, lArm, rArm);
-            surgeon.position.set(0, 0, -45);
-            scene.add(surgeon);
+            const rArm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.3, 0.18), cloth);
+            rArm.position.set(0.45, 1.0, 0);
+
+            WORLD.surgeon.add(body, head, lArm, rArm);
+            WORLD.surgeon.position.set(0, 0, -40);
+            WORLD.scene.add(WORLD.surgeon);
         }
 
-        // --- 3. CORE LOGIC & INPUT ---
-        function initInput() {
-            const zone = document.getElementById('joystick-zone');
-            const stick = document.getElementById('joy-stick');
+        // --- 3. INPUT & DYNAMICS ---
+        function bindControls() {
+            const zone = document.getElementById('joy-wrapper');
+            const stick = document.getElementById('joy-inner');
             let cx, cy;
 
             zone.addEventListener('touchstart', (e) => {
-                const rect = zone.getBoundingClientRect();
-                cx = rect.left + rect.width / 2;
-                cy = rect.top + rect.height / 2;
+                const r = zone.getBoundingClientRect();
+                cx = r.left + r.width/2; cy = r.top + r.height/2;
             });
 
             zone.addEventListener('touchmove', (e) => {
                 e.preventDefault();
-                const touch = e.touches[0];
-                const dx = touch.clientX - cx;
-                const dy = touch.clientY - cy;
-                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 55);
-                const angle = Math.atan2(dy, dx);
+                const t = e.touches[0];
+                const dx = t.clientX - cx, dy = t.clientY - cy;
+                const d = Math.min(Math.sqrt(dx*dx + dy*dy), 55);
+                const a = Math.atan2(dy, dx);
 
-                stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
-                
-                ENGINE.controls.vector.z = Math.sin(angle) * (dist / 55) * 0.35;
-                ENGINE.controls.vector.x = -Math.cos(angle) * (dist / 55) * 0.35;
-                ENGINE.controls.moving = dist > 8;
+                stick.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
+                WORLD.state.moveVec.z = Math.sin(a) * (d/55) * 0.35;
+                WORLD.state.moveVec.x = -Math.cos(a) * (d/55) * 0.35;
+                WORLD.state.moving = d > 10;
             }, { passive: false });
 
             window.addEventListener('touchend', () => {
                 stick.style.transform = `translate(0,0)`;
-                ENGINE.controls.moving = false;
-                ENGINE.controls.vector.set(0, 0, 0);
+                WORLD.state.moving = false;
+                WORLD.state.moveVec.set(0, 0, 0);
             });
         }
 
         function updateAudioSpatial() {
-            if (!ENGINE.isStarted) return;
-
-            const dist = camera.position.distanceTo(surgeon.position);
+            if (!WORLD.state.started) return;
+            const dist = WORLD.camera.position.distanceTo(WORLD.surgeon.position);
             
-            // 1. Breathing Intensity
-            let breathVol = 1.0 - (dist / ENGINE.settings.proximityThreshold);
-            breathVol = Math.max(0, Math.min(breathVol, 1));
-            audioMap.breath.volume = Math.pow(breathVol, 1.8) * 0.9;
+            // Proximity HUD update
+            document.getElementById('dist-ui').innerText = dist < 25 ? `PROXIMITY: CRITICAL` : `PROXIMITY: ${Math.floor(dist)}m`;
+            
+            // Breath Scaling
+            let bVol = 1.0 - (dist / 50);
+            bVol = Math.max(0, Math.min(bVol, 1));
+            SFX.breath.volume = Math.pow(bVol, 1.6) * 0.95;
 
-            // 2. Footstep Management
-            if (ENGINE.controls.moving) {
-                audioMap.steps.volume = Math.min(audioMap.steps.volume + 0.04, 0.45);
-                audioMap.steps.playbackRate = 0.85 + (Math.random() * 0.1);
+            // Step Scaling
+            if (WORLD.state.moving) {
+                SFX.steps.volume = Math.min(SFX.steps.volume + 0.05, 0.45);
             } else {
-                audioMap.steps.volume = Math.max(audioMap.steps.volume - 0.08, 0);
+                SFX.steps.volume = Math.max(SFX.steps.volume - 0.05, 0);
             }
-
-            // 3. Static/Sanity Visuals
-            const staticFX = document.getElementById('static-fx');
-            staticFX.opacity = 0.05 + (breathVol * 0.2);
         }
 
-        function updateSurgeon(delta) {
-            const dist = camera.position.distanceTo(surgeon.position);
+        function updateSurgeonAI(delta) {
+            const cam = WORLD.camera;
+            const surg = WORLD.surgeon;
             
-            // Frustum Culling Check
-            const proj = new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+            // Frustum check for "Object Impermanence" logic
+            const proj = new THREE.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
             const frustum = new THREE.Frustum().setFromProjectionMatrix(proj);
-            const isVisible = frustum.containsPoint(surgeon.position);
+            const isVisible = frustum.containsPoint(surg.position);
 
             if (!isVisible) {
-                // If you aren't looking, he closes the gap rapidly
-                surgeon.position.z += delta * 9.0; 
-                surgeon.rotation.y = Math.PI; 
+                // He hunts when you aren't looking
+                surg.position.z += delta * CONFIG.surgeonSpeedStalk;
+                surg.lookAt(cam.position.x, 0, cam.position.z);
             } else {
-                // If you are looking, he is frozen or "creeping"
-                surgeon.position.z += delta * 0.8;
-                // Jitter head
-                surgeon.children[1].position.x = Math.sin(Date.now() * 0.05) * 0.02;
+                // He creeps when seen
+                surg.position.z += delta * 0.6;
+                WORLD.state.sanity -= 0.005; // Looking at him drains sanity
             }
 
-            // Stalking logic: Keep him within a logical distance range
-            if (dist > 70) surgeon.position.z = camera.position.z - 40;
-            
-            // Limb animation
-            const walkSpeed = isVisible ? 0.002 : 0.015;
-            surgeon.children[2].rotation.x = Math.sin(Date.now() * walkSpeed) * 0.3;
-            surgeon.children[3].rotation.x = -Math.sin(Date.now() * walkSpeed) * 0.3;
+            // Bound him within range
+            const d = cam.position.distanceTo(surg.position);
+            if (d > 80) surg.position.z = cam.position.z - 45;
+
+            // Limb Animation
+            const t = Date.now() * 0.007;
+            surg.children[2].rotation.x = Math.sin(t) * 0.5;
+            surg.children[3].rotation.x = -Math.sin(t) * 0.5;
         }
 
-        // --- 4. RENDER PIPELINE ---
-        function mainLoop() {
-            requestAnimationFrame(mainLoop);
-            const delta = clock.getDelta();
+        // --- 4. ENGINE CORE ---
+        function renderLoop() {
+            requestAnimationFrame(renderLoop);
+            const delta = WORLD.clock.getDelta();
 
-            if (ENGINE.controls.moving) {
-                camera.position.z += ENGINE.controls.vector.z;
-                camera.position.x += ENGINE.controls.vector.x;
+            if (WORLD.state.moving) {
+                WORLD.camera.position.z += WORLD.state.moveVec.z;
+                WORLD.camera.position.x += WORLD.state.moveVec.x;
                 
-                // Camera Bob
-                camera.position.y = 1.6 + Math.sin(Date.now() * 0.008) * 0.06;
-                // Subtle Tilt
-                camera.rotation.z = Math.sin(Date.now() * 0.004) * 0.01;
+                // Detailed Head Bobbing
+                WORLD.camera.position.y = 1.6 + Math.sin(Date.now() * 0.008) * 0.08;
+                WORLD.camera.rotation.z = Math.sin(Date.now() * 0.004) * 0.02;
             }
 
-            // Object Impermanence: Shifting the Corridor
-            ENGINE.assets.segments.forEach((seg, idx) => {
-                const sDist = Math.abs(camera.position.z - seg.position.z);
-                if (sDist > ENGINE.settings.viewDistance) {
-                    seg.visible = false;
-                } else {
-                    seg.visible = true;
-                    // Randomly shift wall positions of unseen segments
-                    if (sDist > 40 && Math.random() > 0.999) {
-                        seg.children[1].position.x += (Math.random() - 0.5) * 0.1;
-                    }
-                }
+            // Sanity Degradation Visuals
+            const sanPercent = Math.floor(WORLD.state.sanity);
+            document.getElementById('sanity-ui').innerText = `SANITY: ${sanPercent}%`;
+            if (sanPercent < 50) {
+                WORLD.ambient.color.setHex(0x330000);
+            }
+
+            // Flashlight Instability
+            if (Math.random() > 0.985) {
+                WORLD.flashlight.intensity = 40 + Math.random() * 160;
+                if (Math.random() > 0.99) WORLD.flashlight.intensity = 0; // Temporary blackout
+            }
+
+            // Dynamic Segment Culling
+            WORLD.segments.forEach(seg => {
+                const zDiff = WORLD.camera.position.z - seg.position.z;
+                seg.visible = (zDiff > -CONFIG.viewDist && zDiff < 20);
             });
 
-            // Flashlight Flicker
-            if (Math.random() > 0.985) {
-                flashlight.intensity = 20 + Math.random() * 120;
-            }
-
-            updateSurgeon(delta);
+            updateSurgeonAI(delta);
             updateAudioSpatial();
 
-            renderer.render(scene, camera);
+            WORLD.renderer.render(WORLD.scene, WORLD.camera);
         }
 
-        // --- 5. EVENT HANDLERS ---
+        // Window Handlers
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            WORLD.camera.aspect = window.innerWidth / window.innerHeight;
+            WORLD.camera.updateProjectionMatrix();
+            WORLD.renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Prevention of context menu for mobile
-        window.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); return false; };
+        // Prevent Context Menu
+        window.oncontextmenu = (e) => e.preventDefault();
 
     </script>
 </body>
