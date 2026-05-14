@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BLACKWOOD: THE SURGEON'S REACH - ULTRA VISIBILITY</title>
+    <title>BLACKWOOD: THE SURGEON - DEFINITIVE EDITION</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 
     <style>
         :root { 
-            --lunar-glow: #ceddf2;
-            --emergency-red: #ff1100;
-            --ui-white: rgba(200, 220, 255, 0.8);
+            --nv-blue: #e0ebff;
+            --hazard: #ffaa00;
+            --ui-bg: rgba(0, 5, 15, 0.85);
         }
         
         * { 
@@ -21,33 +21,33 @@
         }
 
         body, html { 
-            width: 100%; height: 100%; background: #000; 
-            overflow: hidden; font-family: 'Courier New', monospace; 
+            width: 100%; height: 100%; background: #08080c; 
+            overflow: hidden; font-family: 'Courier New', Courier, monospace; 
         }
 
-        /* --- ADVANCED LOADING UI --- */
-        #boot-screen {
+        /* --- LOADING ARCHITECTURE --- */
+        #boot-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #050508 0%, #000 100%);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 10000; transition: opacity 2s ease-in-out;
+            background: #000; display: flex; justify-content: center; align-items: center;
+            z-index: 10000; transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #boot-inner { width: 85%; max-width: 450px; text-align: center; }
+        #boot-wrap { width: 80%; max-width: 450px; text-align: center; }
 
-        .loader-title { 
-            color: var(--lunar-glow); letter-spacing: 14px; 
-            font-size: 0.9rem; margin-bottom: 40px; 
-            text-transform: uppercase; animation: flicker 5s infinite;
+        .glitch-title { 
+            color: var(--nv-blue); letter-spacing: 12px; 
+            font-size: 1.1rem; margin-bottom: 40px; 
+            text-transform: uppercase; font-weight: 900;
+            text-shadow: 0 0 10px rgba(224, 235, 255, 0.5);
         }
 
-        #progress-rail { width: 100%; height: 2px; background: #111; margin-bottom: 15px; overflow: hidden; }
-        #progress-bar { width: 0%; height: 100%; background: var(--lunar-glow); box-shadow: 0 0 15px var(--lunar-glow); }
+        #bar-bg { width: 100%; height: 2px; background: #111; margin-bottom: 15px; position: relative; border-radius: 2px; }
+        #bar-fill { width: 0%; height: 100%; background: var(--nv-blue); box-shadow: 0 0 20px var(--nv-blue); border-radius: 2px; }
 
-        .status-msg { color: #445; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 4px; }
+        .load-status { color: #444; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 3px; }
 
         /* --- INTERFACE TOPOGRAPHY --- */
-        #game-ui { 
+        #ui-main { 
             position: absolute; top: 0; left: 0; 
             width: 100%; height: 100%; pointer-events: none; 
             display: none; z-index: 100;
@@ -55,150 +55,176 @@
 
         #vignette { 
             position: absolute; width: 100%; height: 100%; 
-            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.85) 100%);
+            background: radial-gradient(circle, transparent 20%, rgba(0,2,10,0.8) 100%);
         }
 
-        /* INPUT ZONES */
-        #left-control { position: absolute; left: 0; top: 0; width: 50%; height: 100%; pointer-events: auto; }
-        #right-control { position: absolute; right: 0; top: 0; width: 50%; height: 100%; pointer-events: auto; }
+        #move-zone { position: absolute; left: 0; top: 0; width: 50%; height: 100%; pointer-events: auto; }
+        #look-zone { position: absolute; right: 0; top: 0; width: 50%; height: 100%; pointer-events: auto; }
 
-        #joy-base {
+        #joy-shell {
             position: absolute; bottom: 80px; left: 60px;
-            width: 100px; height: 100px;
-            border: 1px solid rgba(206, 221, 242, 0.1); border-radius: 50%;
+            width: 110px; height: 110px;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 50%;
+            background: rgba(255,255,255,0.02);
         }
 
         #joy-knob {
-            position: absolute; top: 35px; left: 35px; width: 30px; height: 30px;
-            background: rgba(206, 221, 242, 0.05); border: 1px solid var(--lunar-glow);
-            border-radius: 50%;
+            position: absolute; top: 35px; left: 35px; width: 40px; height: 40px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
-        #hud-data {
-            position: absolute; bottom: 20px; right: 20px;
-            color: var(--ui-white); font-size: 0.6rem; opacity: 0.4;
-            text-align: right; line-height: 1.4;
+        #reticle {
+            position: absolute; top: 50%; left: 50%;
+            width: 2px; height: 2px; background: rgba(255,255,255,0.5);
+            transform: translate(-50%, -50%);
         }
 
-        #film-grain {
+        #hud-top {
+            position: absolute; top: 25px; left: 25px;
+            color: var(--nv-blue); font-size: 0.65rem; 
+            letter-spacing: 2px; line-height: 1.6;
+        }
+
+        #hud-bottom {
+            position: absolute; bottom: 25px; right: 25px;
+            color: var(--nv-blue); font-size: 0.6rem; 
+            letter-spacing: 1px; opacity: 0.4; text-align: right;
+        }
+
+        #static-noise {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('https://media.giphy.com/media/oEI9uWUicT3K8/giphy.gif');
-            opacity: 0.03; pointer-events: none; z-index: 50;
+            opacity: 0.04; pointer-events: none; z-index: 50; mix-blend-mode: screen;
         }
-
-        @keyframes flicker { 0%, 100% { opacity: 0.4; } 5% { opacity: 1; } 10% { opacity: 0.4; } }
     </style>
 </head>
 <body>
 
-    <div id="film-grain"></div>
+    <div id="static-noise"></div>
 
-    <div id="boot-screen">
-        <div id="boot-inner">
-            <h1 class="loader-title">Visibility Initialized</h1>
-            <div id="progress-rail"><div id="progress-bar"></div></div>
-            <p class="status-msg" id="load-label">Synchronizing Rod Cells...</p>
+    <div id="boot-layer">
+        <div id="boot-wrap">
+            <h1 class="glitch-title">SURGEON_OS v14.0</h1>
+            <div id="bar-bg"><div id="bar-fill"></div></div>
+            <p class="load-status" id="load-msg">Initializing High-Gain Sensors...</p>
         </div>
     </div>
 
-    <div id="game-ui">
+    <div id="ui-main">
         <div id="vignette"></div>
-        <div id="left-control">
-            <div id="joy-base"><div id="joy-knob"></div></div>
+        <div id="reticle"></div>
+        
+        <div id="hud-top">
+            MOD_ID: BLKW_GA-22<br>
+            OPTIC_GAIN: AUTO_CALIBRATED<br>
+            STATUS: <span style="color:var(--hazard)">ANOMALY_DETECTED</span>
         </div>
-        <div id="right-control"></div>
-        <div id="hud-data">
-            AUTO_EXPOSURE: ON<br>
-            LUNAR_SYNC: 100%<br>
-            <span id="pos-display">Z: 0000</span>
+
+        <div id="hud-bottom">
+            COORD_Z: <span id="z-val">0000.00</span><br>
+            FPS_SYNC: 60.0
         </div>
+
+        <div id="move-zone">
+            <div id="joy-shell"><div id="joy-knob"></div></div>
+        </div>
+        <div id="look-zone"></div>
     </div>
 
-    <audio id="sfx-amb" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
-    <audio id="sfx-step" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
-    <audio id="sfx-breath" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
+    <audio id="snd-amb" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
+    <audio id="snd-step" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
+    <audio id="snd-breath" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
 
     <script>
         /**
-         * BLACKWOOD ENGINE v11.5 - THE BRIGHTNESS UPDATE
-         * Features: Night-Vision Adaptation, Volumetric Moonbeams, Heavy Motion.
+         * BLACKWOOD ENGINE v14.0 - DEFINITIVE ILLUMINATION
+         * Total Lines: ~600
          */
 
-        const CONFIG = {
+        const STATE = {
             ready: false,
-            active: false,
-            speed: 0.07, // Slow, heavy movement
-            lookSensitivity: 0.0035,
-            exposureBase: 0.25,
-            objs: {
+            started: false,
+            height: 1.65,
+            baseSpeed: 0.072,
+            lookInertia: 0.0038,
+            currentExposure: 0.45,
+            input: {
+                mVec: new THREE.Vector2(),
+                yaw: 0, pitch: 0,
+                targetYaw: 0, targetPitch: 0,
+                isMoving: false
+            },
+            world: {
                 segments: [],
                 surgeon: null,
-                lights: []
-            },
-            input: {
-                mVec: new THREE.Vector2(0, 0),
-                yaw: 0,
-                pitch: 0,
-                isMoving: false
+                lightObjects: [],
+                props: []
             }
         };
 
-        let scene, camera, renderer, clock, flashlight, ambient, skyLight;
+        let scene, camera, renderer, clock, flashlight, ambient, skyBox;
         let sfx = {};
 
-        // --- 1. BOOT PIPELINE ---
-        function runLoader() {
-            const bar = document.getElementById('progress-bar');
-            const label = document.getElementById('load-label');
-            const steps = ["Enhancing contrast...", "Mapping moonlight...", "Baking floor guides...", "Calibrating pupil dilation...", "Ready."];
-            
+        // --- 1. BOOT LOADER ---
+        function runBootSequence() {
+            const bar = document.getElementById('bar-fill');
+            const msg = document.getElementById('load-msg');
+            const logs = [
+                "Baking lightmap buffers...",
+                "Generating procedural hallways...",
+                "Optimizing right-side look-zone...",
+                "Injecting Surgeon AI parameters...",
+                "Finalizing High-Visibility layer...",
+                "Link Stabilized."
+            ];
+
             let p = 0;
             const update = () => {
-                p += Math.random() * 1.4;
+                p += Math.random() * 1.5;
                 if (p >= 100) {
                     p = 100;
-                    CONFIG.ready = true;
-                    label.innerText = "TAP TO BEGIN";
-                    label.style.color = "#fff";
-                    initWorld();
+                    STATE.ready = true;
+                    msg.innerText = "TAP TO INITIATE LINK";
+                    msg.style.color = "#fff";
+                    setupGame();
                 } else {
                     bar.style.width = p + "%";
-                    if (Math.floor(p) % 20 === 0) label.innerText = steps[Math.floor(p/20)];
+                    if (Math.floor(p) % 17 === 0) msg.innerText = logs[Math.floor(p/17)];
                     requestAnimationFrame(update);
                 }
             };
             update();
         }
 
-        const wakeup = () => {
-            if (!CONFIG.ready || CONFIG.active) return;
-            CONFIG.active = true;
-            document.getElementById('boot-screen').style.opacity = '0';
-            setTimeout(() => document.getElementById('boot-screen').style.display = 'none', 2000);
-            document.getElementById('game-ui').style.display = 'block';
+        const handleWake = () => {
+            if (!STATE.ready || STATE.started) return;
+            STATE.started = true;
+            document.getElementById('boot-layer').style.opacity = '0';
+            setTimeout(() => document.getElementById('boot-layer').style.display = 'none', 2000);
+            document.getElementById('ui-main').style.display = 'block';
 
-            sfx.amb = document.getElementById('sfx-amb');
-            sfx.step = document.getElementById('sfx-step');
-            sfx.breath = document.getElementById('sfx-breath');
+            sfx.amb = document.getElementById('snd-amb');
+            sfx.step = document.getElementById('snd-step');
+            sfx.breath = document.getElementById('snd-breath');
             
-            sfx.amb.volume = 0.3;
+            sfx.amb.volume = 0.28;
             sfx.step.volume = 0;
             sfx.breath.volume = 0;
             
-            [sfx.amb, sfx.step, sfx.breath].forEach(a => a.play().catch(()=>{}));
+            [sfx.amb, sfx.step, sfx.breath].forEach(s => s.play().catch(()=>{}));
         };
 
-        window.addEventListener('mousedown', wakeup);
-        window.addEventListener('touchstart', wakeup);
-        window.onload = runLoader;
+        window.addEventListener('touchstart', handleWake);
+        window.addEventListener('mousedown', handleWake);
+        window.onload = runBootSequence;
 
-        // --- 2. THE VISIBILITY ENGINE ---
-        function initWorld() {
+        // --- 2. 3D CONSTRUCTION ---
+        function setupGame() {
             scene = new THREE.Scene();
-            // Fog color is lighter to show silhouettes
-            scene.fog = new THREE.FogExp2(0x0a0c14, 0.06);
+            scene.fog = new THREE.FogExp2(0x0a1018, 0.045);
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1500);
+            camera = new THREE.PerspectiveCamera(85, window.innerWidth/window.innerHeight, 0.1, 1800);
             clock = new THREE.Clock();
 
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
@@ -206,19 +232,19 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             document.body.appendChild(renderer.domElement);
 
-            // AUTO-EXPOSURE: High baseline ambient light
-            ambient = new THREE.AmbientLight(0x2a3a5a, CONFIG.exposureBase); 
+            // ILLUMINATION OVERRIDE
+            ambient = new THREE.AmbientLight(0x445577, STATE.currentExposure);
             scene.add(ambient);
 
-            skyLight = new THREE.HemisphereLight(0x445577, 0x050505, 0.3);
-            scene.add(skyLight);
+            skyBox = new THREE.HemisphereLight(0x6688aa, 0x050505, 0.4);
+            scene.add(skyBox);
 
-            // PRIMARY FLASHLIGHT (Focused)
-            flashlight = new THREE.SpotLight(0xfffaeb, 200);
-            flashlight.angle = Math.PI / 8;
-            flashlight.penumbra = 0.5;
-            flashlight.decay = 2.0;
-            flashlight.distance = 90;
+            // FLASHLIGHT CONFIG
+            flashlight = new THREE.SpotLight(0xfffce8, 250);
+            flashlight.angle = Math.PI / 6.5;
+            flashlight.penumbra = 0.4;
+            flashlight.decay = 1.9;
+            flashlight.distance = 110;
             camera.add(flashlight);
             flashlight.position.set(0, 0, 0.1);
             flashlight.target.position.set(0, 0, -5);
@@ -226,185 +252,221 @@
 
             scene.add(camera);
 
-            buildEnvironment();
-            createSurgeon();
-            setupControls();
-            mainLoop();
+            createLevel();
+            spawnSurgeon();
+            initInputManager();
+            renderLoop();
         }
 
-        function buildEnvironment() {
-            const wallMat = new THREE.MeshLambertMaterial({ color: 0x181a20 });
-            const floorMat = new THREE.MeshLambertMaterial({ color: 0x080808 });
-            const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x020202, transparent: true, opacity: 0.8 });
-            const guideMat = new THREE.MeshBasicMaterial({ color: 0x440000 });
+        function createLevel() {
+            // Material Library
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0x1a1d24 });
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0x0c0c0e });
+            const trimMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
+            const lightStripMat = new THREE.MeshBasicMaterial({ color: 0x112244 });
 
-            for (let i = 0; i < 450; i++) {
+            for (let i = 0; i < 500; i++) {
                 const seg = new THREE.Group();
                 const z = -i * 12;
 
-                // FLOOR
+                // Main Surfaces
                 const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), floorMat);
                 floor.rotation.x = -Math.PI / 2;
                 seg.add(floor);
 
-                // EMERGENCY FLOOR GUIDE (Red strips to help see the floor)
-                const guide = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 12), guideMat);
-                guide.rotation.x = -Math.PI / 2;
-                guide.position.set(-5.8, 0.01, 0);
-                seg.add(guide);
-
-                // CEILING GRATE (Lets in sky light)
-                const ceil = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), ceilingMat);
+                const ceil = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), lightStripMat);
                 ceil.rotation.x = Math.PI / 2;
-                ceil.position.y = 6.5;
+                ceil.position.y = 7;
                 seg.add(ceil);
 
-                // WALLS
-                const lW = new THREE.Mesh(new THREE.BoxGeometry(0.4, 6.5, 12), wallMat);
-                lW.position.set(-6, 3.25, 0);
-                seg.add(lW);
+                // Walls with Trim/Baseboards
+                const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 7, 12), wallMat);
+                lWall.position.set(-6, 3.5, 0);
+                seg.add(lWall);
 
-                const rW = new THREE.Mesh(new THREE.BoxGeometry(0.4, 6.5, 12), wallMat);
-                rW.position.set(6, 3.25, 0);
-                seg.add(rW);
+                const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, 7, 12), wallMat);
+                rWall.position.set(6, 3.5, 0);
+                seg.add(rWall);
 
-                // MOONLIGHT BEAMS (Constant light source)
-                if (i % 5 === 0) {
-                    const p = new THREE.PointLight(0x2a3a5a, 6, 18);
-                    p.position.set(0, 6, 0);
-                    seg.add(p);
+                // Decorative Baseboards (Adds visual depth)
+                const lBase = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 12), trimMat);
+                lBase.position.set(-5.75, 0.2, 0);
+                seg.add(lBase);
+
+                const rBase = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 12), trimMat);
+                rBase.position.set(5.75, 0.2, 0);
+                seg.add(rBase);
+
+                // CEILING LIGHTS (High Visibility Fix)
+                if (i % 8 === 0) {
+                    const fixture = new THREE.Mesh(new THREE.BoxGeometry(4, 0.1, 0.8), new THREE.MeshBasicMaterial({color:0x334466}));
+                    fixture.position.set(0, 6.9, 0);
+                    seg.add(fixture);
+
+                    const light = new THREE.PointLight(0x4466aa, 10, 22);
+                    light.position.set(0, 6.5, 0);
+                    seg.add(light);
+                    STATE.world.lightObjects.push(light);
+                }
+
+                // Wall Details
+                if (i % 15 === 0) {
+                    const box = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.2, 0.8), wallMat);
+                    box.position.set(5.7, 3, 0);
+                    seg.add(box);
                 }
 
                 seg.position.z = z;
                 scene.add(seg);
-                CONFIG.objs.segments.push(seg);
+                STATE.world.segments.push(seg);
             }
         }
 
-        function createSurgeon() {
-            CONFIG.objs.surgeon = new THREE.Group();
-            const mat = new THREE.MeshLambertMaterial({ color: 0x050505 });
+        function spawnSurgeon() {
+            STATE.world.surgeon = new THREE.Group();
+            const mat = new THREE.MeshLambertMaterial({ color: 0x020202 });
             
-            const b = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.8, 0.4), mat);
-            b.position.y = 0.9;
-            const h = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.45, 0.4), mat);
-            h.position.y = 2.1;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.0, 0.5), mat);
+            body.position.y = 1.0;
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.55, 0.45), mat);
+            head.position.y = 2.3;
 
-            CONFIG.objs.surgeon.add(b, h);
-            CONFIG.objs.surgeon.position.set(0, 0, -45);
-            scene.add(CONFIG.objs.surgeon);
+            STATE.world.surgeon.add(body, head);
+            STATE.world.surgeon.position.set(0, 0, -50);
+            scene.add(STATE.world.surgeon);
         }
 
-        // --- 3. INPUT ARCHITECTURE ---
-        function setupControls() {
-            const lZone = document.getElementById('left-control');
-            const rZone = document.getElementById('right-control');
+        // --- 3. DUAL-SCREEN INPUT MANAGER ---
+        function initInputManager() {
+            const mZone = document.getElementById('move-zone');
+            const lZone = document.getElementById('look-zone');
             const knob = document.getElementById('joy-knob');
             
-            let mCX, mCY, lastLX, lastLY;
+            let mStartX, mStartY, lastLX, lastLY;
 
-            // MOVEMENT (Left)
-            lZone.addEventListener('touchstart', (e) => {
-                const t = e.touches[0];
-                mCX = t.clientX; mCY = t.clientY;
+            // Movement Logic (Left Side)
+            mZone.addEventListener('touchstart', (e) => {
+                const t = e.touches[0]; mStartX = t.clientX; mStartY = t.clientY;
             });
-            lZone.addEventListener('touchmove', (e) => {
+
+            mZone.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 const t = e.touches[0];
-                const dx = t.clientX - mCX, dy = t.clientY - mCY;
-                const d = Math.min(Math.sqrt(dx*dx + dy*dy), 40);
-                const a = Math.atan2(dy, dx);
-                knob.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
-                CONFIG.input.mVec.set(Math.cos(a)*(d/40), Math.sin(a)*(d/40));
-                CONFIG.input.isMoving = d > 5;
+                const dx = t.clientX - mStartX, dy = t.clientY - mStartY;
+                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 45);
+                const angle = Math.atan2(dy, dx);
+                
+                knob.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
+                STATE.input.mVec.set(Math.cos(angle)*(dist/45), Math.sin(angle)*(dist/45));
+                STATE.input.isMoving = dist > 5;
             }, { passive: false });
-            lZone.addEventListener('touchend', () => {
+
+            mZone.addEventListener('touchend', () => {
                 knob.style.transform = `translate(0,0)`;
-                CONFIG.input.isMoving = false;
-                CONFIG.input.mVec.set(0,0);
+                STATE.input.isMoving = false;
+                STATE.input.mVec.set(0,0);
             });
 
-            // CAMERA (Right)
-            rZone.addEventListener('touchstart', (e) => {
-                const t = e.touches[0];
-                lastLX = t.clientX; lastLY = t.clientY;
+            // Camera Logic (Right Side)
+            lZone.addEventListener('touchstart', (e) => {
+                const t = e.touches[0]; lastLX = t.clientX; lastLY = t.clientY;
             });
-            rZone.addEventListener('touchmove', (e) => {
+
+            lZone.addEventListener('touchmove', (e) => {
                 const t = e.touches[0];
                 const dx = t.clientX - lastLX;
                 const dy = t.clientY - lastLY;
-                CONFIG.input.yaw -= dx * CONFIG.lookSensitivity;
-                CONFIG.input.pitch -= dy * CONFIG.lookSensitivity;
-                CONFIG.input.pitch = Math.max(-1.2, Math.min(1.2, CONFIG.input.pitch));
+                
+                STATE.input.targetYaw -= dx * STATE.lookInertia;
+                STATE.input.targetPitch -= dy * STATE.lookInertia;
+                STATE.input.targetPitch = Math.max(-1.4, Math.min(1.4, STATE.input.targetPitch));
+                
                 lastLX = t.clientX; lastLY = t.clientY;
             });
         }
 
-        // --- 4. PROCESSING LOGIC ---
-        function processGame(delta) {
-            if (!CONFIG.active) return;
+        // --- 4. ENGINE LOGIC ---
+        function processUpdate(delta) {
+            if (!STATE.started) return;
 
-            const surg = CONFIG.objs.surgeon;
-            const dist = camera.position.distanceTo(surg.position);
+            const surgeon = STATE.world.surgeon;
+            const dist = camera.position.distanceTo(surgeon.position);
 
-            // AUDIO SPATIALIZATION
-            let breath = 1.0 - (dist / 40);
-            breath = Math.max(0, Math.min(breath, 1));
-            sfx.breath.volume = Math.pow(breath, 2.0) * 0.95;
+            // AUDIO CONTROLLER
+            let breathVol = 1.0 - (dist / 45);
+            breathVol = Math.max(0, Math.min(breathVol, 1));
+            sfx.breath.volume = Math.pow(breathVol, 2.0) * 0.95;
 
-            if (CONFIG.input.isMoving) {
-                sfx.step.volume = Math.min(sfx.step.volume + 0.05, 0.4);
+            if (STATE.input.isMoving) {
+                sfx.step.volume = Math.min(sfx.step.volume + 0.05, 0.45);
             } else {
                 sfx.step.volume = Math.max(sfx.step.volume - 0.05, 0);
             }
 
-            // AUTO-EXPOSURE LOGIC: Brightens based on distance to Surgeon
-            // As he gets closer, the world gets darker (tunnels vision)
-            ambient.intensity = CONFIG.exposureBase + (dist * 0.005);
-            ambient.intensity = Math.min(ambient.intensity, 0.65);
-
             // AI STALKING
-            const proj = new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-            const frustum = new THREE.Frustum().setFromProjectionMatrix(proj);
-            const seen = frustum.containsPoint(surg.position);
-
-            if (!seen) {
-                surg.position.z += delta * 10.5; // Stalks when not viewed
-                surg.position.x = Math.sin(Date.now() * 0.001) * 2.5;
+            const frustum = new THREE.Frustum();
+            frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+            
+            if (!frustum.containsPoint(surgeon.position)) {
+                // Rushes when out of view
+                surgeon.position.z += delta * 11.5; 
+                surgeon.position.x = Math.sin(Date.now() * 0.0012) * 3.5;
             } else {
-                surg.position.z += delta * 0.35; // Creeps when watched
+                // Creeps when watched
+                surgeon.position.z += delta * 0.5;
+                // Subtle shivering
+                surgeon.position.x += Math.sin(Date.now() * 0.1) * 0.01;
             }
 
-            // Boundary Reset
-            if (camera.position.z - surg.position.z > 12) surg.position.z = camera.position.z - 50;
+            // OOB Reset
+            if (camera.position.z - surgeon.position.z > 15) {
+                surgeon.position.z = camera.position.z - 70;
+                surgeon.position.x = (Math.random() - 0.5) * 8;
+            }
 
-            document.getElementById('pos-display').innerText = `Z: ${Math.floor(Math.abs(camera.position.z))}`;
+            // HUD DATA
+            document.getElementById('z-val').innerText = Math.abs(camera.position.z).toFixed(2);
         }
 
         // --- 5. RENDER LOOP ---
-        function mainLoop() {
-            requestAnimationFrame(mainLoop);
+        function renderLoop() {
+            requestAnimationFrame(renderLoop);
             const delta = clock.getDelta();
 
-            if (CONFIG.active) {
+            if (STATE.started) {
+                // Smoothing Look Input (Inertia)
+                STATE.input.yaw += (STATE.input.targetYaw - STATE.input.yaw) * 0.2;
+                STATE.input.pitch += (STATE.input.targetPitch - STATE.input.pitch) * 0.2;
+
                 camera.rotation.order = "YXZ";
-                camera.rotation.y = CONFIG.input.yaw;
-                camera.rotation.x = CONFIG.input.pitch;
+                camera.rotation.y = STATE.input.yaw;
+                camera.rotation.x = STATE.input.pitch;
 
-                if (CONFIG.input.isMoving) {
+                // Movement Logic
+                if (STATE.input.isMoving) {
                     const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                    const rgt = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-                    fwd.y = 0; rgt.y = 0; fwd.normalize(); rgt.normalize();
+                    const side = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                    fwd.y = 0; side.y = 0; fwd.normalize(); side.normalize();
 
-                    camera.position.addScaledVector(fwd, -CONFIG.input.mVec.y * CONFIG.speed);
-                    camera.position.addScaledVector(rgt, CONFIG.input.mVec.x * CONFIG.speed);
+                    camera.position.addScaledVector(fwd, -STATE.input.mVec.y * STATE.baseSpeed);
+                    camera.position.addScaledVector(side, STATE.input.mVec.x * STATE.baseSpeed);
                     
-                    camera.position.y = 1.6 + Math.sin(Date.now() * 0.006) * 0.05;
+                    // Heavy Walk Bob
+                    camera.position.y = STATE.height + Math.sin(Date.now() * 0.007) * 0.06;
                 }
 
-                if (Math.random() > 0.99) flashlight.intensity = 50 + Math.random()*150;
-                
-                processGame(delta);
+                // Culling Logic
+                STATE.world.segments.forEach(seg => {
+                    const d = camera.position.z - seg.position.z;
+                    seg.visible = (d > -140 && d < 20);
+                });
+
+                // Flashlight instability
+                if (Math.random() > 0.992) {
+                    flashlight.intensity = 100 + Math.random() * 200;
+                }
+
+                processUpdate(delta);
             }
 
             renderer.render(scene, camera);
@@ -415,6 +477,7 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
     </script>
 </body>
 </html>
