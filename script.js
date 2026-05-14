@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 
-// DOM Elements
 const progressBar = document.getElementById('progress-bar');
 const loadingText = document.getElementById('loading-text');
 const loadingScreen = document.getElementById('loading-screen');
@@ -8,7 +7,6 @@ const controls = document.getElementById('mobile-controls');
 const bgMusic = document.getElementById('bg-music');
 const footstepAudio = document.getElementById('footstep-audio');
 
-// Game Variables
 let scene, camera, renderer, surgeon, flashlight;
 let moveForward = 0, moveRight = 0, isWalking = false;
 let segments = [];
@@ -16,37 +14,49 @@ let isLoaded = false;
 const frustum = new THREE.Frustum();
 const projScreenMatrix = new THREE.Matrix4();
 
-// --- SMOOTH SLOW LOAD ENGINE ---
+// --- FIXED LOADING LOGIC ---
 let progress = 0;
-function smoothLoad() {
-    progress += Math.random() * 0.35; // Slow crawl for stability
+function startLoadingBar() {
+    // We use a small timeout to ensure the browser has breath to animate the bar
+    let increment = Math.random() * 0.8; 
+    progress += increment;
+
     if (progress >= 100) {
         progress = 100;
         progressBar.style.width = '100%';
-        loadingText.innerText = "TAP TO ENTER THE VOID";
+        loadingText.innerText = "READY. TAP TO START.";
         loadingText.style.color = "#ff0000";
         isLoaded = true;
-        initGame(); // Pre-build map in background
+        
+        // Build the game ONLY after the bar is done
+        initGame(); 
     } else {
         progressBar.style.width = progress + '%';
-        loadingText.innerText = "STABILIZING DIMENSIONS... " + Math.floor(progress) + "%";
-        requestAnimationFrame(smoothLoad);
+        loadingText.innerText = "STABILIZING REALITY... " + Math.floor(progress) + "%";
+        setTimeout(startLoadingBar, 30); // Use setTimeout for guaranteed visual updates
     }
 }
-smoothLoad();
 
-// Start game on first mobile touch
-const handleEntry = () => {
+// Start the bar immediately
+startLoadingBar();
+
+const handleEntry = (e) => {
     if (!isLoaded) return;
-    loadingScreen.style.opacity = '0';
-    setTimeout(() => loadingScreen.style.display = 'none', 500);
+    if (e) e.preventDefault();
+
+    loadingScreen.style.display = 'none';
     controls.style.display = 'block';
     
     bgMusic.play();
+    // Prime audio
     footstepAudio.play().then(() => footstepAudio.pause());
+    
     window.removeEventListener('touchstart', handleEntry);
+    window.removeEventListener('click', handleEntry);
 };
+
 window.addEventListener('touchstart', handleEntry);
+window.addEventListener('click', handleEntry);
 
 function initGame() {
     scene = new THREE.Scene();
@@ -75,37 +85,27 @@ function create4000UnitMap() {
     const wallMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
     const floorMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
     
-    // 400 segments = 4000 units
     for (let i = 0; i < 400; i++) {
         const group = new THREE.Group();
         const zPos = -i * 10;
 
-        // Ground Floor
         const floor1 = new THREE.Mesh(new THREE.PlaneGeometry(8, 10), floorMat);
         floor1.rotation.x = -Math.PI / 2;
         group.add(floor1);
 
-        // Walls
         const lW = new THREE.Mesh(new THREE.BoxGeometry(0.2, 12, 10), wallMat);
         lW.position.set(-4, 6, 0);
         group.add(lW);
+
         const rW = new THREE.Mesh(new THREE.BoxGeometry(0.2, 12, 10), wallMat);
         rW.position.set(4, 6, 0);
         group.add(rW);
 
-        // Second Story Floor
         const floor2 = new THREE.Mesh(new THREE.PlaneGeometry(8, 10), floorMat);
         floor2.rotation.x = -Math.PI / 2;
         floor2.position.y = 5.5;
         group.add(floor2);
 
-        // Ceiling
-        const ceil = new THREE.Mesh(new THREE.PlaneGeometry(8, 10), floorMat);
-        ceil.rotation.x = Math.PI / 2;
-        ceil.position.y = 11;
-        group.add(ceil);
-
-        // Occasional Stairs (Object Impermanence: only some segments get them)
         if (i % 100 === 0 && i !== 0) {
             for(let s=0; s<11; s++){
                 const step = new THREE.Mesh(new THREE.BoxGeometry(8, 0.5, 1), wallMat);
@@ -139,19 +139,14 @@ function handleImpermanence() {
     projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
     frustum.setFromProjectionMatrix(projScreenMatrix);
 
-    // Stalker Logic: If unseen, move closer and change height
     if (!frustum.containsPoint(surgeon.position)) {
-        surgeon.position.z += 0.08; 
-        if(Math.random() > 0.99) surgeon.position.y = Math.random() * 6; // Story hopping
-    } else {
-        if(surgeon.position.y > 1 && surgeon.position.y < 4) surgeon.position.y = 0;
-        if(surgeon.position.y > 6) surgeon.position.y = 5.5;
+        surgeon.position.z += 0.1; 
+        if(Math.random() > 0.99) surgeon.position.y = (Math.random() > 0.5) ? 5.5 : 0;
     }
 
-    // Map Warping: Randomly narrow hallways behind player
     segments.forEach(seg => {
-        if (!frustum.containsPoint(seg.position) && Math.abs(camera.position.z - seg.position.z) > 40) {
-            if (Math.random() > 0.998) seg.scale.x = (Math.random() > 0.5) ? 0.6 : 1.2;
+        if (!frustum.containsPoint(seg.position) && Math.abs(camera.position.z - seg.position.z) > 50) {
+            if (Math.random() > 0.999) seg.scale.x = (Math.random() > 0.5) ? 0.5 : 1.0;
         }
     });
 }
@@ -162,15 +157,15 @@ function setupJoystick() {
     let active = false;
     const move = (e) => {
         if (!active) return;
-        const t = e.touches[0];
+        const t = e.touches ? e.touches[0] : e;
         const r = base.getBoundingClientRect();
         const dx = t.clientX - (r.left + r.width/2);
         const dy = t.clientY - (r.top + r.height/2);
         const d = Math.min(Math.sqrt(dx*dx + dy*dy), 45);
         const a = Math.atan2(dy, dx);
         stick.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
-        moveForward = -Math.sin(a) * (d/45) * 0.25;
-        moveRight = Math.cos(a) * (d/45) * 0.25;
+        moveForward = -Math.sin(a) * (d/45) * 0.28;
+        moveRight = Math.cos(a) * (d/45) * 0.28;
         isWalking = d > 8;
     };
     base.addEventListener('touchstart', (e) => { active = true; move(e); });
@@ -186,17 +181,15 @@ function animate() {
     if (isWalking) {
         camera.position.z += moveForward;
         camera.position.x += moveRight;
-        camera.position.y += Math.sin(Date.now() * 0.01) * 0.04;
+        camera.position.y = (camera.position.y > 3) ? 7.1 : 1.6; 
+        camera.position.y += Math.sin(Date.now() * 0.01) * 0.05;
         if (footstepAudio.paused) footstepAudio.play();
     } else {
         footstepAudio.pause();
     }
-
     handleImpermanence();
-
     const t = Date.now() * 0.005;
     surgeon.children[2].rotation.x = Math.sin(t) * 0.5;
     surgeon.children[3].rotation.x = -Math.sin(t) * 0.5;
-
     renderer.render(scene, camera);
 }
