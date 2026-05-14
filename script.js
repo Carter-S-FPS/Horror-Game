@@ -7,15 +7,18 @@ const bgMusic = document.getElementById('bg-music');
 const footstepAudio = document.getElementById('footstep-audio');
 const playBtn = document.getElementById('play-btn');
 
-// Start logic: Uses 'touchstart' for instant mobile response
-const startHandler = (e) => {
-    if (e) e.preventDefault();
+// Start Function - Handles the transition from UI to Game
+const startApp = (e) => {
+    if(e) e.preventDefault();
+    console.log("Starting Asylum Engine...");
+
     document.getElementById('ui').style.display = 'none';
     document.getElementById('mobile-controls').style.display = 'block';
 
-    bgMusic.play(); // Start horror ambience
+    // Play Ambience
+    bgMusic.play().catch(err => console.log("Audio waiting for interaction"));
     
-    // Unlocks and primes footstep audio for mobile
+    // Unlock and pause footsteps so they're ready to play later
     footstepAudio.play().then(() => {
         footstepAudio.pause();
         footstepAudio.currentTime = 0;
@@ -24,8 +27,9 @@ const startHandler = (e) => {
     init();
 };
 
-playBtn.addEventListener('touchstart', startHandler, { passive: false });
-playBtn.addEventListener('click', startHandler);
+// Double-binding to ensure mobile and desktop both work
+playBtn.addEventListener('touchstart', startApp, { passive: false });
+playBtn.addEventListener('click', startApp);
 
 function init() {
     scene = new THREE.Scene();
@@ -35,33 +39,39 @@ function init() {
     renderer = new THREE.WebGLRenderer({ antialias: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    
+    // Lower the canvas Z-index so it doesn't block UI elements
+    renderer.domElement.style.position = "absolute";
+    renderer.domElement.style.top = "0";
     renderer.domElement.style.zIndex = "1";
     document.body.appendChild(renderer.domElement);
 
-    flashlight = new THREE.SpotLight(0xffffff, 50);
+    // Dynamic Flashlight
+    flashlight = new THREE.SpotLight(0xffffff, 60);
+    flashlight.angle = Math.PI / 7;
     camera.add(flashlight);
     flashlight.position.set(0, 0, 1);
     flashlight.target = camera;
     scene.add(camera);
 
-    createAsylum();
+    createWorld();
     createSurgeon();
-    setupJoystick();
+    setupMobileInputs();
     animate();
 }
 
 function createSurgeon() {
     surgeon = new THREE.Group();
-    const size = 0.35; // Standard block size
-    const mat = new THREE.MeshLambertMaterial({ color: 0x3d443d });
+    const s = 0.35; // 35x35x35 blocks
+    const mat = new THREE.MeshLambertMaterial({ color: 0x2e332e });
 
-    // Distinct meshes for body parts
-    const head = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), new THREE.MeshLambertMaterial({color: 0x111}));
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(size, size * 1.6, size), mat);
-    const lLeg = new THREE.Mesh(new THREE.BoxGeometry(size/2, size, size/2), mat);
-    const rLeg = new THREE.Mesh(new THREE.BoxGeometry(size/2, size, size/2), mat);
-    const lArm = new THREE.Mesh(new THREE.BoxGeometry(size/2, size, size/2), mat);
-    const rArm = new THREE.Mesh(new THREE.BoxGeometry(size/2, size, size/2), mat);
+    // Individual Limb Meshes
+    const head = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), new THREE.MeshLambertMaterial({color: 0x000}));
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(s, s*1.5, s), mat);
+    const lLeg = new THREE.Mesh(new THREE.BoxGeometry(s/2, s, s/2), mat);
+    const rLeg = new THREE.Mesh(new THREE.BoxGeometry(s/2, s, s/2), mat);
+    const lArm = new THREE.Mesh(new THREE.BoxGeometry(s/2, s, s/2), mat);
+    const rArm = new THREE.Mesh(new THREE.BoxGeometry(s/2, s, s/2), mat);
 
     head.position.y = 0.8;
     torso.position.y = 0.4;
@@ -71,60 +81,60 @@ function createSurgeon() {
     rArm.position.set(0.25, 0.5, 0);
 
     surgeon.add(head, torso, lLeg, rLeg, lArm, rArm);
-    surgeon.position.set(0, 0, -10);
+    surgeon.position.set(0, 0, -15);
     scene.add(surgeon);
 }
 
-function createAsylum() {
-    const wallMat = new THREE.MeshLambertMaterial({ color: 0x151515 });
-    for (let i = 0; i < 30; i++) {
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 10), new THREE.MeshLambertMaterial({color: 0x050505}));
+function createWorld() {
+    const wallMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+    for (let i = 0; i < 50; i++) {
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 10), new THREE.MeshLambertMaterial({color: 0x030303}));
         floor.rotation.x = -Math.PI / 2;
         floor.position.z = -i * 10;
         scene.add(floor);
 
-        const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.1, 6, 10), wallMat);
-        lWall.position.set(-3, 3, -i * 10);
-        scene.add(lWall);
+        const lW = new THREE.Mesh(new THREE.BoxGeometry(0.1, 6, 10), wallMat);
+        lW.position.set(-3, 3, -i * 10);
+        scene.add(lW);
 
-        const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.1, 6, 10), wallMat);
-        rWall.position.set(3, 3, -i * 10);
-        scene.add(rWall);
+        const rW = new THREE.Mesh(new THREE.BoxGeometry(0.1, 6, 10), wallMat);
+        rW.position.set(3, 3, -i * 10);
+        scene.add(rW);
     }
 }
 
-function setupJoystick() {
+function setupMobileInputs() {
     const base = document.getElementById('joystick-base');
     const stick = document.getElementById('joystick-stick');
-    let dragging = false;
+    let active = false;
 
-    const move = (e) => {
-        if (!dragging) return;
-        const touch = e.touches[0];
-        const rect = base.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
+    const onMove = (e) => {
+        if (!active) return;
+        const t = e.touches[0];
+        const r = base.getBoundingClientRect();
+        const cX = r.left + r.width / 2;
+        const cY = r.top + r.height / 2;
 
-        let dx = touch.clientX - centerX;
-        let dy = touch.clientY - centerY;
-        const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 45);
-        const angle = Math.atan2(dy, dx);
+        let dx = t.clientX - cX;
+        let dy = t.clientY - cY;
+        const d = Math.min(Math.sqrt(dx*dx + dy*dy), 45);
+        const a = Math.atan2(dy, dx);
 
-        stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
+        stick.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
         
-        moveForward = -Math.sin(angle) * (dist/45) * 0.13;
-        moveRight = Math.cos(angle) * (dist/45) * 0.13;
-        isWalking = dist > 8;
+        moveForward = -Math.sin(a) * (d/45) * 0.15;
+        moveRight = Math.cos(a) * (d/45) * 0.15;
+        isWalking = d > 10;
     };
 
-    base.addEventListener('touchstart', () => { dragging = true; });
+    base.addEventListener('touchstart', () => active = true);
     window.addEventListener('touchend', () => {
-        dragging = false;
+        active = false;
         stick.style.transform = `translate(0,0)`;
         isWalking = false;
         moveForward = 0; moveRight = 0;
     });
-    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('touchmove', onMove, { passive: false });
 }
 
 function animate() {
@@ -133,17 +143,17 @@ function animate() {
     if (isWalking) {
         camera.position.z += moveForward;
         camera.position.x += moveRight;
-        camera.position.y = 1.6 + Math.sin(Date.now() * 0.01) * 0.04;
-        if (footstepAudio.paused) footstepAudio.play(); //
+        camera.position.y = 1.6 + Math.sin(Date.now() * 0.01) * 0.05;
+        if (footstepAudio.paused) footstepAudio.play();
     } else {
-        footstepAudio.pause(); //
+        footstepAudio.pause();
     }
 
-    // Surgeon Stalking Animation
-    const t = Date.now() * 0.005;
-    surgeon.position.z += 0.006;
-    surgeon.children[2].rotation.x = Math.sin(t) * 0.5; // Left Leg
-    surgeon.children[3].rotation.x = -Math.sin(t) * 0.5; // Right Leg
+    // Stalker Animation
+    const now = Date.now() * 0.005;
+    surgeon.position.z += 0.01; // He slowly follows
+    surgeon.children[2].rotation.x = Math.sin(now) * 0.6; // L-Leg
+    surgeon.children[3].rotation.x = -Math.sin(now) * 0.6; // R-Leg
 
     renderer.render(scene, camera);
 }
