@@ -3,344 +3,468 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BLACKWOOD: THE SURGEON'S REACH</title>
+    <title>BLACKWOOD: THE SURGEON'S REACH (EXTENDED)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 
     <style>
-        :root { --horror-red: #660000; --deep-black: #050505; }
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; }
-        body, html { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        :root { 
+            --horror-red: #8b0000; 
+            --terminal-green: #00ff41;
+            --ui-font: 'Courier New', Courier, monospace;
+        }
+        
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            touch-action: none; -webkit-tap-highlight-color: transparent; 
+            user-select: none; 
+        }
 
-        /* --- LOADING OVERLAY --- */
+        body, html { 
+            width: 100%; height: 100%; background: #000; 
+            overflow: hidden; font-family: var(--ui-font); 
+        }
+
+        /* --- IMMERSIVE OVERLAY --- */
         #overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: black; display: flex; justify-content: center; align-items: center;
-            z-index: 10000; transition: opacity 1.5s ease;
+            background: radial-gradient(circle, #111 0%, #000 100%);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10000; transition: opacity 2s ease;
         }
-        #load-wrap { width: 80%; text-align: center; }
-        h1 { color: var(--horror-red); letter-spacing: 10px; font-size: 1.2rem; margin-bottom: 30px; animation: breathe 4s infinite; }
-        #bar-bg { width: 100%; height: 2px; background: #111; border: 1px solid #222; margin-bottom: 15px; position: relative; }
-        #bar-fill { width: 0%; height: 100%; background: var(--horror-red); box-shadow: 0 0 15px red; transition: width 0.1s; }
-        #status-text { color: #444; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; }
 
-        /* --- UI CONTROLS --- */
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
-        #vignette { position: absolute; width: 100%; height: 100%; box-shadow: inset 0 0 150px rgba(0,0,0,0.9); }
-        
+        #load-wrap { width: 85%; max-width: 500px; text-align: center; }
+
+        h1 { 
+            color: var(--horror-red); letter-spacing: 12px; 
+            font-size: 1.4rem; margin-bottom: 40px; 
+            text-shadow: 0 0 10px rgba(139, 0, 0, 0.7);
+            animation: pulse 3s infinite; 
+        }
+
+        #bar-bg { 
+            width: 100%; height: 4px; background: #111; 
+            border: 1px solid #222; margin-bottom: 20px; 
+            position: relative; overflow: hidden;
+        }
+
+        #bar-fill { 
+            width: 0%; height: 100%; background: var(--horror-red); 
+            box-shadow: 0 0 20px #f00; transition: width 0.2s; 
+        }
+
+        #status-text { 
+            color: #555; font-size: 0.75rem; 
+            text-transform: uppercase; letter-spacing: 3px; 
+        }
+
+        /* --- GAMEPLAY UI --- */
+        #ui-layer { 
+            position: absolute; top: 0; left: 0; 
+            width: 100%; height: 100%; pointer-events: none; 
+            display: none; 
+        }
+
+        #vignette { 
+            position: absolute; width: 100%; height: 100%; 
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.95) 100%);
+        }
+
+        #crosshair {
+            position: absolute; top: 50%; left: 50%;
+            width: 4px; height: 4px; background: rgba(255,255,255,0.2);
+            border-radius: 50%; transform: translate(-50%, -50%);
+        }
+
+        /* --- JOYSTICK SYSTEM --- */
         #joystick-zone {
-            position: absolute; bottom: 40px; left: 40px;
-            width: 140px; height: 140px; pointer-events: auto;
-        }
-        #joy-base { width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.05); border-radius: 50%; background: rgba(255,255,255,0.02); }
-        #joy-stick { 
-            position: absolute; top: 45px; left: 45px; width: 50px; height: 50px; 
-            background: rgba(100,0,0,0.3); border-radius: 50%; border: 1px solid rgba(255,0,0,0.2); 
+            position: absolute; bottom: 50px; left: 50px;
+            width: 160px; height: 160px; pointer-events: auto;
         }
 
-        @keyframes breathe { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        #joy-base { 
+            width: 100%; height: 100%; 
+            border: 2px solid rgba(255,255,255,0.03); 
+            border-radius: 50%; background: rgba(255,255,255,0.01);
+            backdrop-filter: blur(2px);
+        }
+
+        #joy-stick { 
+            position: absolute; top: 55px; left: 55px; 
+            width: 50px; height: 50px; background: rgba(139, 0, 0, 0.2); 
+            border-radius: 50%; border: 1px solid rgba(255, 0, 0, 0.3); 
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        /* --- NOISE/GRAIN FX --- */
+        #static-fx {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://media.giphy.com/media/oEI9uWUicT3K8/giphy.gif');
+            opacity: 0.05; pointer-events: none; z-index: 5;
+        }
+
+        #terminal {
+            position: absolute; top: 20px; left: 20px;
+            color: var(--terminal-green); font-size: 0.7rem;
+            opacity: 0.6; text-shadow: 0 0 5px var(--terminal-green);
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
     </style>
 </head>
 <body>
 
+    <div id="static-fx"></div>
+
     <div id="overlay">
         <div id="load-wrap">
-            <h1 id="main-title">REALITY INITIALIZING</h1>
+            <h1 id="main-title">INITIATING BLACKWOOD</h1>
             <div id="bar-bg"><div id="bar-fill"></div></div>
-            <p id="status-text">DECODING ASYLUM DATA...</p>
+            <p id="status-text">Synchronizing nervous system...</p>
         </div>
     </div>
 
     <div id="ui-layer">
         <div id="vignette"></div>
+        <div id="crosshair"></div>
+        <div id="terminal">LOG: SECTOR_04 // SUBJECT_ACTIVE</div>
         <div id="joystick-zone">
             <div id="joy-base"><div id="joy-stick"></div></div>
         </div>
     </div>
 
-    <audio id="ambience" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
+    <audio id="sfx-ambience" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
+    <audio id="sfx-steps" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
+    <audio id="sfx-breath" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
 
     <script>
         /**
-         * BLACKWOOD ENGINE v3.0 - MOBILE OPTIMIZED
-         * Unified Single-File Architecture
-         **/
+         * BLACKWOOD HORROR ENGINE v5.1
+         * Advanced Proximity Logic & Spatial Mapping
+         */
 
-        // Global State
-        const state = {
-            loaded: false,
-            started: false,
-            moving: false,
-            moveVec: { x: 0, z: 0 },
-            progress: 0,
-            floorY: 1.6,
-            segments: [],
-            rooms: []
+        // --- GLOBAL ENGINE STATE ---
+        const ENGINE = {
+            isLoaded: false,
+            isStarted: false,
+            sanity: 100.0,
+            depth: 0,
+            controls: {
+                moving: false,
+                vector: new THREE.Vector3(),
+                rotation: 0
+            },
+            settings: {
+                fov: 75,
+                renderScale: Math.min(window.devicePixelRatio, 1.5),
+                viewDistance: 80,
+                proximityThreshold: 45
+            },
+            assets: {
+                segments: [],
+                surgeonParts: [],
+                clutter: []
+            }
         };
 
-        const clock = new THREE.Clock();
-        let scene, camera, renderer, surgeon, flashlight, scanner;
+        let scene, camera, renderer, clock, surgeon, flashlight, pulseLight;
+        let audioMap = {};
 
-        // --- 1. LOADING LOGIC ---
-        function performLoading() {
+        // --- 1. INITIALIZATION & LOADING ---
+        function initBootSequence() {
             const bar = document.getElementById('bar-fill');
-            const text = document.getElementById('status-text');
-            const title = document.getElementById('main-title');
+            const status = document.getElementById('status-text');
+            const logs = [
+                "Decompressing environmental geometry...",
+                "Mapping auditory triggers...",
+                "Calibrating object impermanence...",
+                "Isolating the Surgeon's signature...",
+                "Reality check failed. Proceeding anyway."
+            ];
 
-            const loadLoop = setInterval(() => {
-                state.progress += Math.random() * 0.9;
-                if (state.progress >= 100) {
-                    state.progress = 100;
-                    clearInterval(loadLoop);
-                    state.loaded = true;
-                    title.innerText = "READY FOR SURGERY";
-                    text.innerText = "TAP SCREEN TO AWAKEN";
-                    text.style.color = "#ff0000";
-                    initCore(); // Setup 3D in background
+            let progress = 0;
+            const step = () => {
+                progress += Math.random() * 2.5;
+                if (progress >= 100) {
+                    progress = 100;
+                    ENGINE.isLoaded = true;
+                    status.innerText = "MANIFESTATION COMPLETE. TAP TO AWAKEN.";
+                    status.style.color = "#ff0000";
+                    init3D();
+                } else {
+                    bar.style.width = progress + "%";
+                    if (Math.floor(progress) % 20 === 0) {
+                        status.innerText = logs[Math.floor(progress / 20)];
+                    }
+                    requestAnimationFrame(step);
                 }
-                bar.style.width = state.progress + "%";
-            }, 40);
+            };
+            step();
         }
 
-        // Handle User Interaction
-        const beginExperience = () => {
-            if (!state.loaded || state.started) return;
-            state.started = true;
+        function startExperience() {
+            if (!ENGINE.isLoaded || ENGINE.isStarted) return;
+            ENGINE.isStarted = true;
+
             document.getElementById('overlay').style.opacity = '0';
-            setTimeout(() => document.getElementById('overlay').style.display = 'none', 1500);
+            setTimeout(() => document.getElementById('overlay').style.display = 'none', 2000);
             document.getElementById('ui-layer').style.display = 'block';
-            document.getElementById('ambience').play().catch(()=>{});
-        };
 
-        window.addEventListener('touchstart', beginExperience);
-        window.addEventListener('mousedown', beginExperience);
-        window.onload = performLoading;
+            // Audio Setup
+            audioMap.ambience = document.getElementById('sfx-ambience');
+            audioMap.steps = document.getElementById('sfx-steps');
+            audioMap.breath = document.getElementById('sfx-breath');
 
-        // --- 2. 3D CORE ---
-        function initCore() {
+            audioMap.ambience.volume = 0.4;
+            audioMap.steps.volume = 0;
+            audioMap.breath.volume = 0;
+
+            Object.values(audioMap).forEach(track => track.play().catch(() => {}));
+        }
+
+        window.addEventListener('touchstart', startExperience);
+        window.addEventListener('mousedown', startExperience);
+        window.onload = initBootSequence;
+
+        // --- 2. 3D CONSTRUCTS ---
+        function init3D() {
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x000000, 0.14);
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-            
+            camera = new THREE.PerspectiveCamera(ENGINE.settings.fov, window.innerWidth / window.innerHeight, 0.1, 1000);
+            clock = new THREE.Clock();
+
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setPixelRatio(ENGINE.settings.renderScale);
             document.body.appendChild(renderer.domElement);
 
-            // Lighting
-            flashlight = new THREE.SpotLight(0xffffff, 100);
+            // Lighting System
+            flashlight = new THREE.SpotLight(0xfff5e1, 150);
             flashlight.angle = Math.PI / 8;
-            flashlight.penumbra = 0.3;
-            flashlight.decay = 2;
-            flashlight.distance = 40;
+            flashlight.penumbra = 0.6;
+            flashlight.decay = 2.5;
+            flashlight.distance = 60;
             camera.add(flashlight);
-            flashlight.position.set(0, 0, 0.5);
+            flashlight.position.set(0, 0, 0.2);
             flashlight.target.position.set(0, 0, -5);
             camera.add(flashlight.target);
+
+            pulseLight = new THREE.PointLight(0x330000, 0, 10);
+            scene.add(pulseLight);
             scene.add(camera);
 
-            const ambient = new THREE.AmbientLight(0x404040, 0.05);
-            scene.add(ambient);
-
-            buildAsylum();
+            buildEnvironment();
             spawnSurgeon();
-            initJoystick();
-            animate();
+            initInput();
+            mainLoop();
         }
 
-        // --- 3. ARCHITECTURE ---
-        function buildAsylum() {
-            const wallTex = new THREE.MeshLambertMaterial({ color: 0x151515 });
-            const floorTex = new THREE.MeshLambertMaterial({ color: 0x080808 });
+        function buildEnvironment() {
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
+            const pipeMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
 
-            // Create 4000 units of shifting space
-            for (let i = 0; i < 400; i++) {
+            // Create 500 meter long corridor sequence
+            for (let i = 0; i < 500; i++) {
                 const segment = new THREE.Group();
                 const zPos = -i * 10;
 
-                // Floors (Ground & Story 2)
-                for(let f=0; f<2; f++) {
-                    const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorTex);
-                    floor.rotation.x = -Math.PI / 2;
-                    floor.position.y = f * 6;
-                    segment.add(floor);
+                // Floor
+                const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorMat);
+                floor.rotation.x = -Math.PI / 2;
+                segment.add(floor);
 
-                    // Walls
-                    const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 10), wallTex);
-                    lWall.position.set(-5, 3 + (f*6), 0);
-                    segment.add(lWall);
+                // Walls with slight variation
+                const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 10), wallMat);
+                leftWall.position.set(-5, 4, 0);
+                segment.add(leftWall);
 
-                    const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 10), wallTex);
-                    rWall.position.set(5, 3 + (f*6), 0);
-                    segment.add(rWall);
+                const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8, 10), wallMat);
+                rightWall.position.set(5, 4, 0);
+                segment.add(rightWall);
+
+                // Add "Pipes" to walls periodically
+                if (i % 4 === 0) {
+                    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 10), pipeMat);
+                    pipe.rotation.x = Math.PI / 2;
+                    pipe.position.set(-4.7, 6, 0);
+                    segment.add(pipe);
                 }
 
-                // Procedural Rooms (Randomly spawn off the hallway)
-                if (Math.random() > 0.92 && i > 5) {
-                    const room = new THREE.Mesh(new THREE.BoxGeometry(15, 6, 15), wallTex);
-                    room.position.set(Math.random() > 0.5 ? 12 : -12, 3, 0);
-                    segment.add(room);
-                }
-
-                // Stairs
-                if (i % 80 === 0 && i !== 0) {
-                    for(let s=0; s<12; s++) {
-                        const step = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 1), wallTex);
-                        step.position.set(0, s*0.5, -s);
-                        segment.add(step);
-                    }
+                // Random Doors
+                if (Math.random() > 0.9) {
+                    const door = new THREE.Mesh(new THREE.BoxGeometry(0.1, 4, 2), wallMat);
+                    door.position.set(4.8, 2, Math.random() * 4 - 2);
+                    segment.add(door);
                 }
 
                 segment.position.z = zPos;
                 scene.add(segment);
-                state.segments.push(segment);
+                ENGINE.assets.segments.push(segment);
             }
         }
 
         function spawnSurgeon() {
             surgeon = new THREE.Group();
-            const mat = new THREE.MeshLambertMaterial({ color: 0x2b332b });
+            const darkMat = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+            const paleMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
+
+            // Surgeon Anatomy - Vaguely humanoid but wrong
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.8, 0.3), darkMat);
+            body.position.y = 0.9;
             
-            // Surgeon anatomy (The requested 35x35x35 block scale)
-            const bodyParts = [
-                new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), new THREE.MeshLambertMaterial({color: 0x000})), // Head
-                new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.8, 0.3), mat), // Torso
-                new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), mat), // L-Arm
-                new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), mat), // R-Arm
-                new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), mat), // L-Leg
-                new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), mat)  // R-Leg
-            ];
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.3), paleMat);
+            head.position.y = 1.9;
 
-            bodyParts[0].position.y = 1.6;
-            bodyParts[1].position.y = 1.0;
-            bodyParts[2].position.set(-0.3, 1.1, 0);
-            bodyParts[3].position.set(0.3, 1.1, 0);
-            bodyParts[4].position.set(-0.15, 0.35, 0);
-            bodyParts[5].position.set(0.15, 0.35, 0);
+            const lArm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.2, 0.15), darkMat);
+            lArm.position.set(-0.4, 1.1, 0);
+            lArm.rotation.z = 0.1;
 
-            surgeon.add(...bodyParts);
-            surgeon.position.set(0, 0, -30);
+            const rArm = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.2, 0.15), darkMat);
+            rArm.position.set(0.4, 1.1, 0);
+            rArm.rotation.z = -0.1;
+
+            surgeon.add(body, head, lArm, rArm);
+            surgeon.position.set(0, 0, -45);
             scene.add(surgeon);
         }
 
-        // --- 4. INPUT & MOTION ---
-        function initJoystick() {
+        // --- 3. CORE LOGIC & INPUT ---
+        function initInput() {
             const zone = document.getElementById('joystick-zone');
             const stick = document.getElementById('joy-stick');
-            let rect, centerX, centerY;
-
-            const handleMove = (e) => {
-                const touch = e.touches ? e.touches[0] : e;
-                const dx = touch.clientX - centerX;
-                const dy = touch.clientY - centerY;
-                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 50);
-                const angle = Math.atan2(dy, dx);
-
-                stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
-                
-                state.moveVec.z = -Math.sin(angle) * (dist/50) * 0.26;
-                state.moveVec.x = Math.cos(angle) * (dist/50) * 0.26;
-                state.moving = dist > 10;
-            };
+            let cx, cy;
 
             zone.addEventListener('touchstart', (e) => {
-                rect = zone.getBoundingClientRect();
-                centerX = rect.left + rect.width/2;
-                centerY = rect.top + rect.height/2;
+                const rect = zone.getBoundingClientRect();
+                cx = rect.left + rect.width / 2;
+                cy = rect.top + rect.height / 2;
             });
 
             zone.addEventListener('touchmove', (e) => {
                 e.preventDefault();
-                handleMove(e);
+                const touch = e.touches[0];
+                const dx = touch.clientX - cx;
+                const dy = touch.clientY - cy;
+                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 55);
+                const angle = Math.atan2(dy, dx);
+
+                stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
+                
+                ENGINE.controls.vector.z = Math.sin(angle) * (dist / 55) * 0.35;
+                ENGINE.controls.vector.x = -Math.cos(angle) * (dist / 55) * 0.35;
+                ENGINE.controls.moving = dist > 8;
             }, { passive: false });
 
             window.addEventListener('touchend', () => {
                 stick.style.transform = `translate(0,0)`;
-                state.moving = false;
-                state.moveVec = { x: 0, z: 0 };
+                ENGINE.controls.moving = false;
+                ENGINE.controls.vector.set(0, 0, 0);
             });
         }
 
-        // --- 5. PERCEPTION & IMPERMANENCE ---
-        const frustum = new THREE.Frustum();
-        const projMatrix = new THREE.Matrix4();
+        function updateAudioSpatial() {
+            if (!ENGINE.isStarted) return;
 
-        function processImpermanence() {
-            projMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-            frustum.setFromProjectionMatrix(projMatrix);
-
-            // Surgeon Logic: Object Impermanence
-            const isVisible = frustum.containsPoint(surgeon.position);
+            const dist = camera.position.distanceTo(surgeon.position);
             
-            if (!isVisible) {
-                // He moves 3x faster when you aren't looking
-                surgeon.position.z += 0.12; 
-                
-                // Story shifting: If he's far enough away, he can swap floors
-                if (Math.random() > 0.995) {
-                    surgeon.position.y = (surgeon.position.y < 3) ? 6 : 0;
-                }
+            // 1. Breathing Intensity
+            let breathVol = 1.0 - (dist / ENGINE.settings.proximityThreshold);
+            breathVol = Math.max(0, Math.min(breathVol, 1));
+            audioMap.breath.volume = Math.pow(breathVol, 1.8) * 0.9;
+
+            // 2. Footstep Management
+            if (ENGINE.controls.moving) {
+                audioMap.steps.volume = Math.min(audioMap.steps.volume + 0.04, 0.45);
+                audioMap.steps.playbackRate = 0.85 + (Math.random() * 0.1);
             } else {
-                // He creeps slowly while seen
-                surgeon.position.z += 0.02;
-                
-                // Head tilt logic
-                surgeon.children[0].rotation.y = Math.sin(Date.now() * 0.002) * 0.3;
+                audioMap.steps.volume = Math.max(audioMap.steps.volume - 0.08, 0);
             }
 
-            // Hallway Warping
-            state.segments.forEach(seg => {
-                const dist = Math.abs(camera.position.z - seg.position.z);
-                if (!frustum.containsPoint(seg.position) && dist > 40) {
-                    // Unseen segments randomly compress or expand
-                    if (Math.random() > 0.998) {
-                        seg.scale.x = (Math.random() > 0.5) ? 0.7 : 1.1;
+            // 3. Static/Sanity Visuals
+            const staticFX = document.getElementById('static-fx');
+            staticFX.opacity = 0.05 + (breathVol * 0.2);
+        }
+
+        function updateSurgeon(delta) {
+            const dist = camera.position.distanceTo(surgeon.position);
+            
+            // Frustum Culling Check
+            const proj = new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+            const frustum = new THREE.Frustum().setFromProjectionMatrix(proj);
+            const isVisible = frustum.containsPoint(surgeon.position);
+
+            if (!isVisible) {
+                // If you aren't looking, he closes the gap rapidly
+                surgeon.position.z += delta * 9.0; 
+                surgeon.rotation.y = Math.PI; 
+            } else {
+                // If you are looking, he is frozen or "creeping"
+                surgeon.position.z += delta * 0.8;
+                // Jitter head
+                surgeon.children[1].position.x = Math.sin(Date.now() * 0.05) * 0.02;
+            }
+
+            // Stalking logic: Keep him within a logical distance range
+            if (dist > 70) surgeon.position.z = camera.position.z - 40;
+            
+            // Limb animation
+            const walkSpeed = isVisible ? 0.002 : 0.015;
+            surgeon.children[2].rotation.x = Math.sin(Date.now() * walkSpeed) * 0.3;
+            surgeon.children[3].rotation.x = -Math.sin(Date.now() * walkSpeed) * 0.3;
+        }
+
+        // --- 4. RENDER PIPELINE ---
+        function mainLoop() {
+            requestAnimationFrame(mainLoop);
+            const delta = clock.getDelta();
+
+            if (ENGINE.controls.moving) {
+                camera.position.z += ENGINE.controls.vector.z;
+                camera.position.x += ENGINE.controls.vector.x;
+                
+                // Camera Bob
+                camera.position.y = 1.6 + Math.sin(Date.now() * 0.008) * 0.06;
+                // Subtle Tilt
+                camera.rotation.z = Math.sin(Date.now() * 0.004) * 0.01;
+            }
+
+            // Object Impermanence: Shifting the Corridor
+            ENGINE.assets.segments.forEach((seg, idx) => {
+                const sDist = Math.abs(camera.position.z - seg.position.z);
+                if (sDist > ENGINE.settings.viewDistance) {
+                    seg.visible = false;
+                } else {
+                    seg.visible = true;
+                    // Randomly shift wall positions of unseen segments
+                    if (sDist > 40 && Math.random() > 0.999) {
+                        seg.children[1].position.x += (Math.random() - 0.5) * 0.1;
                     }
                 }
             });
-        }
-
-        // --- 6. ANIMATION LOOP ---
-        function animate() {
-            requestAnimationFrame(animate);
-            const delta = clock.getDelta();
-
-            if (state.moving) {
-                camera.position.z += state.moveVec.z;
-                camera.position.x += state.moveVec.x;
-
-                // Vertical floor detection
-                const currentFloor = (camera.position.z < -2000) ? 7.6 : 1.6;
-                camera.position.y += (currentFloor - camera.position.y) * 0.1;
-
-                // Head Bob
-                camera.position.y += Math.sin(Date.now() * 0.01) * 0.04;
-            }
 
             // Flashlight Flicker
-            if (Math.random() > 0.98) {
-                flashlight.intensity = 40 + Math.random() * 60;
+            if (Math.random() > 0.985) {
+                flashlight.intensity = 20 + Math.random() * 120;
             }
 
-            processImpermanence();
-
-            // Limb Animation for Surgeon
-            const t = Date.now() * 0.006;
-            surgeon.children[4].rotation.x = Math.sin(t) * 0.5; // L-Leg
-            surgeon.children[5].rotation.x = -Math.sin(t) * 0.5; // R-Leg
-            surgeon.children[2].rotation.x = -Math.sin(t) * 0.2; // Arms
-            surgeon.children[3].rotation.x = Math.sin(t) * 0.2;
+            updateSurgeon(delta);
+            updateAudioSpatial();
 
             renderer.render(scene, camera);
         }
 
-        // Handle Resizing
+        // --- 5. EVENT HANDLERS ---
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        // Prevention of context menu for mobile
+        window.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); return false; };
+
     </script>
 </body>
 </html>
