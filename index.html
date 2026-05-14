@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BLACKWOOD: THE SURGEON'S REACH - V10.0</title>
+    <title>BLACKWOOD: THE SURGEON'S REACH - ULTRA VISIBILITY</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 
     <style>
         :root { 
-            --lunar: #b0c4de;
-            --blood: #800000;
-            --void: #020202;
+            --lunar-glow: #ceddf2;
+            --emergency-red: #ff1100;
+            --ui-white: rgba(200, 220, 255, 0.8);
         }
         
         * { 
@@ -22,170 +22,166 @@
 
         body, html { 
             width: 100%; height: 100%; background: #000; 
-            overflow: hidden; font-family: 'Courier New', Courier, monospace; 
+            overflow: hidden; font-family: 'Courier New', monospace; 
         }
 
-        /* --- PRE-FLIGHT INTERFACE --- */
+        /* --- ADVANCED LOADING UI --- */
         #boot-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--void); display: flex; justify-content: center; align-items: center;
-            z-index: 10000; transition: opacity 3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: radial-gradient(circle, #050508 0%, #000 100%);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10000; transition: opacity 2s ease-in-out;
         }
 
-        #boot-content { width: 80%; max-width: 500px; text-align: center; }
+        #boot-inner { width: 85%; max-width: 450px; text-align: center; }
 
-        .title-card { 
-            color: var(--blood); letter-spacing: 12px; 
-            font-size: 1rem; margin-bottom: 50px; 
-            text-transform: uppercase; animation: pulse 4s infinite;
+        .loader-title { 
+            color: var(--lunar-glow); letter-spacing: 14px; 
+            font-size: 0.9rem; margin-bottom: 40px; 
+            text-transform: uppercase; animation: flicker 5s infinite;
         }
 
-        #load-bar-container { width: 100%; height: 1px; background: #111; margin-bottom: 20px; }
-        #load-bar-progress { width: 0%; height: 100%; background: var(--lunar); box-shadow: 0 0 10px var(--lunar); }
+        #progress-rail { width: 100%; height: 2px; background: #111; margin-bottom: 15px; overflow: hidden; }
+        #progress-bar { width: 0%; height: 100%; background: var(--lunar-glow); box-shadow: 0 0 15px var(--lunar-glow); }
 
-        .sub-text { color: #333; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 5px; }
+        .status-msg { color: #445; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 4px; }
 
-        /* --- INPUT TOPOGRAPHY --- */
-        #ui-overlay { 
+        /* --- INTERFACE TOPOGRAPHY --- */
+        #game-ui { 
             position: absolute; top: 0; left: 0; 
             width: 100%; height: 100%; pointer-events: none; 
-            display: none; z-index: 50;
+            display: none; z-index: 100;
         }
 
-        #vignette-effect { 
+        #vignette { 
             position: absolute; width: 100%; height: 100%; 
-            background: radial-gradient(circle, transparent 10%, rgba(0,0,0,0.95) 100%);
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.85) 100%);
         }
 
-        /* Movement Side (Left) */
-        #move-zone {
-            position: absolute; top: 0; left: 0; width: 50%; height: 100%;
-            pointer-events: auto;
+        /* INPUT ZONES */
+        #left-control { position: absolute; left: 0; top: 0; width: 50%; height: 100%; pointer-events: auto; }
+        #right-control { position: absolute; right: 0; top: 0; width: 50%; height: 100%; pointer-events: auto; }
+
+        #joy-base {
+            position: absolute; bottom: 80px; left: 60px;
+            width: 100px; height: 100px;
+            border: 1px solid rgba(206, 221, 242, 0.1); border-radius: 50%;
         }
 
-        /* Camera Side (Right) */
-        #look-zone {
-            position: absolute; top: 0; right: 0; width: 50%; height: 100%;
-            pointer-events: auto;
-        }
-
-        #joystick-container {
-            position: absolute; bottom: 60px; left: 60px;
-            width: 120px; height: 120px;
-            border: 1px solid rgba(255,255,255,0.05); border-radius: 50%;
-        }
-
-        #joystick-knob {
-            position: absolute; top: 40px; left: 40px; width: 40px; height: 40px;
-            background: rgba(176, 196, 222, 0.1); border: 1px solid var(--lunar);
+        #joy-knob {
+            position: absolute; top: 35px; left: 35px; width: 30px; height: 30px;
+            background: rgba(206, 221, 242, 0.05); border: 1px solid var(--lunar-glow);
             border-radius: 50%;
         }
 
-        #noise-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://media.giphy.com/media/oEI9uWUicT3K8/giphy.gif');
-            opacity: 0.04; pointer-events: none; z-index: 5;
+        #hud-data {
+            position: absolute; bottom: 20px; right: 20px;
+            color: var(--ui-white); font-size: 0.6rem; opacity: 0.4;
+            text-align: right; line-height: 1.4;
         }
 
-        @keyframes pulse { 0%, 100% { opacity: 0.1; } 50% { opacity: 1; } }
+        #film-grain {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://media.giphy.com/media/oEI9uWUicT3K8/giphy.gif');
+            opacity: 0.03; pointer-events: none; z-index: 50;
+        }
+
+        @keyframes flicker { 0%, 100% { opacity: 0.4; } 5% { opacity: 1; } 10% { opacity: 0.4; } }
     </style>
 </head>
 <body>
 
-    <div id="noise-layer"></div>
+    <div id="film-grain"></div>
 
     <div id="boot-screen">
-        <div id="boot-content">
-            <h1 class="title-card">Neural Link Established</h1>
-            <div id="load-bar-container"><div id="load-bar-progress"></div></div>
-            <p class="sub-text" id="load-status">Calibrating Vestibular Sense...</p>
+        <div id="boot-inner">
+            <h1 class="loader-title">Visibility Initialized</h1>
+            <div id="progress-rail"><div id="progress-bar"></div></div>
+            <p class="status-msg" id="load-label">Synchronizing Rod Cells...</p>
         </div>
     </div>
 
-    <div id="ui-overlay">
-        <div id="vignette-effect"></div>
-        <div id="move-zone">
-            <div id="joystick-container">
-                <div id="joystick-knob"></div>
-            </div>
+    <div id="game-ui">
+        <div id="vignette"></div>
+        <div id="left-control">
+            <div id="joy-base"><div id="joy-knob"></div></div>
         </div>
-        <div id="look-zone"></div>
+        <div id="right-control"></div>
+        <div id="hud-data">
+            AUTO_EXPOSURE: ON<br>
+            LUNAR_SYNC: 100%<br>
+            <span id="pos-display">Z: 0000</span>
+        </div>
     </div>
 
-    <audio id="track-amb" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
-    <audio id="track-step" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
-    <audio id="track-breath" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
+    <audio id="sfx-amb" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
+    <audio id="sfx-step" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
+    <audio id="sfx-breath" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
 
     <script>
         /**
-         * BLACKWOOD CORE ENGINE V10.0
-         * "Weight & Vision" Update
+         * BLACKWOOD ENGINE v11.5 - THE BRIGHTNESS UPDATE
+         * Features: Night-Vision Adaptation, Volumetric Moonbeams, Heavy Motion.
          */
 
-        const SYSTEM = {
-            isReady: false,
-            isActive: false,
-            moveSpeed: 0.08, // Significantly slowed down from Flash speeds
-            rotateSpeed: 0.004,
-            sanity: 1.0,
-            controls: {
-                moveVec: new THREE.Vector2(0, 0),
-                lookYaw: 0,
-                lookPitch: 0,
-                isMoving: false
-            },
-            world: {
+        const CONFIG = {
+            ready: false,
+            active: false,
+            speed: 0.07, // Slow, heavy movement
+            lookSensitivity: 0.0035,
+            exposureBase: 0.25,
+            objs: {
                 segments: [],
                 surgeon: null,
-                clock: new THREE.Clock()
+                lights: []
+            },
+            input: {
+                mVec: new THREE.Vector2(0, 0),
+                yaw: 0,
+                pitch: 0,
+                isMoving: false
             }
         };
 
-        let scene, camera, renderer, flashlight, moonAmbience, pointFill;
+        let scene, camera, renderer, clock, flashlight, ambient, skyLight;
         let sfx = {};
 
-        // --- 1. BOOT SEQUENCE ---
-        function runBootPipeline() {
-            const bar = document.getElementById('load-bar-progress');
-            const status = document.getElementById('load-status');
-            const log = [
-                "Damping motor functions...",
-                "Mapping peripheral rods...",
-                "Isolating auditory triggers...",
-                "Engaging dual-hemisphere controls...",
-                "Manifestation complete."
-            ];
-
+        // --- 1. BOOT PIPELINE ---
+        function runLoader() {
+            const bar = document.getElementById('progress-bar');
+            const label = document.getElementById('load-label');
+            const steps = ["Enhancing contrast...", "Mapping moonlight...", "Baking floor guides...", "Calibrating pupil dilation...", "Ready."];
+            
             let p = 0;
-            const step = () => {
-                p += Math.random() * 1.2;
+            const update = () => {
+                p += Math.random() * 1.4;
                 if (p >= 100) {
                     p = 100;
-                    SYSTEM.isReady = true;
-                    status.innerText = "LINK READY. TOUCH TO AWAKEN.";
-                    status.style.color = "#fff";
-                    initScene();
+                    CONFIG.ready = true;
+                    label.innerText = "TAP TO BEGIN";
+                    label.style.color = "#fff";
+                    initWorld();
                 } else {
                     bar.style.width = p + "%";
-                    if (Math.floor(p) % 20 === 0) status.innerText = log[Math.floor(p/20)];
-                    requestAnimationFrame(step);
+                    if (Math.floor(p) % 20 === 0) label.innerText = steps[Math.floor(p/20)];
+                    requestAnimationFrame(update);
                 }
             };
-            step();
+            update();
         }
 
         const wakeup = () => {
-            if (!SYSTEM.isReady || SYSTEM.isActive) return;
-            SYSTEM.isActive = true;
+            if (!CONFIG.ready || CONFIG.active) return;
+            CONFIG.active = true;
             document.getElementById('boot-screen').style.opacity = '0';
-            setTimeout(() => document.getElementById('boot-screen').style.display = 'none', 3000);
-            document.getElementById('ui-overlay').style.display = 'block';
+            setTimeout(() => document.getElementById('boot-screen').style.display = 'none', 2000);
+            document.getElementById('game-ui').style.display = 'block';
 
-            sfx.amb = document.getElementById('track-amb');
-            sfx.step = document.getElementById('track-step');
-            sfx.breath = document.getElementById('track-breath');
+            sfx.amb = document.getElementById('sfx-amb');
+            sfx.step = document.getElementById('sfx-step');
+            sfx.breath = document.getElementById('sfx-breath');
             
-            sfx.amb.volume = 0.25;
+            sfx.amb.volume = 0.3;
             sfx.step.volume = 0;
             sfx.breath.volume = 0;
             
@@ -194,229 +190,221 @@
 
         window.addEventListener('mousedown', wakeup);
         window.addEventListener('touchstart', wakeup);
-        window.onload = runBootPipeline;
+        window.onload = runLoader;
 
-        // --- 2. ENVIRONMENT CONSTRUCT ---
-        function initScene() {
+        // --- 2. THE VISIBILITY ENGINE ---
+        function initWorld() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x020205, 0.07);
+            // Fog color is lighter to show silhouettes
+            scene.fog = new THREE.FogExp2(0x0a0c14, 0.06);
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1200);
-            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1500);
+            clock = new THREE.Clock();
+
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             document.body.appendChild(renderer.domElement);
 
-            // Peripheral Visibility Logic:
-            // Moonlight Baseline - Ensures the world isn't pitch black outside the beam
-            moonAmbience = new THREE.AmbientLight(0x1a2333, 0.2); 
-            scene.add(moonAmbience);
+            // AUTO-EXPOSURE: High baseline ambient light
+            ambient = new THREE.AmbientLight(0x2a3a5a, CONFIG.exposureBase); 
+            scene.add(ambient);
 
-            const sky = new THREE.HemisphereLight(0x223344, 0x000000, 0.25);
-            scene.add(sky);
+            skyLight = new THREE.HemisphereLight(0x445577, 0x050505, 0.3);
+            scene.add(skyLight);
 
-            // Primary Flashlight Driver
-            flashlight = new THREE.SpotLight(0xfff9e0, 180);
-            flashlight.angle = Math.PI / 7.5;
-            flashlight.penumbra = 0.4;
+            // PRIMARY FLASHLIGHT (Focused)
+            flashlight = new THREE.SpotLight(0xfffaeb, 200);
+            flashlight.angle = Math.PI / 8;
+            flashlight.penumbra = 0.5;
             flashlight.decay = 2.0;
-            flashlight.distance = 85;
+            flashlight.distance = 90;
             camera.add(flashlight);
             flashlight.position.set(0, 0, 0.1);
             flashlight.target.position.set(0, 0, -5);
             camera.add(flashlight.target);
 
-            // Local Bounce (Soft light at player feet)
-            pointFill = new THREE.PointLight(0x334466, 0.15, 8);
-            camera.add(pointFill);
-
             scene.add(camera);
 
-            generateInfiniteWard();
-            spawnSurgeon();
-            initInputSystems();
+            buildEnvironment();
+            createSurgeon();
+            setupControls();
             mainLoop();
         }
 
-        function generateInfiniteWard() {
-            const wallMat = new THREE.MeshLambertMaterial({ color: 0x121212 });
+        function buildEnvironment() {
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0x181a20 });
             const floorMat = new THREE.MeshLambertMaterial({ color: 0x080808 });
-            const ceilMat = new THREE.MeshLambertMaterial({ color: 0x020202 });
+            const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x020202, transparent: true, opacity: 0.8 });
+            const guideMat = new THREE.MeshBasicMaterial({ color: 0x440000 });
 
-            for (let i = 0; i < 400; i++) {
+            for (let i = 0; i < 450; i++) {
                 const seg = new THREE.Group();
                 const z = -i * 12;
 
+                // FLOOR
                 const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), floorMat);
                 floor.rotation.x = -Math.PI / 2;
                 seg.add(floor);
 
-                const ceil = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), ceilMat);
+                // EMERGENCY FLOOR GUIDE (Red strips to help see the floor)
+                const guide = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 12), guideMat);
+                guide.rotation.x = -Math.PI / 2;
+                guide.position.set(-5.8, 0.01, 0);
+                seg.add(guide);
+
+                // CEILING GRATE (Lets in sky light)
+                const ceil = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), ceilingMat);
                 ceil.rotation.x = Math.PI / 2;
                 ceil.position.y = 6.5;
                 seg.add(ceil);
 
-                const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.5, 12), wallMat);
-                lWall.position.set(-6, 3.25, 0);
-                seg.add(lWall);
+                // WALLS
+                const lW = new THREE.Mesh(new THREE.BoxGeometry(0.4, 6.5, 12), wallMat);
+                lW.position.set(-6, 3.25, 0);
+                seg.add(lW);
 
-                const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.5, 12), wallMat);
-                rWall.position.set(6, 3.25, 0);
-                seg.add(rWall);
+                const rW = new THREE.Mesh(new THREE.BoxGeometry(0.4, 6.5, 12), wallMat);
+                rW.position.set(6, 3.25, 0);
+                seg.add(rW);
 
-                // Occasional High Windows for Moonbeams
-                if (i % 8 === 0) {
-                    const moonBeam = new THREE.PointLight(0x1a2a44, 4, 15);
-                    moonBeam.position.set(Math.random() > 0.5 ? -5 : 5, 5.5, 0);
-                    seg.add(moonBeam);
+                // MOONLIGHT BEAMS (Constant light source)
+                if (i % 5 === 0) {
+                    const p = new THREE.PointLight(0x2a3a5a, 6, 18);
+                    p.position.set(0, 6, 0);
+                    seg.add(p);
                 }
 
                 seg.position.z = z;
                 scene.add(seg);
-                SYSTEM.world.segments.push(seg);
+                CONFIG.objs.segments.push(seg);
             }
         }
 
-        function spawnSurgeon() {
-            SYSTEM.world.surgeon = new THREE.Group();
-            const dark = new THREE.MeshLambertMaterial({ color: 0x0a0a0a });
+        function createSurgeon() {
+            CONFIG.objs.surgeon = new THREE.Group();
+            const mat = new THREE.MeshLambertMaterial({ color: 0x050505 });
             
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.8, 0.45), dark);
-            body.position.y = 0.9;
-            
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.4), new THREE.MeshLambertMaterial({color: 0x000}));
-            head.position.y = 2.1;
+            const b = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.8, 0.4), mat);
+            b.position.y = 0.9;
+            const h = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.45, 0.4), mat);
+            h.position.y = 2.1;
 
-            SYSTEM.world.surgeon.add(body, head);
-            SYSTEM.world.surgeon.position.set(0, 0, -45);
-            scene.add(SYSTEM.world.surgeon);
+            CONFIG.objs.surgeon.add(b, h);
+            CONFIG.objs.surgeon.position.set(0, 0, -45);
+            scene.add(CONFIG.objs.surgeon);
         }
 
-        // --- 3. DUAL-SCREEN CONTROL SYSTEM ---
-        function initInputSystems() {
-            const mZone = document.getElementById('move-zone');
-            const lZone = document.getElementById('look-zone');
-            const knob = document.getElementById('joystick-knob');
+        // --- 3. INPUT ARCHITECTURE ---
+        function setupControls() {
+            const lZone = document.getElementById('left-control');
+            const rZone = document.getElementById('right-control');
+            const knob = document.getElementById('joy-knob');
             
-            let mCX, mCY;
-            let lastLookX = 0, lastLookY = 0;
+            let mCX, mCY, lastLX, lastLY;
 
-            // MOVE HANDLER (Left Side)
-            mZone.addEventListener('touchstart', (e) => {
-                const r = mZone.getBoundingClientRect();
-                mCX = r.left + 60 + 60; // Offset for joystick container
-                mCY = r.top + (window.innerHeight - 120); 
+            // MOVEMENT (Left)
+            lZone.addEventListener('touchstart', (e) => {
                 const t = e.touches[0];
                 mCX = t.clientX; mCY = t.clientY;
             });
-
-            mZone.addEventListener('touchmove', (e) => {
+            lZone.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 const t = e.touches[0];
                 const dx = t.clientX - mCX, dy = t.clientY - mCY;
-                const d = Math.min(Math.sqrt(dx*dx + dy*dy), 50);
+                const d = Math.min(Math.sqrt(dx*dx + dy*dy), 40);
                 const a = Math.atan2(dy, dx);
-
                 knob.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
-                SYSTEM.controls.moveVec.set(Math.cos(a) * (d/50), Math.sin(a) * (d/50));
-                SYSTEM.controls.isMoving = d > 5;
+                CONFIG.input.mVec.set(Math.cos(a)*(d/40), Math.sin(a)*(d/40));
+                CONFIG.input.isMoving = d > 5;
             }, { passive: false });
-
-            mZone.addEventListener('touchend', () => {
+            lZone.addEventListener('touchend', () => {
                 knob.style.transform = `translate(0,0)`;
-                SYSTEM.controls.isMoving = false;
-                SYSTEM.controls.moveVec.set(0, 0);
+                CONFIG.input.isMoving = false;
+                CONFIG.input.mVec.set(0,0);
             });
 
-            // LOOK HANDLER (Right Side)
-            lZone.addEventListener('touchstart', (e) => {
+            // CAMERA (Right)
+            rZone.addEventListener('touchstart', (e) => {
                 const t = e.touches[0];
-                lastLookX = t.clientX; lastLookY = t.clientY;
+                lastLX = t.clientX; lastLY = t.clientY;
             });
-
-            lZone.addEventListener('touchmove', (e) => {
+            rZone.addEventListener('touchmove', (e) => {
                 const t = e.touches[0];
-                const dx = t.clientX - lastLookX;
-                const dy = t.clientY - lastLookY;
-
-                SYSTEM.controls.lookYaw -= dx * SYSTEM.rotateSpeed;
-                SYSTEM.controls.lookPitch -= dy * SYSTEM.rotateSpeed;
-                SYSTEM.controls.lookPitch = Math.max(-Math.PI/3, Math.min(Math.PI/3, SYSTEM.controls.lookPitch));
-
-                lastLookX = t.clientX; lastLookY = t.clientY;
+                const dx = t.clientX - lastLX;
+                const dy = t.clientY - lastLY;
+                CONFIG.input.yaw -= dx * CONFIG.lookSensitivity;
+                CONFIG.input.pitch -= dy * CONFIG.lookSensitivity;
+                CONFIG.input.pitch = Math.max(-1.2, Math.min(1.2, CONFIG.input.pitch));
+                lastLX = t.clientX; lastLY = t.clientY;
             });
         }
 
-        // --- 4. PROCESSING & AUDIO ---
-        function updateSpatialLogic(delta) {
-            if (!SYSTEM.isActive) return;
+        // --- 4. PROCESSING LOGIC ---
+        function processGame(delta) {
+            if (!CONFIG.active) return;
 
-            const sPos = SYSTEM.world.surgeon.position;
-            const dist = camera.position.distanceTo(sPos);
+            const surg = CONFIG.objs.surgeon;
+            const dist = camera.position.distanceTo(surg.position);
 
-            // BREATHING INTENSITY: Exponential ramp
-            let breathAmt = 1.0 - (dist / 45);
-            breathAmt = Math.max(0, Math.min(breathAmt, 1));
-            sfx.breath.volume = Math.pow(breathAmt, 2.0) * 0.98;
+            // AUDIO SPATIALIZATION
+            let breath = 1.0 - (dist / 40);
+            breath = Math.max(0, Math.min(breath, 1));
+            sfx.breath.volume = Math.pow(breath, 2.0) * 0.95;
 
-            // FOOTSTEP SYNC
-            if (SYSTEM.controls.isMoving) {
-                sfx.step.volume = Math.min(sfx.step.volume + 0.05, 0.35);
+            if (CONFIG.input.isMoving) {
+                sfx.step.volume = Math.min(sfx.step.volume + 0.05, 0.4);
             } else {
                 sfx.step.volume = Math.max(sfx.step.volume - 0.05, 0);
             }
 
-            // SURGEON BEHAVIOR
-            const frustum = new THREE.Frustum();
-            frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
-            const seen = frustum.containsPoint(sPos);
+            // AUTO-EXPOSURE LOGIC: Brightens based on distance to Surgeon
+            // As he gets closer, the world gets darker (tunnels vision)
+            ambient.intensity = CONFIG.exposureBase + (dist * 0.005);
+            ambient.intensity = Math.min(ambient.intensity, 0.65);
+
+            // AI STALKING
+            const proj = new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+            const frustum = new THREE.Frustum().setFromProjectionMatrix(proj);
+            const seen = frustum.containsPoint(surg.position);
 
             if (!seen) {
-                sPos.z += delta * 11.5; // Stalks faster when not viewed
-                sPos.x = Math.sin(Date.now() * 0.001) * 3; 
+                surg.position.z += delta * 10.5; // Stalks when not viewed
+                surg.position.x = Math.sin(Date.now() * 0.001) * 2.5;
             } else {
-                sPos.z += delta * 0.45; // Frozen/Creeping
-                // Head Twitch
-                SYSTEM.world.surgeon.children[1].rotation.z = Math.sin(Date.now() * 0.05) * 0.05;
+                surg.position.z += delta * 0.35; // Creeps when watched
             }
 
-            // Persistence Loop
-            if (camera.position.z - sPos.z > 10) sPos.z = camera.position.z - 50;
+            // Boundary Reset
+            if (camera.position.z - surg.position.z > 12) surg.position.z = camera.position.z - 50;
+
+            document.getElementById('pos-display').innerText = `Z: ${Math.floor(Math.abs(camera.position.z))}`;
         }
 
-        // --- 5. CORE RENDER LOOP ---
+        // --- 5. RENDER LOOP ---
         function mainLoop() {
             requestAnimationFrame(mainLoop);
-            const delta = SYSTEM.world.clock.getDelta();
+            const delta = clock.getDelta();
 
-            if (SYSTEM.isActive) {
-                // Rotation
+            if (CONFIG.active) {
                 camera.rotation.order = "YXZ";
-                camera.rotation.y = SYSTEM.controls.lookYaw;
-                camera.rotation.x = SYSTEM.controls.lookPitch;
+                camera.rotation.y = CONFIG.input.yaw;
+                camera.rotation.x = CONFIG.input.pitch;
 
-                // Movement (Relative to Camera)
-                if (SYSTEM.controls.isMoving) {
-                    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-                    forward.y = 0; right.y = 0; forward.normalize(); right.normalize();
+                if (CONFIG.input.isMoving) {
+                    const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                    const rgt = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                    fwd.y = 0; rgt.y = 0; fwd.normalize(); rgt.normalize();
 
-                    camera.position.addScaledVector(forward, -SYSTEM.controls.moveVec.y * SYSTEM.moveSpeed);
-                    camera.position.addScaledVector(right, SYSTEM.controls.moveVec.x * SYSTEM.moveSpeed);
+                    camera.position.addScaledVector(fwd, -CONFIG.input.mVec.y * CONFIG.speed);
+                    camera.position.addScaledVector(rgt, CONFIG.input.mVec.x * CONFIG.speed);
                     
-                    // Heavy Head Bob
-                    camera.position.y = 1.6 + Math.sin(Date.now() * 0.006) * 0.04;
+                    camera.position.y = 1.6 + Math.sin(Date.now() * 0.006) * 0.05;
                 }
 
-                // Eye Adaptation Simulation
-                const distToSurg = camera.position.distanceTo(SYSTEM.world.surgeon.position);
-                moonAmbience.intensity = 0.15 + (Math.sin(Date.now() * 0.0001) * 0.05);
-
-                // Flicker
-                if (Math.random() > 0.99) flashlight.intensity = 30 + Math.random()*150;
-
-                updateSpatialLogic(delta);
+                if (Math.random() > 0.99) flashlight.intensity = 50 + Math.random()*150;
+                
+                processGame(delta);
             }
 
             renderer.render(scene, camera);
