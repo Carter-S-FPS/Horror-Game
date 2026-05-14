@@ -3,33 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Blackwood Asylum - Reality Dissolved</title>
-    <link rel="stylesheet" href="style.css">
+    <title>BLACKWOOD: THE SURGEON'S REACH</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+
+    <style>
+        :root { --horror-red: #660000; --deep-black: #050505; }
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body, html { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+
+        /* --- LOADING OVERLAY --- */
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; display: flex; justify-content: center; align-items: center;
+            z-index: 10000; transition: opacity 1.5s ease;
+        }
+        #load-wrap { width: 80%; text-align: center; }
+        h1 { color: var(--horror-red); letter-spacing: 10px; font-size: 1.2rem; margin-bottom: 30px; animation: breathe 4s infinite; }
+        #bar-bg { width: 100%; height: 2px; background: #111; border: 1px solid #222; margin-bottom: 15px; position: relative; }
+        #bar-fill { width: 0%; height: 100%; background: var(--horror-red); box-shadow: 0 0 15px red; transition: width 0.1s; }
+        #status-text { color: #444; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* --- UI CONTROLS --- */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
+        #vignette { position: absolute; width: 100%; height: 100%; box-shadow: inset 0 0 150px rgba(0,0,0,0.9); }
+        
+        #joystick-zone {
+            position: absolute; bottom: 40px; left: 40px;
+            width: 140px; height: 140px; pointer-events: auto;
+        }
+        #joy-base { width: 100%; height: 100%; border: 2px solid rgba(255,255,255,0.05); border-radius: 50%; background: rgba(255,255,255,0.02); }
+        #joy-stick { 
+            position: absolute; top: 45px; left: 45px; width: 50px; height: 50px; 
+            background: rgba(100,0,0,0.3); border-radius: 50%; border: 1px solid rgba(255,0,0,0.2); 
+        }
+
+        @keyframes breathe { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    </style>
 </head>
 <body>
 
-    <div id="loading-screen">
-        <div id="loading-content">
-            <h1 id="title">BLACKWOOD ASYLUM</h1>
-            <div id="progress-container">
-                <div id="progress-bar"></div>
-            </div>
-            <p id="loading-text">RECONSTRUCTING REALITY... 0%</p>
+    <div id="overlay">
+        <div id="load-wrap">
+            <h1 id="main-title">REALITY INITIALIZING</h1>
+            <div id="bar-bg"><div id="bar-fill"></div></div>
+            <p id="status-text">DECODING ASYLUM DATA...</p>
         </div>
     </div>
 
-    <div id="mobile-controls" style="display: none;">
-        <div id="joystick-base">
-            <div id="joystick-stick"></div>
+    <div id="ui-layer">
+        <div id="vignette"></div>
+        <div id="joystick-zone">
+            <div id="joy-base"><div id="joy-stick"></div></div>
         </div>
     </div>
 
-    <audio id="bg-music" loop preload="auto"><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
-    <audio id="footstep-audio" loop preload="auto"><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
+    <audio id="ambience" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
 
-    <script type="importmap">
-        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    <script>
+        /**
+         * BLACKWOOD ENGINE v3.0 - MOBILE OPTIMIZED
+         * Unified Single-File Architecture
+         **/
+
+        // Global State
+        const state = {
+            loaded: false,
+            started: false,
+            moving: false,
+            moveVec: { x: 0, z: 0 },
+            progress: 0,
+            floorY: 1.6,
+            segments: [],
+            rooms: []
+        };
+
+        const clock = new THREE.Clock();
+        let scene, camera, renderer, surgeon, flashlight, scanner;
+
+        // --- 1. LOADING LOGIC ---
+        function performLoading() {
+            const bar = document.getElementById('bar-fill');
+            const text = document.getElementById('status-text');
+            const title = document.getElementById('main-title');
+
+            const loadLoop = setInterval(() => {
+                state.progress += Math.random() * 0.9;
+                if (state.progress >= 100) {
+                    state.progress = 100;
+                    clearInterval(loadLoop);
+                    state.loaded = true;
+                    title.innerText = "READY FOR SURGERY";
+                    text.innerText = "TAP SCREEN TO AWAKEN";
+                    text.style.color = "#ff0000";
+                    initCore(); // Setup 3D in background
+                }
+                bar.style.width = state.progress + "%";
+            }, 40);
+        }
+
+        // Handle User Interaction
+        const beginExperience = () => {
+            if (!state.loaded || state.started) return;
+            state.started = true;
+            document.getElementById('overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('overlay').style.display = 'none', 1500);
+            document.getElementById('ui-layer').style.display = 'block';
+            document.getElementById('ambience').play().catch(()=>{});
+        };
+
+        window.addEventListener('touchstart', beginExperience);
+        window.addEventListener('mousedown', beginExperience);
+        window.onload = performLoading;
+
+        // --- 2. 3D CORE ---
+        function initCore() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.14);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.body.appendChild(renderer.domElement);
+
+            // Lighting
+            flashlight = new THREE.SpotLight(0xffffff, 100);
+            flashlight.angle = Math.PI / 8;
+            flashlight.penumbra = 0.3;
+            flashlight.decay = 2;
+            flashlight.distance = 40;
+            camera.add(flashlight);
+            flashlight.position.set(0, 0, 0.5);
+            flashlight.target.position.set(0, 0, -5);
+            camera.add(flashlight.target);
+            scene.add(camera);
+
+            const ambient = new THREE.AmbientLight(0x404040, 0.05);
+            scene.add(ambient);
+
+            buildAsylum();
+            spawnSurgeon();
+            initJoystick();
+            animate();
+        }
+
+        // --- 3. ARCHITECTURE ---
+        function buildAsylum() {
+            const wallTex = new THREE.MeshLambertMaterial({ color: 0x151515 });
+            const floorTex = new THREE.MeshLambertMaterial({ color: 0x080808 });
+
+            // Create 4000 units of shifting space
+            for (let i = 0; i < 400; i++) {
+                const segment = new THREE.Group();
+                const zPos = -i * 10;
+
+                // Floors (Ground & Story 2)
+                for(let f=0; f<2; f++) {
+                    const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorTex);
+                    floor.rotation.x = -Math.PI / 2;
+                    floor.position.y = f * 6;
+                    segment.add(floor);
+
+                    // Walls
+                    const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 10), wallTex);
+                    lWall.position.set(-5, 3 + (f*6), 0);
+                    segment.add(lWall);
+
+                    const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 10), wallTex);
+                    rWall.position.set(5, 3 + (f*6), 0);
+                    segment.add(rWall);
+                }
+
+                // Procedural Rooms (Randomly spawn off the hallway)
+                if (Math.random() > 0.92 && i > 5) {
+                    const room = new THREE.Mesh(new THREE.BoxGeometry(15, 6, 15), wallTex);
+                    room.position.set(Math.random() > 0.5 ? 12 : -12, 3, 0);
+                    segment.add(room);
+                }
+
+                // Stairs
+                if (i % 80 === 0 && i !== 0) {
+                    for(let s=0; s<12; s++) {
+                        const step = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 1), wallTex);
+                        step.position.set(0, s*0.5, -s);
+                        segment.add(step);
+                    }
+                }
+
+                segment.position.z = zPos;
+                scene.add(segment);
+                state.segments.push(segment);
+            }
+        }
+
+        function spawnSurgeon() {
+            surgeon = new THREE.Group();
+            const mat = new THREE.MeshLambertMaterial({ color: 0x2b332b });
+            
+            // Surgeon anatomy (The requested 35x35x35 block scale)
+            const bodyParts = [
+                new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), new THREE.MeshLambertMaterial({color: 0x000})), // Head
+                new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.8, 0.3), mat), // Torso
+                new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), mat), // L-Arm
+                new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), mat), // R-Arm
+                new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), mat), // L-Leg
+                new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), mat)  // R-Leg
+            ];
+
+            bodyParts[0].position.y = 1.6;
+            bodyParts[1].position.y = 1.0;
+            bodyParts[2].position.set(-0.3, 1.1, 0);
+            bodyParts[3].position.set(0.3, 1.1, 0);
+            bodyParts[4].position.set(-0.15, 0.35, 0);
+            bodyParts[5].position.set(0.15, 0.35, 0);
+
+            surgeon.add(...bodyParts);
+            surgeon.position.set(0, 0, -30);
+            scene.add(surgeon);
+        }
+
+        // --- 4. INPUT & MOTION ---
+        function initJoystick() {
+            const zone = document.getElementById('joystick-zone');
+            const stick = document.getElementById('joy-stick');
+            let rect, centerX, centerY;
+
+            const handleMove = (e) => {
+                const touch = e.touches ? e.touches[0] : e;
+                const dx = touch.clientX - centerX;
+                const dy = touch.clientY - centerY;
+                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 50);
+                const angle = Math.atan2(dy, dx);
+
+                stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
+                
+                state.moveVec.z = -Math.sin(angle) * (dist/50) * 0.26;
+                state.moveVec.x = Math.cos(angle) * (dist/50) * 0.26;
+                state.moving = dist > 10;
+            };
+
+            zone.addEventListener('touchstart', (e) => {
+                rect = zone.getBoundingClientRect();
+                centerX = rect.left + rect.width/2;
+                centerY = rect.top + rect.height/2;
+            });
+
+            zone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                handleMove(e);
+            }, { passive: false });
+
+            window.addEventListener('touchend', () => {
+                stick.style.transform = `translate(0,0)`;
+                state.moving = false;
+                state.moveVec = { x: 0, z: 0 };
+            });
+        }
+
+        // --- 5. PERCEPTION & IMPERMANENCE ---
+        const frustum = new THREE.Frustum();
+        const projMatrix = new THREE.Matrix4();
+
+        function processImpermanence() {
+            projMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+            frustum.setFromProjectionMatrix(projMatrix);
+
+            // Surgeon Logic: Object Impermanence
+            const isVisible = frustum.containsPoint(surgeon.position);
+            
+            if (!isVisible) {
+                // He moves 3x faster when you aren't looking
+                surgeon.position.z += 0.12; 
+                
+                // Story shifting: If he's far enough away, he can swap floors
+                if (Math.random() > 0.995) {
+                    surgeon.position.y = (surgeon.position.y < 3) ? 6 : 0;
+                }
+            } else {
+                // He creeps slowly while seen
+                surgeon.position.z += 0.02;
+                
+                // Head tilt logic
+                surgeon.children[0].rotation.y = Math.sin(Date.now() * 0.002) * 0.3;
+            }
+
+            // Hallway Warping
+            state.segments.forEach(seg => {
+                const dist = Math.abs(camera.position.z - seg.position.z);
+                if (!frustum.containsPoint(seg.position) && dist > 40) {
+                    // Unseen segments randomly compress or expand
+                    if (Math.random() > 0.998) {
+                        seg.scale.x = (Math.random() > 0.5) ? 0.7 : 1.1;
+                    }
+                }
+            });
+        }
+
+        // --- 6. ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            if (state.moving) {
+                camera.position.z += state.moveVec.z;
+                camera.position.x += state.moveVec.x;
+
+                // Vertical floor detection
+                const currentFloor = (camera.position.z < -2000) ? 7.6 : 1.6;
+                camera.position.y += (currentFloor - camera.position.y) * 0.1;
+
+                // Head Bob
+                camera.position.y += Math.sin(Date.now() * 0.01) * 0.04;
+            }
+
+            // Flashlight Flicker
+            if (Math.random() > 0.98) {
+                flashlight.intensity = 40 + Math.random() * 60;
+            }
+
+            processImpermanence();
+
+            // Limb Animation for Surgeon
+            const t = Date.now() * 0.006;
+            surgeon.children[4].rotation.x = Math.sin(t) * 0.5; // L-Leg
+            surgeon.children[5].rotation.x = -Math.sin(t) * 0.5; // R-Leg
+            surgeon.children[2].rotation.x = -Math.sin(t) * 0.2; // Arms
+            surgeon.children[3].rotation.x = Math.sin(t) * 0.2;
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle Resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
-    <script type="module" src="game.js"></script>
 </body>
 </html>
