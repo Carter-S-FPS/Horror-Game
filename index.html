@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BLACKWOOD: LUNAR REACH v8.0</title>
+    <title>BLACKWOOD: THE SURGEON'S REACH - V10.0</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 
     <style>
         :root { 
-            --lunar-blue: #aaccff;
-            --horror-red: #bb0000; 
-            --ui-font: 'Courier New', monospace;
+            --lunar: #b0c4de;
+            --blood: #800000;
+            --void: #020202;
         }
         
         * { 
@@ -22,370 +22,402 @@
 
         body, html { 
             width: 100%; height: 100%; background: #000; 
-            overflow: hidden; font-family: var(--ui-font); 
+            overflow: hidden; font-family: 'Courier New', Courier, monospace; 
         }
 
-        /* --- LOADING INTERFACE --- */
-        #overlay {
+        /* --- PRE-FLIGHT INTERFACE --- */
+        #boot-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: flex; justify-content: center; align-items: center;
-            z-index: 10000; transition: opacity 3s ease;
+            background: var(--void); display: flex; justify-content: center; align-items: center;
+            z-index: 10000; transition: opacity 3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #load-wrap { width: 80%; max-width: 500px; text-align: center; }
+        #boot-content { width: 80%; max-width: 500px; text-align: center; }
 
-        .glitch-text { 
-            color: var(--lunar-blue); letter-spacing: 10px; 
-            font-size: 1.2rem; margin-bottom: 30px; 
-            text-shadow: 2px 0 #f00, -2px 0 #00f;
-            animation: glitch 2s infinite;
+        .title-card { 
+            color: var(--blood); letter-spacing: 12px; 
+            font-size: 1rem; margin-bottom: 50px; 
+            text-transform: uppercase; animation: pulse 4s infinite;
         }
 
-        #bar-bg { width: 100%; height: 1px; background: #222; margin-bottom: 15px; }
-        #bar-fill { width: 0%; height: 100%; background: var(--lunar-blue); box-shadow: 0 0 15px var(--lunar-blue); }
+        #load-bar-container { width: 100%; height: 1px; background: #111; margin-bottom: 20px; }
+        #load-bar-progress { width: 0%; height: 100%; background: var(--lunar); box-shadow: 0 0 10px var(--lunar); }
 
-        #status-txt { color: #555; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 3px; }
+        .sub-text { color: #333; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 5px; }
 
-        /* --- HUD & VISUALS --- */
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
-        #vignette { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.85) 100%); z-index: 2; }
-        
-        #hud-top {
-            position: absolute; top: 20px; width: 100%; text-align: center;
-            color: var(--lunar-blue); font-size: 0.6rem; opacity: 0.4; letter-spacing: 5px;
+        /* --- INPUT TOPOGRAPHY --- */
+        #ui-overlay { 
+            position: absolute; top: 0; left: 0; 
+            width: 100%; height: 100%; pointer-events: none; 
+            display: none; z-index: 50;
         }
 
-        /* --- CONTROLS --- */
-        #joystick-zone {
-            position: absolute; bottom: 50px; left: 50px;
-            width: 140px; height: 140px; pointer-events: auto; z-index: 10;
+        #vignette-effect { 
+            position: absolute; width: 100%; height: 100%; 
+            background: radial-gradient(circle, transparent 10%, rgba(0,0,0,0.95) 100%);
         }
-        #joy-base { width: 100%; height: 100%; border: 1px solid rgba(170, 204, 255, 0.1); border-radius: 50%; }
-        #joy-stick { position: absolute; top: 45px; left: 45px; width: 50px; height: 50px; background: rgba(170, 204, 255, 0.05); border-radius: 50%; border: 1px solid var(--lunar-blue); }
 
-        #noise-floor {
+        /* Movement Side (Left) */
+        #move-zone {
+            position: absolute; top: 0; left: 0; width: 50%; height: 100%;
+            pointer-events: auto;
+        }
+
+        /* Camera Side (Right) */
+        #look-zone {
+            position: absolute; top: 0; right: 0; width: 50%; height: 100%;
+            pointer-events: auto;
+        }
+
+        #joystick-container {
+            position: absolute; bottom: 60px; left: 60px;
+            width: 120px; height: 120px;
+            border: 1px solid rgba(255,255,255,0.05); border-radius: 50%;
+        }
+
+        #joystick-knob {
+            position: absolute; top: 40px; left: 40px; width: 40px; height: 40px;
+            background: rgba(176, 196, 222, 0.1); border: 1px solid var(--lunar);
+            border-radius: 50%;
+        }
+
+        #noise-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: url('https://media.giphy.com/media/oEI9uWUicT3K8/giphy.gif');
-            opacity: 0.03; pointer-events: none; z-index: 5;
+            opacity: 0.04; pointer-events: none; z-index: 5;
         }
 
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            100% { transform: translate(0); }
-        }
+        @keyframes pulse { 0%, 100% { opacity: 0.1; } 50% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div id="noise-floor"></div>
+    <div id="noise-layer"></div>
 
-    <div id="overlay">
-        <div id="load-wrap">
-            <h1 class="glitch-text">LUNAR PROTOCOL</h1>
-            <div id="bar-bg"><div id="bar-fill"></div></div>
-            <p id="status-txt">Calibrating Night Vision...</p>
+    <div id="boot-screen">
+        <div id="boot-content">
+            <h1 class="title-card">Neural Link Established</h1>
+            <div id="load-bar-container"><div id="load-bar-progress"></div></div>
+            <p class="sub-text" id="load-status">Calibrating Vestibular Sense...</p>
         </div>
     </div>
 
-    <div id="ui-layer">
-        <div id="vignette"></div>
-        <div id="hud-top">MOONLIGHT_SYNC // SECTOR_8</div>
-        <div id="joystick-zone">
-            <div id="joy-base"><div id="joy-stick"></div></div>
+    <div id="ui-overlay">
+        <div id="vignette-effect"></div>
+        <div id="move-zone">
+            <div id="joystick-container">
+                <div id="joystick-knob"></div>
+            </div>
         </div>
+        <div id="look-zone"></div>
     </div>
 
-    <audio id="amb" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
-    <audio id="step" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
-    <audio id="breath" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
+    <audio id="track-amb" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
+    <audio id="track-step" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
+    <audio id="track-breath" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
 
     <script>
         /**
-         * BLACKWOOD ENGINE v8.0 - MOONLIGHT & SPATIAL AUDIO
-         * Optimized for High Visibility and Extreme Proximity Scaling
+         * BLACKWOOD CORE ENGINE V10.0
+         * "Weight & Vision" Update
          */
 
-        const CORE = {
-            loaded: false,
-            active: false,
-            camHeight: 1.6,
-            depth: 0,
+        const SYSTEM = {
+            isReady: false,
+            isActive: false,
+            moveSpeed: 0.08, // Significantly slowed down from Flash speeds
+            rotateSpeed: 0.004,
             sanity: 1.0,
-            exposure: 1.0,
-            move: { x: 0, z: 0, active: false },
-            objs: { segments: [], moonbeams: [], lights: [] }
+            controls: {
+                moveVec: new THREE.Vector2(0, 0),
+                lookYaw: 0,
+                lookPitch: 0,
+                isMoving: false
+            },
+            world: {
+                segments: [],
+                surgeon: null,
+                clock: new THREE.Clock()
+            }
         };
 
-        let scene, camera, renderer, clock, surgeon, flashlight, moonLight, bounceLight;
-        let sfxAmb, sfxStep, sfxBreath;
+        let scene, camera, renderer, flashlight, moonAmbience, pointFill;
+        let sfx = {};
 
-        // --- 1. BOOT LOGIC ---
-        function runLoader() {
-            const bar = document.getElementById('bar-fill');
-            const txt = document.getElementById('status-txt');
-            const phases = ["Gathering starlight...", "Piercing the void...", "Mapping the Surgeon's path...", "Finalizing exposure..."];
+        // --- 1. BOOT SEQUENCE ---
+        function runBootPipeline() {
+            const bar = document.getElementById('load-bar-progress');
+            const status = document.getElementById('load-status');
+            const log = [
+                "Damping motor functions...",
+                "Mapping peripheral rods...",
+                "Isolating auditory triggers...",
+                "Engaging dual-hemisphere controls...",
+                "Manifestation complete."
+            ];
+
             let p = 0;
-            const t = setInterval(() => {
-                p += Math.random() * 1.5;
+            const step = () => {
+                p += Math.random() * 1.2;
                 if (p >= 100) {
                     p = 100;
-                    clearInterval(t);
-                    CORE.loaded = true;
-                    txt.innerText = "SENSORS READY. TAP TO AWAKEN.";
-                    txt.style.color = "#fff";
-                    initEngine();
+                    SYSTEM.isReady = true;
+                    status.innerText = "LINK READY. TOUCH TO AWAKEN.";
+                    status.style.color = "#fff";
+                    initScene();
+                } else {
+                    bar.style.width = p + "%";
+                    if (Math.floor(p) % 20 === 0) status.innerText = log[Math.floor(p/20)];
+                    requestAnimationFrame(step);
                 }
-                bar.style.width = p + "%";
-                txt.innerText = phases[Math.floor(p/25)];
-            }, 40);
+            };
+            step();
         }
 
-        const start = () => {
-            if (!CORE.loaded || CORE.active) return;
-            CORE.active = true;
-            document.getElementById('overlay').style.opacity = '0';
-            setTimeout(() => document.getElementById('overlay').style.display = 'none', 3000);
-            document.getElementById('ui-layer').style.display = 'block';
+        const wakeup = () => {
+            if (!SYSTEM.isReady || SYSTEM.isActive) return;
+            SYSTEM.isActive = true;
+            document.getElementById('boot-screen').style.opacity = '0';
+            setTimeout(() => document.getElementById('boot-screen').style.display = 'none', 3000);
+            document.getElementById('ui-overlay').style.display = 'block';
 
-            sfxAmb = document.getElementById('amb');
-            sfxStep = document.getElementById('step');
-            sfxBreath = document.getElementById('breath');
+            sfx.amb = document.getElementById('track-amb');
+            sfx.step = document.getElementById('track-step');
+            sfx.breath = document.getElementById('track-breath');
             
-            sfxAmb.volume = 0.3;
-            sfxStep.volume = 0;
-            sfxBreath.volume = 0;
+            sfx.amb.volume = 0.25;
+            sfx.step.volume = 0;
+            sfx.breath.volume = 0;
             
-            [sfxAmb, sfxStep, sfxBreath].forEach(a => a.play().catch(()=>{}));
+            [sfx.amb, sfx.step, sfx.breath].forEach(a => a.play().catch(()=>{}));
         };
 
-        window.addEventListener('mousedown', start);
-        window.addEventListener('touchstart', start);
-        window.onload = runLoader;
+        window.addEventListener('mousedown', wakeup);
+        window.addEventListener('touchstart', wakeup);
+        window.onload = runBootPipeline;
 
-        // --- 2. THE MOONLIGHT SYSTEM ---
-        function initEngine() {
+        // --- 2. ENVIRONMENT CONSTRUCT ---
+        function initScene() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x020408, 0.07);
+            scene.fog = new THREE.FogExp2(0x020205, 0.07);
 
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 1500);
-            clock = new THREE.Clock();
-
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1200);
+            
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             document.body.appendChild(renderer.domElement);
 
-            // GLOBAL AMBIENCE (The "Moonlight" baseline)
-            moonLight = new THREE.DirectionalLight(0xaaccff, 0.4);
-            moonLight.position.set(5, 10, 5);
-            scene.add(moonLight);
+            // Peripheral Visibility Logic:
+            // Moonlight Baseline - Ensures the world isn't pitch black outside the beam
+            moonAmbience = new THREE.AmbientLight(0x1a2333, 0.2); 
+            scene.add(moonAmbience);
 
-            const sky = new THREE.HemisphereLight(0x112244, 0x000000, 0.3);
+            const sky = new THREE.HemisphereLight(0x223344, 0x000000, 0.25);
             scene.add(sky);
 
-            // FLASHLIGHT (Player Light)
-            flashlight = new THREE.SpotLight(0xfff5e1, 140);
-            flashlight.angle = Math.PI / 8;
-            flashlight.penumbra = 0.6;
+            // Primary Flashlight Driver
+            flashlight = new THREE.SpotLight(0xfff9e0, 180);
+            flashlight.angle = Math.PI / 7.5;
+            flashlight.penumbra = 0.4;
             flashlight.decay = 2.0;
-            flashlight.distance = 70;
+            flashlight.distance = 85;
             camera.add(flashlight);
             flashlight.position.set(0, 0, 0.1);
             flashlight.target.position.set(0, 0, -5);
             camera.add(flashlight.target);
 
-            // BOUNCE LIGHT (Clears the pitch blackness around feet)
-            bounceLight = new THREE.PointLight(0xaaccff, 0.1, 10);
-            camera.add(bounceLight);
-            
+            // Local Bounce (Soft light at player feet)
+            pointFill = new THREE.PointLight(0x334466, 0.15, 8);
+            camera.add(pointFill);
+
             scene.add(camera);
 
-            generateWorld();
+            generateInfiniteWard();
             spawnSurgeon();
-            initControls();
-            animate();
+            initInputSystems();
+            mainLoop();
         }
 
-        function generateWorld() {
-            const wallMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-            const floorMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
-            const windowMat = new THREE.MeshBasicMaterial({ color: 0x224466 });
+        function generateInfiniteWard() {
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0x121212 });
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0x080808 });
+            const ceilMat = new THREE.MeshLambertMaterial({ color: 0x020202 });
 
-            for (let i = 0; i < 450; i++) {
-                const group = new THREE.Group();
+            for (let i = 0; i < 400; i++) {
+                const seg = new THREE.Group();
                 const z = -i * 12;
 
-                // Floor & Ceiling
-                const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 12), floorMat);
+                const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), floorMat);
                 floor.rotation.x = -Math.PI / 2;
-                group.add(floor);
+                seg.add(floor);
 
-                const ceil = new THREE.Mesh(new THREE.PlaneGeometry(10, 12), new THREE.MeshLambertMaterial({color: 0x020202}));
+                const ceil = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), ceilMat);
                 ceil.rotation.x = Math.PI / 2;
-                ceil.position.y = 6;
-                group.add(ceil);
+                ceil.position.y = 6.5;
+                seg.add(ceil);
 
-                // Walls
-                const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 12), wallMat);
-                lWall.position.set(-5, 3, 0);
-                group.add(lWall);
+                const lWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.5, 12), wallMat);
+                lWall.position.set(-6, 3.25, 0);
+                seg.add(lWall);
 
-                const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6, 12), wallMat);
-                rWall.position.set(5, 3, 0);
-                group.add(rWall);
+                const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.5, 12), wallMat);
+                rWall.position.set(6, 3.25, 0);
+                seg.add(rWall);
 
-                // HIGH MOONLIGHT WINDOWS (The source of visibility)
-                if (i % 6 === 0) {
-                    const win = new THREE.Mesh(new THREE.PlaneGeometry(2, 1), windowMat);
-                    win.position.set(-4.74, 5, 0);
-                    win.rotation.y = Math.PI / 2;
-                    group.add(win);
-
-                    // Cast a blue beam on the floor
-                    const beam = new THREE.Mesh(
-                        new THREE.PlaneGeometry(4, 8),
-                        new THREE.MeshBasicMaterial({ color: 0x112233, transparent: true, opacity: 0.15 })
-                    );
-                    beam.rotation.x = -Math.PI / 2;
-                    beam.position.set(0, 0.01, 0);
-                    group.add(beam);
-
-                    const winGlow = new THREE.PointLight(0x446688, 5, 12);
-                    winGlow.position.set(-4, 5, 0);
-                    group.add(winGlow);
+                // Occasional High Windows for Moonbeams
+                if (i % 8 === 0) {
+                    const moonBeam = new THREE.PointLight(0x1a2a44, 4, 15);
+                    moonBeam.position.set(Math.random() > 0.5 ? -5 : 5, 5.5, 0);
+                    seg.add(moonBeam);
                 }
 
-                group.position.z = z;
-                scene.add(group);
-                CORE.objs.segments.push(group);
+                seg.position.z = z;
+                scene.add(seg);
+                SYSTEM.world.segments.push(seg);
             }
         }
 
         function spawnSurgeon() {
-            surgeon = new THREE.Group();
-            const dark = new THREE.MeshLambertMaterial({ color: 0x080808 });
+            SYSTEM.world.surgeon = new THREE.Group();
+            const dark = new THREE.MeshLambertMaterial({ color: 0x0a0a0a });
             
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.7, 0.4), dark);
-            body.position.y = 0.85;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.8, 0.45), dark);
+            body.position.y = 0.9;
             
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.45, 0.35), new THREE.MeshLambertMaterial({color:0x000}));
-            head.position.y = 1.95;
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.4), new THREE.MeshLambertMaterial({color: 0x000}));
+            head.position.y = 2.1;
 
-            surgeon.add(body, head);
-            surgeon.position.set(0, 0, -45);
-            scene.add(surgeon);
+            SYSTEM.world.surgeon.add(body, head);
+            SYSTEM.world.surgeon.position.set(0, 0, -45);
+            scene.add(SYSTEM.world.surgeon);
         }
 
-        // --- 3. MOVEMENT & INTERACTION ---
-        function initControls() {
-            const zone = document.getElementById('joystick-zone');
-            const stick = document.getElementById('joy-stick');
-            let cx, cy;
+        // --- 3. DUAL-SCREEN CONTROL SYSTEM ---
+        function initInputSystems() {
+            const mZone = document.getElementById('move-zone');
+            const lZone = document.getElementById('look-zone');
+            const knob = document.getElementById('joystick-knob');
+            
+            let mCX, mCY;
+            let lastLookX = 0, lastLookY = 0;
 
-            const move = (e) => {
-                const t = e.touches ? e.touches[0] : e;
-                const dx = t.clientX - cx, dy = t.clientY - cy;
+            // MOVE HANDLER (Left Side)
+            mZone.addEventListener('touchstart', (e) => {
+                const r = mZone.getBoundingClientRect();
+                mCX = r.left + 60 + 60; // Offset for joystick container
+                mCY = r.top + (window.innerHeight - 120); 
+                const t = e.touches[0];
+                mCX = t.clientX; mCY = t.clientY;
+            });
+
+            mZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const t = e.touches[0];
+                const dx = t.clientX - mCX, dy = t.clientY - mCY;
                 const d = Math.min(Math.sqrt(dx*dx + dy*dy), 50);
                 const a = Math.atan2(dy, dx);
 
-                stick.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
-                CORE.move.z = Math.sin(a) * (d/50) * 0.35;
-                CORE.move.x = -Math.cos(a) * (d/50) * 0.35;
-                CORE.move.active = d > 5;
-            };
+                knob.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
+                SYSTEM.controls.moveVec.set(Math.cos(a) * (d/50), Math.sin(a) * (d/50));
+                SYSTEM.controls.isMoving = d > 5;
+            }, { passive: false });
 
-            zone.addEventListener('touchstart', (e) => {
-                const r = zone.getBoundingClientRect();
-                cx = r.left + r.width/2; cy = r.top + r.height/2;
+            mZone.addEventListener('touchend', () => {
+                knob.style.transform = `translate(0,0)`;
+                SYSTEM.controls.isMoving = false;
+                SYSTEM.controls.moveVec.set(0, 0);
             });
-            zone.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); }, { passive: false });
-            window.addEventListener('touchend', () => {
-                stick.style.transform = `translate(0,0)`;
-                CORE.move.active = false;
-                CORE.move.z = 0; CORE.move.x = 0;
+
+            // LOOK HANDLER (Right Side)
+            lZone.addEventListener('touchstart', (e) => {
+                const t = e.touches[0];
+                lastLookX = t.clientX; lastLookY = t.clientY;
+            });
+
+            lZone.addEventListener('touchmove', (e) => {
+                const t = e.touches[0];
+                const dx = t.clientX - lastLookX;
+                const dy = t.clientY - lastLookY;
+
+                SYSTEM.controls.lookYaw -= dx * SYSTEM.rotateSpeed;
+                SYSTEM.controls.lookPitch -= dy * SYSTEM.rotateSpeed;
+                SYSTEM.controls.lookPitch = Math.max(-Math.PI/3, Math.min(Math.PI/3, SYSTEM.controls.lookPitch));
+
+                lastLookX = t.clientX; lastLookY = t.clientY;
             });
         }
 
-        function handleSpatialAudio() {
-            if (!CORE.active) return;
-            const dist = camera.position.distanceTo(surgeon.position);
-            
-            // BREATHING: Loudness increases exponentially as Surgeon gets closer
-            let breathAmt = 1.0 - (dist / 45); 
+        // --- 4. PROCESSING & AUDIO ---
+        function updateSpatialLogic(delta) {
+            if (!SYSTEM.isActive) return;
+
+            const sPos = SYSTEM.world.surgeon.position;
+            const dist = camera.position.distanceTo(sPos);
+
+            // BREATHING INTENSITY: Exponential ramp
+            let breathAmt = 1.0 - (dist / 45);
             breathAmt = Math.max(0, Math.min(breathAmt, 1));
-            sfxBreath.volume = Math.pow(breathAmt, 1.8) * 0.95;
+            sfx.breath.volume = Math.pow(breathAmt, 2.0) * 0.98;
 
-            // FOOTSTEPS: Sync with motion
-            if (CORE.move.active) {
-                sfxStep.volume = Math.min(sfxStep.volume + 0.05, 0.4);
+            // FOOTSTEP SYNC
+            if (SYSTEM.controls.isMoving) {
+                sfx.step.volume = Math.min(sfx.step.volume + 0.05, 0.35);
             } else {
-                sfxStep.volume = Math.max(sfxStep.volume - 0.05, 0);
+                sfx.step.volume = Math.max(sfx.step.volume - 0.05, 0);
             }
 
-            // AUTO-EXPOSURE: If it's too dark, the "pupils" dilate
-            if (dist > 30) {
-                moonLight.intensity = Math.min(moonLight.intensity + 0.001, 0.6);
-            } else {
-                // If Surgeon is close, vision "tightens" with fear
-                moonLight.intensity = Math.max(moonLight.intensity - 0.01, 0.2);
-            }
-        }
-
-        function updateSurgeon(delta) {
-            const camZ = camera.position.z;
-            const surgZ = surgeon.position.z;
-            
-            // Look Check
+            // SURGEON BEHAVIOR
             const frustum = new THREE.Frustum();
             frustum.setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
-            const seen = frustum.containsPoint(surgeon.position);
+            const seen = frustum.containsPoint(sPos);
 
             if (!seen) {
-                // He moves extremely fast when not watched
-                surgeon.position.z += delta * 12.0; 
-                surgeon.position.x = Math.sin(Date.now() * 0.001) * 2; // Swerve in shadows
+                sPos.z += delta * 11.5; // Stalks faster when not viewed
+                sPos.x = Math.sin(Date.now() * 0.001) * 3; 
             } else {
-                // He freezes or creeps when seen
-                surgeon.position.z += delta * 0.4;
-                // Head jitter
-                surgeon.children[1].position.x = Math.sin(Date.now() * 0.08) * 0.02;
+                sPos.z += delta * 0.45; // Frozen/Creeping
+                // Head Twitch
+                SYSTEM.world.surgeon.children[1].rotation.z = Math.sin(Date.now() * 0.05) * 0.05;
             }
 
             // Persistence Loop
-            if (camZ - surgZ > 15) {
-                surgeon.position.z = camZ - 55; // Teleport ahead
-            }
+            if (camera.position.z - sPos.z > 10) sPos.z = camera.position.z - 50;
         }
 
-        // --- 4. RENDER LOOP ---
-        function animate() {
-            requestAnimationFrame(animate);
-            const delta = clock.getDelta();
+        // --- 5. CORE RENDER LOOP ---
+        function mainLoop() {
+            requestAnimationFrame(mainLoop);
+            const delta = SYSTEM.world.clock.getDelta();
 
-            if (CORE.move.active) {
-                camera.position.z += CORE.move.z;
-                camera.position.x += CORE.move.x;
-                // Bobbing
-                camera.position.y = CORE.camHeight + Math.sin(Date.now() * 0.01) * 0.06;
+            if (SYSTEM.isActive) {
+                // Rotation
+                camera.rotation.order = "YXZ";
+                camera.rotation.y = SYSTEM.controls.lookYaw;
+                camera.rotation.x = SYSTEM.controls.lookPitch;
+
+                // Movement (Relative to Camera)
+                if (SYSTEM.controls.isMoving) {
+                    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                    forward.y = 0; right.y = 0; forward.normalize(); right.normalize();
+
+                    camera.position.addScaledVector(forward, -SYSTEM.controls.moveVec.y * SYSTEM.moveSpeed);
+                    camera.position.addScaledVector(right, SYSTEM.controls.moveVec.x * SYSTEM.moveSpeed);
+                    
+                    // Heavy Head Bob
+                    camera.position.y = 1.6 + Math.sin(Date.now() * 0.006) * 0.04;
+                }
+
+                // Eye Adaptation Simulation
+                const distToSurg = camera.position.distanceTo(SYSTEM.world.surgeon.position);
+                moonAmbience.intensity = 0.15 + (Math.sin(Date.now() * 0.0001) * 0.05);
+
+                // Flicker
+                if (Math.random() > 0.99) flashlight.intensity = 30 + Math.random()*150;
+
+                updateSpatialLogic(delta);
             }
-
-            // Flashlight Flicker
-            if (Math.random() > 0.985) {
-                flashlight.intensity = 40 + Math.random() * 120;
-            }
-
-            // Geometry Culling (Keep performance high)
-            CORE.objs.segments.forEach(s => {
-                const d = camera.position.z - s.position.z;
-                s.visible = (d > -120 && d < 20);
-            });
-
-            updateSurgeon(delta);
-            handleSpatialAudio();
 
             renderer.render(scene, camera);
         }
