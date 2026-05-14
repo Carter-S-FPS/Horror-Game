@@ -1,9 +1,8 @@
-/* Core Reset */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    touch-action: none; /* Prevents mobile zoom/scroll interference */
+    touch-action: none;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
 }
@@ -14,7 +13,7 @@ body {
     font-family: 'Courier New', monospace;
 }
 
-/* Home Screen Layer */
+/* Ensure the Menu is on top of everything */
 #ui { 
     position: fixed; 
     top: 0; left: 0; 
@@ -22,50 +21,50 @@ body {
     display: flex; flex-direction: column;
     justify-content: center; align-items: center;
     background: #000;
-    z-index: 9999; /* Higher than the 3D Canvas */
+    z-index: 9999; 
 }
 
 h1 {
-    color: #500;
-    font-size: 2.5rem;
-    margin-bottom: 30px;
-    letter-spacing: 5px;
+    color: #600;
+    font-size: 2.2rem;
+    margin-bottom: 40px;
+    letter-spacing: 4px;
     text-align: center;
 }
 
 #play-btn {
-    padding: 25px 50px;
-    background: #111;
+    padding: 20px 45px;
+    background: #0a0a0a;
     color: #f00;
-    border: 3px solid #800;
-    font-size: 1.5rem;
+    border: 2px solid #600;
+    font-size: 1.4rem;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 0 15px #500;
+    box-shadow: 0 0 15px #400;
 }
 
-/* Mobile Joystick Layer */
+/* Joystick Layer */
 #mobile-controls {
     position: absolute;
-    bottom: 40px;
-    left: 40px;
-    width: 120px;
-    height: 120px;
-    z-index: 500; /* Above the game, below the menu */
+    bottom: 50px;
+    left: 50px;
+    width: 130px;
+    height: 130px;
+    z-index: 500;
     display: none;
 }
 
 #joystick-base {
     width: 100%; height: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
 }
 
 #joystick-stick {
-    width: 50px; height: 50px;
-    background: rgba(136, 0, 0, 0.5);
+    width: 55px; height: 55px;
+    background: rgba(100, 0, 0, 0.4);
     border-radius: 50%;
     position: absolute;
-    top: 35px; left: 35px;
+    top: 37.5px; left: 37.5px;
 }
