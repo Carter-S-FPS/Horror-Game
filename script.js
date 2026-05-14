@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 
+// DOM Elements
 const progressBar = document.getElementById('progress-bar');
 const loadingText = document.getElementById('loading-text');
 const loadingScreen = document.getElementById('loading-screen');
@@ -7,119 +8,171 @@ const controls = document.getElementById('mobile-controls');
 const bgMusic = document.getElementById('bg-music');
 const footstepAudio = document.getElementById('footstep-audio');
 
-let scene, camera, renderer, surgeon;
+// Game Variables
+let scene, camera, renderer, surgeon, flashlight;
 let moveForward = 0, moveRight = 0, isWalking = false;
+let segments = [];
 let isLoaded = false;
+const frustum = new THREE.Frustum();
+const projScreenMatrix = new THREE.Matrix4();
 
-// --- SMOOTH LOADING LOGIC ---
-let currentProgress = 0;
-function fakeLoad() {
-    // Increment by very small amounts for smoothness
-    let increment = Math.random() * 0.5; 
-    currentProgress += increment;
-
-    if (currentProgress >= 100) {
-        currentProgress = 100;
+// --- SMOOTH SLOW LOAD ENGINE ---
+let progress = 0;
+function smoothLoad() {
+    progress += Math.random() * 0.35; // Slow crawl for stability
+    if (progress >= 100) {
+        progress = 100;
         progressBar.style.width = '100%';
-        loadingText.innerText = "READY. TAP SCREEN.";
+        loadingText.innerText = "TAP TO ENTER THE VOID";
         loadingText.style.color = "#ff0000";
         isLoaded = true;
-        initGame(); // Build 3D in background
+        initGame(); // Pre-build map in background
     } else {
-        progressBar.style.width = currentProgress + '%';
-        loadingText.innerText = "LOADING ASSETS... " + Math.floor(currentProgress) + "%";
-        requestAnimationFrame(fakeLoad);
+        progressBar.style.width = progress + '%';
+        loadingText.innerText = "STABILIZING DIMENSIONS... " + Math.floor(progress) + "%";
+        requestAnimationFrame(smoothLoad);
     }
 }
-// Start the smooth crawl
-fakeLoad();
+smoothLoad();
 
-// Start game on first touch after 100%
-const startPlay = () => {
+// Start game on first mobile touch
+const handleEntry = () => {
     if (!isLoaded) return;
-    
-    loadingScreen.style.display = 'none';
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => loadingScreen.style.display = 'none', 500);
     controls.style.display = 'block';
-
-    bgMusic.play();
-    // Prime footsteps
-    footstepAudio.play().then(() => footstepAudio.pause());
     
-    window.removeEventListener('touchstart', startPlay);
+    bgMusic.play();
+    footstepAudio.play().then(() => footstepAudio.pause());
+    window.removeEventListener('touchstart', handleEntry);
 };
-window.addEventListener('touchstart', startPlay);
+window.addEventListener('touchstart', handleEntry);
 
 function initGame() {
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x000000, 0.15);
+    scene.fog = new THREE.FogExp2(0x000000, 0.12);
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1500);
     renderer = new THREE.WebGLRenderer({ antialias: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     document.body.appendChild(renderer.domElement);
 
-    const light = new THREE.SpotLight(0xffffff, 60);
-    camera.add(light);
-    light.position.set(0,0,1);
-    light.target = camera;
+    flashlight = new THREE.SpotLight(0xffffff, 80);
+    flashlight.angle = Math.PI / 7;
+    camera.add(flashlight);
+    flashlight.position.set(0, 0, 1);
+    flashlight.target = camera;
     scene.add(camera);
 
-    createMap();
+    create4000UnitMap();
     createSurgeon();
     setupJoystick();
     animate();
 }
 
+function create4000UnitMap() {
+    const wallMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+    const floorMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
+    
+    // 400 segments = 4000 units
+    for (let i = 0; i < 400; i++) {
+        const group = new THREE.Group();
+        const zPos = -i * 10;
+
+        // Ground Floor
+        const floor1 = new THREE.Mesh(new THREE.PlaneGeometry(8, 10), floorMat);
+        floor1.rotation.x = -Math.PI / 2;
+        group.add(floor1);
+
+        // Walls
+        const lW = new THREE.Mesh(new THREE.BoxGeometry(0.2, 12, 10), wallMat);
+        lW.position.set(-4, 6, 0);
+        group.add(lW);
+        const rW = new THREE.Mesh(new THREE.BoxGeometry(0.2, 12, 10), wallMat);
+        rW.position.set(4, 6, 0);
+        group.add(rW);
+
+        // Second Story Floor
+        const floor2 = new THREE.Mesh(new THREE.PlaneGeometry(8, 10), floorMat);
+        floor2.rotation.x = -Math.PI / 2;
+        floor2.position.y = 5.5;
+        group.add(floor2);
+
+        // Ceiling
+        const ceil = new THREE.Mesh(new THREE.PlaneGeometry(8, 10), floorMat);
+        ceil.rotation.x = Math.PI / 2;
+        ceil.position.y = 11;
+        group.add(ceil);
+
+        // Occasional Stairs (Object Impermanence: only some segments get them)
+        if (i % 100 === 0 && i !== 0) {
+            for(let s=0; s<11; s++){
+                const step = new THREE.Mesh(new THREE.BoxGeometry(8, 0.5, 1), wallMat);
+                step.position.set(0, s*0.5, -s);
+                group.add(step);
+            }
+        }
+
+        group.position.z = zPos;
+        scene.add(group);
+        segments.push(group);
+    }
+}
+
 function createSurgeon() {
     surgeon = new THREE.Group();
-    const mat = new THREE.MeshLambertMaterial({ color: 0x3d443d });
-    const s = 0.35; // 35x35x35 blocks
-
+    const mat = new THREE.MeshLambertMaterial({ color: 0x223322 });
+    const s = 0.35; 
     const head = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), new THREE.MeshLambertMaterial({color: 0x000}));
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(s, s*1.5, s), mat);
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(s, s*1.6, s), mat);
     const lLeg = new THREE.Mesh(new THREE.BoxGeometry(s/2, s, s/2), mat);
     const rLeg = new THREE.Mesh(new THREE.BoxGeometry(s/2, s, s/2), mat);
-
     head.position.y = 0.8; torso.position.y = 0.4;
     lLeg.position.set(-0.1, 0, 0); rLeg.position.set(0.1, 0, 0);
-
     surgeon.add(head, torso, lLeg, rLeg);
-    surgeon.position.set(0, 0, -12);
+    surgeon.position.set(0, 0, -25);
     scene.add(surgeon);
 }
 
-function createMap() {
-    const wallMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-    for (let i = 0; i < 40; i++) {
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 10), new THREE.MeshLambertMaterial({color: 0x040404}));
-        floor.rotation.x = -Math.PI / 2; floor.position.z = -i * 10; scene.add(floor);
-        const lW = new THREE.Mesh(new THREE.BoxGeometry(0.1, 6, 10), wallMat);
-        lW.position.set(-3, 3, -i * 10); scene.add(lW);
-        const rW = new THREE.Mesh(new THREE.BoxGeometry(0.1, 6, 10), wallMat);
-        rW.position.set(3, 3, -i * 10); scene.add(rW);
+function handleImpermanence() {
+    projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    frustum.setFromProjectionMatrix(projScreenMatrix);
+
+    // Stalker Logic: If unseen, move closer and change height
+    if (!frustum.containsPoint(surgeon.position)) {
+        surgeon.position.z += 0.08; 
+        if(Math.random() > 0.99) surgeon.position.y = Math.random() * 6; // Story hopping
+    } else {
+        if(surgeon.position.y > 1 && surgeon.position.y < 4) surgeon.position.y = 0;
+        if(surgeon.position.y > 6) surgeon.position.y = 5.5;
     }
+
+    // Map Warping: Randomly narrow hallways behind player
+    segments.forEach(seg => {
+        if (!frustum.containsPoint(seg.position) && Math.abs(camera.position.z - seg.position.z) > 40) {
+            if (Math.random() > 0.998) seg.scale.x = (Math.random() > 0.5) ? 0.6 : 1.2;
+        }
+    });
 }
 
 function setupJoystick() {
     const base = document.getElementById('joystick-base');
     const stick = document.getElementById('joystick-stick');
     let active = false;
-
     const move = (e) => {
         if (!active) return;
         const t = e.touches[0];
         const r = base.getBoundingClientRect();
         const dx = t.clientX - (r.left + r.width/2);
         const dy = t.clientY - (r.top + r.height/2);
-        const d = Math.min(Math.sqrt(dx*dx + dy*dy), 40);
+        const d = Math.min(Math.sqrt(dx*dx + dy*dy), 45);
         const a = Math.atan2(dy, dx);
         stick.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
-        moveForward = -Math.sin(a) * (d/40) * 0.15;
-        moveRight = Math.cos(a) * (d/40) * 0.15;
-        isWalking = d > 5;
+        moveForward = -Math.sin(a) * (d/45) * 0.25;
+        moveRight = Math.cos(a) * (d/45) * 0.25;
+        isWalking = d > 8;
     };
-
     base.addEventListener('touchstart', (e) => { active = true; move(e); });
     window.addEventListener('touchend', () => {
         active = false; stick.style.transform = `translate(0,0)`;
@@ -133,14 +186,17 @@ function animate() {
     if (isWalking) {
         camera.position.z += moveForward;
         camera.position.x += moveRight;
-        camera.position.y = 1.6 + Math.sin(Date.now() * 0.01) * 0.05;
+        camera.position.y += Math.sin(Date.now() * 0.01) * 0.04;
         if (footstepAudio.paused) footstepAudio.play();
     } else {
         footstepAudio.pause();
     }
+
+    handleImpermanence();
+
     const t = Date.now() * 0.005;
-    surgeon.position.z += 0.006;
     surgeon.children[2].rotation.x = Math.sin(t) * 0.5;
     surgeon.children[3].rotation.x = -Math.sin(t) * 0.5;
+
     renderer.render(scene, camera);
 }
