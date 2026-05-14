@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Asylum 3D - Loading</title>
+    <title>Blackwood Asylum</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div id="loading-screen">
         <div id="loading-content">
-            <h1>ENTERING BLACKWOOD...</h1>
+            <h1>ENTERING BLACKWOOD</h1>
             <div id="progress-container">
                 <div id="progress-bar"></div>
             </div>
-            <p id="loading-text">0%</p>
+            <p id="loading-text">INITIALIZING...</p>
         </div>
     </div>
 
@@ -24,8 +23,8 @@
         </div>
     </div>
 
-    <audio id="bg-music" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
-    <audio id="footstep-audio" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
+    <audio id="bg-music" loop preload="auto"><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
+    <audio id="footstep-audio" loop preload="auto"><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
 
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
