@@ -9,24 +9,21 @@ body, html { width: 100%; height: 100%; background: #000; overflow: hidden; font
     background: #000; display: flex; justify-content: center; align-items: center;
     z-index: 10000; color: #800;
 }
-#loading-content { text-align: center; width: 70%; }
+#loading-content { text-align: center; width: 75%; }
 
-h1 { font-size: 1.5rem; letter-spacing: 4px; margin-bottom: 20px; animation: flicker 2s infinite; }
+h1 { font-size: 1.6rem; letter-spacing: 5px; margin-bottom: 25px; animation: flicker 3s infinite; }
 @keyframes flicker {
-    0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
-    20%, 24%, 55% { opacity: 0.3; }
+    0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; text-shadow: 0 0 10px #f00; }
+    20%, 24%, 55% { opacity: 0.2; text-shadow: none; }
 }
 
 #progress-container {
-    width: 100%; height: 6px; background: #111;
-    border: 1px solid #200; margin-bottom: 10px;
+    width: 100%; height: 4px; background: #111;
+    border: 1px solid #300; margin-bottom: 12px;
 }
-#progress-bar {
-    width: 0%; height: 100%; background: #b00;
-    box-shadow: 0 0 10px #f00;
-}
-#loading-text { color: #444; font-size: 0.9rem; letter-spacing: 2px; }
+#progress-bar { width: 0%; height: 100%; background: #900; box-shadow: 0 0 15px #f00; }
+#loading-text { color: #555; font-size: 0.8rem; letter-spacing: 2px; }
 
-#mobile-controls { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; z-index: 5000; }
+#mobile-controls { position: absolute; bottom: 50px; left: 50px; width: 130px; height: 130px; z-index: 5000; }
 #joystick-base { width: 100%; height: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; }
-#joystick-stick { width: 50px; height: 50px; background: rgba(150,0,0,0.3); border-radius: 50%; position: absolute; top: 35px; left: 35px; }
+#joystick-stick { width: 55px; height: 55px; background: rgba(120,0,0,0.4); border-radius: 50%; position: absolute; top: 37.5px; left: 37.5px; }
