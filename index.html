@@ -3,127 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SANITY_S_FRACTURE_V30</title>
+    <title>SANITY_S_FRACTURE_V1000</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         :root {
-            --glitch-teal: #00f2ff;
-            --horror-red: #990000;
-            --deep-void: #020204;
-            --terminal-text: #4a4a50;
-            --font-stack: 'Courier New', Courier, monospace;
+            --neon-blue: #00f2ff;
+            --blood-red: #8a0000;
+            --office-gray: #1a1a1c;
+            --interface-bg: #030305;
+            --font-main: 'Courier New', Courier, monospace;
         }
 
         * { 
             margin: 0; padding: 0; box-sizing: border-box; 
             touch-action: none; user-select: none; 
-            outline: none; -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body, html { 
             width: 100%; height: 100%; background: #000; 
-            overflow: hidden; font-family: var(--font-stack);
+            overflow: hidden; font-family: var(--font-main);
         }
 
-        /* --- FRACTURE OVERLAYS --- */
-        #sanity-static {
+        /* --- POST-PROCESSING & ATMOSPHERE --- */
+        #vhs-grain {
             position: fixed; inset: 0; pointer-events: none; z-index: 9000;
             background: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Can_not_be_displayed.png');
-            opacity: 0.04; mix-blend-mode: screen;
+            opacity: 0.03; mix-blend-mode: screen;
         }
 
-        #crt-scanlines {
+        #vignette-overlay {
             position: fixed; inset: 0; pointer-events: none; z-index: 9001;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%);
-            background-size: 100% 4px; opacity: 0.7;
+            background: radial-gradient(circle, transparent 15%, #000 160%);
         }
 
-        /* --- THE JUMPSCARE VOID --- */
-        #fracture-event {
-            position: fixed; inset: 0; z-index: 100000;
-            display: none; background: #000;
-            justify-content: center; align-items: center;
-        }
-
-        #fracture-img {
-            width: 200%; height: 200%; object-fit: cover;
-            filter: contrast(500%) brightness(20%) invert(1);
-            animation: insanity-shake 0.04s infinite;
-        }
-
-        @keyframes insanity-shake {
-            0% { transform: translate(15px, 10px) rotate(1deg); }
-            20% { transform: translate(-15px, -10px) rotate(-1deg); }
-            40% { transform: translate(10px, -15px) rotate(2deg); }
-            60% { transform: translate(-10px, 15px) rotate(-2deg); }
-            80% { transform: translate(20px, 5px) rotate(0deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-
-        /* --- BOOT SEQUENCE INTERFACE --- */
-        #terminal-overlay {
-            position: fixed; inset: 0; background: #000; z-index: 20000;
+        /* --- TERMINAL INTERFACE --- */
+        #boot-screen {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 4s ease-in-out;
+            transition: opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .terminal-shell {
-            width: 85%; max-width: 1400px; height: 80vh;
-            border: 1px solid #111; background: var(--deep-void);
-            padding: 70px; display: flex; flex-direction: column;
-            box-shadow: 0 0 100px #000;
+        .terminal-box {
+            width: 85%; max-width: 1200px; height: 75vh;
+            border: 1px solid #1a1a1a; background: var(--interface-bg);
+            padding: 50px; display: flex; flex-direction: column;
+            box-shadow: inset 0 0 100px #000;
         }
 
-        .shell-header {
-            color: var(--glitch-teal); font-size: 1.4rem; letter-spacing: 20px;
-            margin-bottom: 50px; border-bottom: 2px solid #1a1a1c; padding-bottom: 25px;
-            text-transform: uppercase; text-shadow: 0 0 10px var(--glitch-teal);
+        .header-text {
+            color: var(--neon-blue); font-size: 1.2rem; letter-spacing: 12px;
+            margin-bottom: 30px; border-bottom: 1px solid #111; padding-bottom: 20px;
         }
 
-        #load-rail {
-            width: 100%; height: 2px; background: #08080a; margin: 40px 0;
+        #load-bar-bg {
+            width: 100%; height: 1px; background: #0a0a0a; margin: 30px 0;
             position: relative;
         }
 
-        #load-fill {
-            width: 0%; height: 100%; background: var(--glitch-teal);
-            box-shadow: 0 0 40px var(--glitch-teal);
+        #load-bar-fill {
+            width: 0%; height: 100%; background: var(--neon-blue);
+            box-shadow: 0 0 20px var(--neon-blue);
         }
 
-        #shell-log {
-            flex-grow: 1; overflow: hidden; font-size: 0.85rem;
-            color: var(--terminal-text); line-height: 3; white-space: pre-wrap;
+        #boot-log {
+            flex-grow: 1; overflow: hidden; font-size: 0.7rem;
+            color: #333; line-height: 2.5; white-space: pre-wrap;
             display: flex; flex-direction: column-reverse;
         }
 
-        /* --- HUD ELEMENTS --- */
-        #game-ui {
+        /* --- CORE HUD --- */
+        #game-hud {
             position: absolute; inset: 0; pointer-events: none;
             display: none; z-index: 1000;
         }
 
-        #vignette {
-            position: absolute; inset: 0;
-            background: radial-gradient(circle, transparent 10%, #000 190%);
-            opacity: 1;
+        .readout-panel {
+            position: absolute; top: 60px; left: 60px;
+            font-size: 0.7rem; color: var(--neon-blue);
+            line-height: 3; letter-spacing: 5px;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
         }
 
-        .data-stream {
-            position: absolute; top: 100px; left: 100px;
-            font-size: 0.8rem; color: var(--glitch-teal);
-            line-height: 3.5; letter-spacing: 8px;
-            text-shadow: 0 0 12px rgba(0, 242, 255, 0.4);
-        }
-
-        #ward-announcement {
-            position: absolute; top: 44%; width: 100%; text-align: center;
-            color: #fff; font-size: 6rem; font-weight: 900; letter-spacing: 70px;
-            opacity: 0; transform: scale(0.5); transition: 4s cubic-bezier(0.1, 0.8, 0.2, 1);
-        }
-
-        /* --- CONTROL MAPPING --- */
+        /* --- INPUT ZONES --- */
         #zone-move {
-            position: absolute; left: 0; bottom: 0; width: 50%; height: 85%;
+            position: absolute; left: 0; bottom: 0; width: 50%; height: 100%;
             pointer-events: auto;
         }
 
@@ -132,516 +96,348 @@
             pointer-events: auto;
         }
 
-        #joystick-base {
-            position: absolute; width: 240px; height: 240px; border-radius: 50%;
-            background: rgba(0, 242, 255, 0.01); border: 2px solid rgba(0, 242, 255, 0.05);
-            display: none; transform: translate(-50%, -50%); backdrop-filter: blur(20px);
+        #joystick-outer {
+            position: absolute; width: 180px; height: 180px; border-radius: 50%;
+            background: rgba(0, 242, 255, 0.02); border: 1px solid rgba(0, 242, 255, 0.1);
+            display: none; transform: translate(-50%, -50%); backdrop-filter: blur(8px);
         }
 
-        #joystick-nub {
-            position: absolute; top: 85px; left: 85px; width: 70px; height: 70px;
-            background: var(--glitch-teal); border-radius: 50%; opacity: 0.25;
-            box-shadow: 0 0 60px var(--glitch-teal);
+        #joystick-inner {
+            position: absolute; top: 60px; left: 60px; width: 60px; height: 60px;
+            background: var(--neon-blue); border-radius: 50%; opacity: 0.3;
+        }
+
+        #death-screen {
+            position: fixed; inset: 0; z-index: 100000; background: #000;
+            display: none; justify-content: center; align-items: center;
+        }
+
+        #death-screen img {
+            width: 140%; height: 140%; object-fit: cover;
+            filter: contrast(400%) brightness(20%) grayscale(1);
+            animation: violent-glitch 0.05s infinite;
+        }
+
+        @keyframes violent-glitch {
+            0% { transform: translate(5px, 2px); }
+            50% { transform: translate(-5px, -2px); }
+            100% { transform: translate(2px, 5px); }
         }
     </style>
 </head>
 <body>
 
-    <div id="sanity-static"></div>
-    <div id="crt-scanlines"></div>
+    <div id="vhs-grain"></div>
+    <div id="vignette-overlay"></div>
 
-    <div id="fracture-event">
-        <img id="fracture-img" src="https://i.imgur.com/8N8H1yV.png" alt="SANITY_LOST">
-    </div>
+    <div id="death-screen"><img src="https://i.imgur.com/8N8H1yV.png"></div>
 
-    <div id="terminal-overlay">
-        <div class="terminal-shell">
-            <div class="shell-header">SANITY_S_FRACTURE_CORE</div>
-            <div id="load-rail"><div id="load-fill"></div></div>
-            <div id="shell-log"></div>
+    <div id="boot-screen">
+        <div class="terminal-box">
+            <div class="header-text">SANITY_S_FRACTURE_TITAN</div>
+            <div id="load-bar-bg"><div id="load-bar-fill"></div></div>
+            <div id="boot-log"></div>
         </div>
     </div>
 
-    <div id="game-ui">
-        <div id="vignette"></div>
-        <div class="data-stream">
-            GEO_BUFFER: 2000_SPAN_ALLOCATED<br>
-            CORRIDOR_SEAL: TOTAL_ENCAPSULATION<br>
-            ENTITY_LOGIC: QUANTUM_SCOUT_v30<br>
-            SANITY_LEVEL: <span id="sanity-ui">STABLE</span><br>
-            WARD_IDENT: <span id="ward-ui">01</span>
+    <div id="game-hud">
+        <div class="readout-panel">
+            SURGEON_RADIUS: 800_STUDS<br>
+            FLOOR_FINISH: CLEARCOAT_EPOXY<br>
+            CEILING_TYPE: ACOUSTIC_GRID<br>
+            THREAT_LEVEL: <span id="threat-stat">SECURE</span>
         </div>
-        <div id="ward-announcement">WARD 01</div>
-        <div id="zone-move"><div id="joystick-base"><div id="joystick-nub"></div></div></div>
+        <div id="zone-move"><div id="joystick-outer"><div id="joystick-inner"></div></div></div>
         <div id="zone-look"></div>
     </div>
 
-    <audio id="snd-ambience" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
-    <audio id="snd-steps" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
-    <audio id="snd-breathing" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
-    <audio id="snd-fracture"><source src="mixkit-female-scream-loud-and-scary-2208.wav" type="audio/wav"></audio>
-
     <script>
         /**
-         * SANITY'S FRACTURE - CORE ENGINE SCRIPT
+         * SANITY'S FRACTURE: TITAN CORE
          * ---------------------------------------------------------------------
-         * VERSION: 30.0.1 (EXPLICIT ARCHITECTURE)
-         * DEVELOPER: BLACKWOOD TITAN
-         * * LOGIC MODULES:
-         * 1. SPATIAL_BUFFER_INJECTION (2000 Units)
-         * 2. EXPLICIT_ANATOMY_MAPPING (The Surgeon)
-         * 3. FRUSTUM_GATED_SCOUT_AI
-         * 4. FRACTURE_SOUNDSCAPE_3D
-         * 5. NEURAL_INTERFACE_v30
-         * ---------------------------------------------------------------------
+         * This script executes a high-fidelity liminal office horror engine.
+         * Every geometric node is explicitly injected to ensure size and scale.
          */
 
-        const SYSTEM_CFG = {
-            VERSION: "30.0.1",
-            MAP_REACH: 2000,
-            UNIT_WIDTH: 22,
-            CEILING_HEIGHT: 16,
-            EYE_COORD: 1.85,
-            VOXEL_SCALE: 0.052,
-            LOCOMOTION_SPEED: 0.385,
-            LOOK_SENSITIVITY: 0.008,
-            SCOUT_SPEED_GATED: 0.02,
-            SCOUT_SPEED_ACTIVE: 1.45, // EXTREMELY FAST
-            SURGEON_SPEED: 0.28,
-            RENDER_LIMIT: 500,
-            SCARE_TRIGGER: 5.0,
-            FOG_DENSITY: 0.15
+        const CORE_PARAMS = {
+            MAP_SIZE: 4000,
+            HALL_W: 16,
+            HALL_H: 14,
+            CAMERA_Y: 1.7,
+            HUMAN_SCALE: 0.038, // Real human scale vs office walls
+            MOVE_SPEED: 0.38,
+            SENSITIVITY: 0.0075,
+            SURGEON_SPAWN: 800,
+            SCOUT_SPAWN: 600,
+            RENDER_DIST: 500
         };
 
-        const WORLD_STATE = {
-            booted: false,
-            active: false,
-            currentWard: 1,
-            isFracturing: false,
-            input: {
-                v: new THREE.Vector2(0, 0),
-                active: false,
-                yaw: 0,
-                pitch: 0,
-                origin: new THREE.Vector2(0, 0)
-            },
-            registry: {
-                collisionNodes: [],
-                entityNodes: [],
-                geometryNodes: []
-            }
+        const SESSION = {
+            ready: false, active: false,
+            input: { v: new THREE.Vector2(), active: false, yaw: 0, pitch: 0, anchor: new THREE.Vector2() },
+            registry: { walls: [], entities: [], reflections: [] }
         };
 
-        let scene, camera, renderer, torchLight, frustumCheck, projMat;
+        let scene, camera, renderer, torch, frustum, projMat;
 
-        // --- MODULE 1: EXPLICIT BOOT SEQUENCER ---
-        // Expanded to ensure 1250+ lines by detailing every initialization step.
-        function executeSystemBoot() {
-            const bar = document.getElementById('load-fill');
-            const log = document.getElementById('shell-log');
-            
-            const compilerLogs = [
-                "INITIALIZING_KERNEL: SANITY_S_FRACTURE_V30...",
-                "ALLOCATING_2000_UNIT_SPATIAL_MATRIX...",
-                "CONFIGURING_VOXEL_CLOUD: 60x60x60_LATTICE...",
-                "INJECTING_HALLWAY_GEOMETRY: SECTION_01_WEST...",
-                "INJECTING_HALLWAY_GEOMETRY: SECTION_01_NORTH...",
-                "INJECTING_HALLWAY_GEOMETRY: SECTION_01_SOUTH...",
-                "INJECTING_HALLWAY_GEOMETRY: SECTION_01_EAST...",
-                "SEALING_CEILING_BUFFER: ENCAPSULATION_LAYER...",
-                "MAPPING_ANATOMY: ID_01_THE_SURGEON...",
-                "VOXEL_INJECTION: HUMAN_BLOOD_TEXTURE_MAP...",
-                "VOXEL_INJECTION: CRANIUM_STRUCT_v9...",
-                "VOXEL_INJECTION: UPPER_TORSO_BUFF...",
-                "VOXEL_INJECTION: LOWER_TORSO_BUFF...",
-                "VOXEL_INJECTION: APPENDAGE_L_ARM...",
-                "VOXEL_INJECTION: APPENDAGE_R_ARM...",
-                "VOXEL_INJECTION: APPENDAGE_L_LEG...",
-                "VOXEL_INJECTION: APPENDAGE_R_LEG...",
-                "MAPPING_ANATOMY: ID_02_QUANTUM_SCOUT...",
-                "MAPPING_ANATOMY: ID_03_QUANTUM_SCOUT...",
-                "MAPPING_ANATOMY: ID_04_QUANTUM_SCOUT...",
-                "SYNCING_FRUSTUM_CULLING: OPTICS_MODULE_ACTIVE...",
-                "NEURAL_INPUT: TOUCH_ANCHOR_ESTABLISHED...",
-                "SOUNDSCAPE_SYNTH: SPATIAL_DREAD_LOADED...",
-                "WARD_01_PROXIMITY: DETECTED.",
-                "CORE_STABLE. READY_FOR_SYNC."
+        // --- MODULE 1: EXPLICIT BOOT LOADER ---
+        function runBoot() {
+            const fill = document.getElementById('load-bar-fill');
+            const log = document.getElementById('boot-log');
+            const startupTasks = [
+                "ALLOCATING_GEOMETRY_BUFFERS: 4000_STUDS...",
+                "INJECTING_EPOXY_PHYSICAL_MATERIAL...",
+                "COMPILING_ACOUSTIC_CEILING_TILES...",
+                "CALIBRATING_HUMAN_PROPORTIONS...",
+                "MAPPING_SURGEON_VOXEL_CLOUD...",
+                "SETTING_SURGEON_SPAWN_COORD: 800_STUDS...",
+                "SETTING_SCOUT_SPAWN_COORD: 600_STUDS...",
+                "SYNCHRONIZING_FRUSTUM_CULLING...",
+                "INITIALIZING_NEURAL_LINK...",
+                "SYSTEM_STABLE_V4.5.0"
             ];
 
-            let progress = 0;
-            const bootLoop = () => {
-                progress += Math.random() * 1.4;
-                if (progress >= 100) {
-                    progress = 100;
-                    WORLD_STATE.booted = true;
-                    log.innerHTML = "<span style='color:#fff; font-weight:bold;'>[KERNEL_LOADED] TOUCH TO SYNC NEURAL LINK</span><br>" + log.innerHTML;
-                    constructSanityVoid();
-                } else {
-                    bar.style.width = progress + "%";
-                    if (Math.floor(progress) % 5 === 0) {
-                        const logIdx = Math.floor(progress / 5);
-                        if (compilerLogs[logIdx]) log.innerHTML = `> ${compilerLogs[logIdx]}<br>${log.innerHTML}`;
-                    }
-                    requestAnimationFrame(bootLoop);
+            let p = 0;
+            const bootStep = () => {
+                p += Math.random() * 1.5;
+                fill.style.width = p + "%";
+                if (Math.floor(p) % 10 === 0) {
+                    const task = startupTasks[Math.floor(p / 10)];
+                    if (task) log.innerHTML = `> ${task}<br>${log.innerHTML}`;
                 }
+                if (p >= 100) {
+                    SESSION.ready = true;
+                    log.innerHTML = "<span style='color:#fff'>[SYNC_COMPLETE] TOUCH TO BEGIN</span><br>" + log.innerHTML;
+                    initUniverse();
+                } else requestAnimationFrame(bootStep);
             };
-            bootLoop();
+            bootStep();
         }
 
-        // --- MODULE 2: THE ANATOMY ARCHITECT ---
-        // Every entity is built using explicit voxel mapping to reach 1250 lines.
-        class FractureEntity {
-            constructor(type, ward) {
-                this.node = new THREE.Group();
-                this.type = type; // 'surgeon' or 'scout'
-                this.ward = ward;
-                this.lastDistance = 1000;
-                
-                // Color Synthesis for Sanity's Fracture
-                this.colorPalette = type === 'surgeon' 
-                    ? [0x5e0000, 0x8b0000, 0x1a0000, 0xddbbbb] 
-                    : [0x0a0a0a, 0x1a1a1a, 0x050505];
-
-                this.generateVoxelAnatomy();
+        // --- MODULE 2: EXPLICIT ANATOMY SYSTEM ---
+        class Hostile {
+            constructor(type, spawnDist) {
+                this.root = new THREE.Group();
+                this.type = type;
+                this.spawnDist = spawnDist;
+                this.matPool = type === 'surgeon' ? [0x440000, 0x1a0000] : [0x080808];
+                this.generateAnatomy();
+                this.placeInVoid();
             }
 
-            generateVoxelAnatomy() {
-                // EXPLICIT VOXEL COMPONENT: HEAD
-                this.injectVoxelPart(28, 28, 28, 0, 88, 0);
-                // EXPLICIT VOXEL COMPONENT: UPPER_TORSO
-                this.injectVoxelPart(42, 25, 32, 0, 55, 0);
-                // EXPLICIT VOXEL COMPONENT: LOWER_TORSO
-                this.injectVoxelPart(38, 25, 30, 0, 30, 0);
-                // EXPLICIT VOXEL COMPONENT: L_SHOULDER
-                this.injectVoxelPart(15, 15, 15, -45, 55, 0);
-                // EXPLICIT VOXEL COMPONENT: R_SHOULDER
-                this.injectVoxelPart(15, 15, 15, 45, 55, 0);
-                // EXPLICIT VOXEL COMPONENT: L_ARM
-                this.injectVoxelPart(10, 70, 10, -45, 15, 0);
-                // EXPLICIT VOXEL COMPONENT: R_ARM
-                this.injectVoxelPart(10, 70, 10, 45, 15, 0);
-                // EXPLICIT VOXEL COMPONENT: L_HIP
-                this.injectVoxelPart(18, 18, 18, -20, 10, 0);
-                // EXPLICIT VOXEL COMPONENT: R_HIP
-                this.injectVoxelPart(18, 18, 18, 20, 10, 0);
-                // EXPLICIT VOXEL COMPONENT: L_LEG
-                this.injectVoxelPart(15, 75, 15, -20, -35, 0);
-                // EXPLICIT VOXEL COMPONENT: R_LEG
-                this.injectVoxelPart(15, 75, 15, 20, -35, 0);
-
-                this.node.scale.set(SYSTEM_CFG.VOXEL_SCALE, SYSTEM_CFG.VOXEL_SCALE, SYSTEM_CFG.VOXEL_SCALE);
-            }
-
-            injectVoxelPart(w, h, d, x, y, z) {
-                const partGroup = new THREE.Group();
-                // Sub-voxel density check
-                for (let i = 0; i < 48; i++) {
-                    const material = new THREE.MeshLambertMaterial({ 
-                        color: this.colorPalette[Math.floor(Math.random() * this.colorPalette.length)] 
-                    });
-                    const voxel = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
-                    voxel.position.set(
-                        (Math.random() - 0.5) * w * 0.8,
-                        (Math.random() - 0.5) * h * 0.8,
-                        (Math.random() - 0.5) * d * 0.8
-                    );
-                    partGroup.add(voxel);
-                }
-                partGroup.position.set(x, y, z);
-                this.node.add(partGroup);
-            }
-
-            processLogic(playerPos, isObserved) {
-                if (this.ward !== WORLD_STATE.currentWard) {
-                    this.node.visible = false;
-                    return 9999;
-                }
-
-                const dist = this.node.position.distanceTo(playerPos);
-                this.node.visible = dist < SYSTEM_CFG.RENDER_LIMIT;
-
-                if (dist < 250) {
-                    this.node.lookAt(playerPos.x, this.node.position.y, playerPos.z);
-                    const vecToPlayer = new THREE.Vector3().subVectors(playerPos, this.node.position).normalize();
-                    vecToPlayer.y = 0;
-
-                    let currentVel = 0;
-                    if (this.type === 'surgeon') {
-                        currentVel = SYSTEM_CFG.SURGEON_SPEED;
-                    } else {
-                        // QUANTUM FRACTURE LOGIC: Only fast when being looked at
-                        currentVel = isObserved ? SYSTEM_CFG.SCOUT_SPEED_ACTIVE : SYSTEM_CFG.SCOUT_SPEED_GATED;
+            generateAnatomy() {
+                const buildVoxel = (w, h, d, x, y, z) => {
+                    const g = new THREE.Group();
+                    for (let i = 0; i < 25; i++) {
+                        const m = new THREE.Mesh(
+                            new THREE.BoxGeometry(w, h, d),
+                            new THREE.MeshLambertMaterial({ color: this.matPool[0] })
+                        );
+                        m.position.set((Math.random() - 0.5) * w, (Math.random() - 0.5) * h, (Math.random() - 0.5) * d);
+                        g.add(m);
                     }
+                    g.position.set(x, y, z);
+                    this.root.add(g);
+                };
 
-                    this.node.position.addScaledVector(vecToPlayer, currentVel);
+                // REAL HUMAN PROPORTION VOXELS
+                buildVoxel(16, 26, 12, 0, 48, 0);   // Torso
+                buildVoxel(12, 12, 12, 0, 72, 0);   // Head
+                buildVoxel(6, 48, 6, -11, 38, 0);   // Left Arm
+                buildVoxel(6, 48, 6, 11, 38, 0);    // Right Arm
+                buildVoxel(8, 48, 8, -5, 0, 0);     // Left Leg
+                buildVoxel(8, 48, 8, 5, 0, 0);      // Right Leg
+
+                this.root.scale.set(CORE_PARAMS.HUMAN_SCALE, CORE_PARAMS.HUMAN_SCALE, CORE_PARAMS.HUMAN_SCALE);
+            }
+
+            placeInVoid() {
+                // Hard-coded to exactly spawn far away as requested
+                const angle = Math.random() * Math.PI * 2;
+                this.root.position.set(
+                    Math.cos(angle) * this.spawnDist,
+                    0.1,
+                    Math.sin(angle) * this.spawnDist
+                );
+            }
+
+            update(pPos, isSeen) {
+                const dist = this.root.position.distanceTo(pPos);
+                if (dist < 200) {
+                    this.root.lookAt(pPos.x, 0, pPos.z);
+                    const dir = new THREE.Vector3().subVectors(pPos, this.root.position).normalize();
+                    const speed = this.type === 'surgeon' ? 0.25 : (isSeen ? 1.2 : 0.04);
+                    this.root.position.addScaledVector(dir, speed);
                 }
-                this.lastDistance = dist;
                 return dist;
             }
         }
 
-        // --- MODULE 3: THE LABYRINTH GEOMETRY ENGINE ---
-        function constructSanityVoid() {
+        // --- MODULE 3: THE LIMINAL GEOMETRY ENGINE ---
+        function initUniverse() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x010101, SYSTEM_CFG.FOG_DENSITY);
-
-            camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 5000);
-            frustumCheck = new THREE.Frustum();
-            projMat = new THREE.Matrix4();
+            scene.fog = new THREE.FogExp2(0x010102, 0.14);
+            camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 3000);
+            frustum = new THREE.Frustum(); projMat = new THREE.Matrix4();
 
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.3));
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
             document.body.appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0x1a1a1a, 1.4));
-            torchLight = new THREE.SpotLight(0xfffce0, 1300, 200, 0.45, 0.6);
-            torchLight.position.set(0, 0, 0.1);
-            torchLight.target.position.set(0, 0, -5);
-            camera.add(torchLight);
-            camera.add(torchLight.target);
+            scene.add(new THREE.AmbientLight(0x101012, 1.8));
+            torch = new THREE.SpotLight(0xfffce0, 1200, 180, 0.45, 0.5);
+            camera.add(torch); camera.add(torch.target); torch.target.position.z = -5;
             scene.add(camera);
 
-            injectWorldInfrastructure();
-            manifestHostiles();
-            initializeNeuralDrivers();
-            mainEngineLoop();
-        }
+            // EPOXY PHYSICAL MATERIAL
+            const epoxyMat = new THREE.MeshPhysicalMaterial({ 
+                color: 0x070707, 
+                roughness: 0.1, 
+                metalness: 0.2,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.05
+            });
 
-        function injectWorldInfrastructure() {
-            const wMat = new THREE.MeshLambertMaterial({ color: 0x060606 });
-            const cMat = new THREE.MeshLambertMaterial({ color: 0x030303 });
+            // ACOUSTIC TILE MATERIAL
+            const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x2a2a2a });
 
-            // Multilayered Ward Mapping (3 Floors of 2000 units)
-            for (let w = 0; w < 3; w++) {
-                const wardContainer = new THREE.Group();
-                wardContainer.position.y = w * 50;
+            // INJECT GEOMETRY
+            for (let i = 0; i < 50; i++) {
+                const hall = new THREE.Group();
+                
+                // Floor
+                const floor = new THREE.Mesh(new THREE.PlaneGeometry(1000, CORE_PARAMS.HALL_W), epoxyMat);
+                floor.rotation.x = -Math.PI / 2;
+                
+                // Ceiling
+                const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(1000, CORE_PARAMS.HALL_W), ceilingMat);
+                ceiling.rotation.x = Math.PI / 2; ceiling.position.y = CORE_PARAMS.HALL_H;
+                
+                // Ceiling Grid Lines (Classic Office Look)
+                const grid = new THREE.GridHelper(1000, 50, 0x000000, 0x111111);
+                grid.position.y = CORE_PARAMS.HALL_H - 0.02;
+                grid.rotation.x = 0;
 
-                // Explicit Corridors
-                for (let i = 0; i < 30; i++) {
-                    buildExplicitHallway(0, i * 90 - 1000, wardContainer, wMat, cMat);
-                    buildExplicitHallway(Math.PI / 2, i * 90 - 1000, wardContainer, wMat, cMat);
-                }
-                scene.add(wardContainer);
+                // Walls
+                const wall1 = new THREE.Mesh(new THREE.BoxGeometry(1000, CORE_PARAMS.HALL_H, 0.5), new THREE.MeshLambertMaterial({color:0x040404}));
+                wall1.position.set(0, CORE_PARAMS.HALL_H / 2, -CORE_PARAMS.HALL_W / 2);
+                const wall2 = new THREE.Mesh(new THREE.BoxGeometry(1000, CORE_PARAMS.HALL_H, 0.5), new THREE.MeshLambertMaterial({color:0x040404}));
+                wall2.position.set(0, CORE_PARAMS.HALL_H / 2, CORE_PARAMS.HALL_W / 2);
+
+                hall.add(floor, ceiling, grid, wall1, wall2);
+                hall.rotation.y = (i % 2 === 0) ? 0 : Math.PI / 2;
+                hall.position.set((i % 2 === 0 ? 0 : i * 25 - 500), 0, (i % 2 === 0 ? i * 25 - 500 : 0));
+                
+                scene.add(hall);
+                SESSION.registry.walls.push(wall1, wall2);
             }
-        }
 
-        function buildExplicitHallway(rot, offset, parent, wallMat, ceilMat) {
-            const hall = new THREE.Group();
-            
-            // EXPLICIT WALL: LEFT_SIDE
-            const lWall = new THREE.Mesh(new THREE.BoxGeometry(2000, SYSTEM_CFG.CEILING_HEIGHT, 1), wallMat);
-            lWall.position.set(0, SYSTEM_CFG.CEILING_HEIGHT / 2, -SYSTEM_CFG.UNIT_WIDTH / 2);
-            
-            // EXPLICIT WALL: RIGHT_SIDE
-            const rWall = new THREE.Mesh(new THREE.BoxGeometry(2000, SYSTEM_CFG.CEILING_HEIGHT, 1), wallMat);
-            rWall.position.set(0, SYSTEM_CFG.CEILING_HEIGHT / 2, SYSTEM_CFG.UNIT_WIDTH / 2);
+            // SPAWN ENTITIES
+            const surgeon = new Hostile('surgeon', CORE_PARAMS.SURGEON_SPAWN);
+            scene.add(surgeon.root); SESSION.registry.entities.push(surgeon);
 
-            // EXPLICIT FLOOR: GROUND_GRID
-            const floor = new THREE.Mesh(new THREE.BoxGeometry(2000, 1, SYSTEM_CFG.UNIT_WIDTH), ceilMat);
-            
-            // EXPLICIT CEILING: ROOF_SEAL
-            const ceiling = new THREE.Mesh(new THREE.BoxGeometry(2000, 1, SYSTEM_CFG.UNIT_WIDTH), ceilMat);
-            ceiling.position.y = SYSTEM_CFG.CEILING_HEIGHT;
-
-            hall.add(lWall, rWall, floor, ceiling);
-            hall.rotation.y = rot;
-            
-            if (rot === 0) hall.position.z = offset;
-            else hall.position.x = offset;
-
-            parent.add(hall);
-            WORLD_STATE.registry.collisionNodes.push(lWall, rWall);
-        }
-
-        function manifestHostiles() {
-            // THE SURGEON (ONE BLOODY HUMAN STALKER)
-            const surgeon = new FractureEntity('surgeon', 1);
-            surgeon.node.position.set(80, 0.5, 80);
-            scene.add(surgeon.node);
-            WORLD_STATE.registry.entityNodes.push(surgeon);
-
-            // THE 3 QUANTUM SCOUTS (FAST WHEN OBSERVED)
             for (let i = 0; i < 3; i++) {
-                const scout = new FractureEntity('scout', 1);
-                scout.node.position.set(
-                    (Math.random() - 0.5) * 600,
-                    0.5,
-                    (Math.random() - 0.5) * 600
-                );
-                scene.add(scout.node);
-                WORLD_STATE.registry.entityNodes.push(scout);
+                const scout = new Hostile('scout', CORE_PARAMS.SCOUT_SPAWN + (i * 50));
+                scene.add(scout.root); SESSION.registry.entities.push(scout);
             }
+
+            mountInputs();
+            engineLoop();
         }
 
-        // --- MODULE 4: THE FRACTURE EVENT ---
-        function triggerFracture() {
-            if (WORLD_STATE.isFracturing) return;
-            WORLD_STATE.isFracturing = true;
+        function engineLoop() {
+            requestAnimationFrame(engineLoop);
+            if (!SESSION.active) return;
 
-            const fractureUI = document.getElementById('fracture-event');
-            const fractureSFX = document.getElementById('snd-fracture');
-
-            fractureUI.style.display = 'flex';
-            fractureSFX.currentTime = 0;
-            fractureSFX.play();
-
-            setTimeout(() => {
-                fractureUI.style.display = 'none';
-                // Traumatic Displacement
-                camera.position.x += (Math.random() - 0.5) * 70;
-                camera.position.z += (Math.random() - 0.5) * 70;
-                setTimeout(() => { WORLD_STATE.isFracturing = false; }, 10000);
-            }, 900);
-        }
-
-        // --- MODULE 5: THE MAIN ENGINE LOOP ---
-        function mainEngineLoop() {
-            requestAnimationFrame(mainEngineLoop);
-            if (!WORLD_STATE.active) return;
-
-            // Frustum Matrix Update for Scout Visibility
             camera.updateMatrixWorld();
             projMat.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-            frustumCheck.setFromProjectionMatrix(projMat);
+            frustum.setFromProjectionMatrix(projMat);
 
             camera.rotation.order = "YXZ";
-            camera.rotation.y = WORLD_STATE.input.yaw;
-            camera.rotation.x = WORLD_STATE.input.pitch;
+            camera.rotation.y = SESSION.input.yaw;
+            camera.rotation.x = SESSION.input.pitch;
 
-            // Locomotion Drivers
-            if (WORLD_STATE.input.active) {
-                const forwardVec = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                const sideVec = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-                forwardVec.y = 0; sideVec.y = 0; forwardVec.normalize(); sideVec.normalize();
-
-                const moveDelta = new THREE.Vector3()
-                    .addScaledVector(forwardVec, -WORLD_STATE.input.v.y)
-                    .addScaledVector(sideVec, WORLD_STATE.input.v.x);
-
-                // Collision Raycasting
-                const cRay = new THREE.Raycaster(camera.position, moveDelta.clone().normalize(), 0, 3.5);
-                if (cRay.intersectObjects(WORLD_STATE.registry.collisionNodes).length === 0) {
-                    camera.position.addScaledVector(moveDelta, SYSTEM_CFG.LOCOMOTION_SPEED);
-                    // Kinetic Bobbing Logic
-                    camera.position.y = ((WORLD_STATE.currentWard - 1) * 50) + SYSTEM_CFG.EYE_COORD + Math.sin(Date.now() * 0.013) * 0.09;
-                }
-                document.getElementById('snd-steps').volume = 0.5;
-            } else {
-                document.getElementById('snd-steps').volume = 0;
+            if (SESSION.input.active) {
+                const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                fwd.y = 0; fwd.normalize();
+                const side = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                side.y = 0; side.normalize();
+                const moveVec = new THREE.Vector3().addScaledVector(fwd, -SESSION.input.v.y).addScaledVector(side, SESSION.input.v.x);
+                
+                camera.position.addScaledVector(moveVec, CORE_PARAMS.MOVE_SPEED);
+                camera.position.y = CORE_PARAMS.CAMERA_Y + Math.sin(Date.now() * 0.012) * 0.06;
             }
 
-            // Entity Lifecycle Processing
-            let threatProximity = 5000;
-            WORLD_STATE.registry.entityNodes.forEach(ent => {
-                const observedByCamera = frustumCheck.containsPoint(ent.node.position);
-                const d = ent.processLogic(camera.position, observedByCamera);
+            let threatLevel = "SECURE";
+            SESSION.registry.entities.forEach(ent => {
+                const isSeen = frustum.containsPoint(ent.root.position);
+                const d = ent.update(camera.position, isSeen);
                 
-                if (ent.ward === WORLD_STATE.currentWard && d < threatProximity) threatProximity = d;
+                if (d < 50) threatLevel = "DETECTION";
+                if (d < 15) threatLevel = "CRITICAL";
 
-                // Event Trigger: Fracture
-                if (d < SYSTEM_CFG.SCARE_TRIGGER && !WORLD_STATE.isFracturing) {
-                    triggerFracture();
-                }
-
-                // Breathing Auditory Attenuation
-                if (ent.type === 'surgeon' && ent.ward === WORLD_STATE.currentWard && d < 80) {
-                    document.getElementById('snd-breathing').volume = 1.0 - (d / 80);
+                if (d < 4.5) {
+                    document.getElementById('death-screen').style.display = 'flex';
+                    setTimeout(() => location.reload(), 1500);
                 }
             });
 
-            // HUD Refresh Cycle
-            const sanityUI = document.getElementById('sanity-ui');
-            sanityUI.innerText = threatProximity < 40 ? "FRACTURING" : "STABLE";
-            sanityUI.style.color = threatProximity < 40 ? "var(--horror-red)" : "var(--glitch-teal)";
+            document.getElementById('threat-stat').innerText = threatLevel;
+            document.getElementById('threat-stat').style.color = threatLevel === "CRITICAL" ? "var(--blood-red)" : "var(--neon-blue)";
 
             renderer.render(scene, camera);
         }
 
-        // --- MODULE 6: NEURAL INTERFACE LISTENERS ---
-        function initializeNeuralDrivers() {
-            const mvZ = document.getElementById('zone-move');
-            const lkZ = document.getElementById('zone-look');
-            const base = document.getElementById('joystick-base');
-            const nub = document.getElementById('joystick-nub');
-            
-            let lastTouchX, lastTouchY;
+        function mountInputs() {
+            const mvZone = document.getElementById('zone-move');
+            const lkZone = document.getElementById('zone-look');
+            const outer = document.getElementById('joystick-outer');
+            const inner = document.getElementById('joystick-inner');
+            let lx, ly;
 
-            // Movement Touch Logic
-            mvZ.addEventListener('touchstart', (e) => {
+            mvZone.addEventListener('touchstart', e => {
                 const t = e.touches[0];
-                WORLD_STATE.input.origin.set(t.clientX, t.clientY);
-                base.style.display = 'block';
-                base.style.left = t.clientX + 'px'; base.style.top = t.clientY + 'px';
+                SESSION.input.anchor.set(t.clientX, t.clientY);
+                outer.style.display = 'block'; outer.style.left = t.clientX + 'px'; outer.style.top = t.clientY + 'px';
             });
 
-            mvZ.addEventListener('touchmove', (e) => {
+            mvZone.addEventListener('touchmove', e => {
                 e.preventDefault();
                 const t = e.touches[0];
-                const dx = t.clientX - WORLD_STATE.input.origin.x;
-                const dy = t.clientY - WORLD_STATE.input.origin.y;
-                const mag = Math.min(Math.sqrt(dx*dx + dy*dy), 100);
-                const rad = Math.atan2(dy, dx);
-
-                nub.style.transform = `translate(${Math.cos(rad) * mag}px, ${Math.sin(rad) * mag}px)`;
-                WORLD_STATE.input.v.set(Math.cos(rad) * (mag / 100), Math.sin(rad) * (mag / 100));
-                WORLD_STATE.input.active = mag > 15;
+                const dx = t.clientX - SESSION.input.anchor.x;
+                const dy = t.clientY - SESSION.input.anchor.y;
+                const dist = Math.min(Math.sqrt(dx * dx + dy * dy), 80);
+                const angle = Math.atan2(dy, dx);
+                inner.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px)`;
+                SESSION.input.v.set(Math.cos(angle) * (dist / 80), Math.sin(angle) * (dist / 80));
+                SESSION.input.active = dist > 10;
             }, { passive: false });
 
-            mvZ.addEventListener('touchend', () => {
-                base.style.display = 'none';
-                WORLD_STATE.input.active = false;
-                WORLD_STATE.input.v.set(0,0);
-            });
+            mvZone.addEventListener('touchend', () => { outer.style.display = 'none'; SESSION.input.active = false; });
 
-            // Look Touch Logic
-            lkZ.addEventListener('touchstart', (e) => {
-                lastTouchX = e.touches[0].clientX; lastTouchY = e.touches[0].clientY;
-            });
-
-            lkZ.addEventListener('touchmove', (e) => {
+            lkZone.addEventListener('touchstart', e => { lx = e.touches[0].clientX; ly = e.touches[0].clientY; });
+            lkZone.addEventListener('touchmove', e => {
                 const t = e.touches[0];
-                const deltaX = t.clientX - lastTouchX;
-                const deltaY = t.clientY - lastTouchY;
-                
-                WORLD_STATE.input.yaw -= deltaX * SYSTEM_CFG.LOOK_SENSITIVITY;
-                WORLD_STATE.input.pitch -= deltaY * SYSTEM_CFG.LOOK_SENSITIVITY;
-                WORLD_STATE.input.pitch = Math.max(-1.5, Math.min(1.5, WORLD_STATE.input.pitch));
-                
-                lastTouchX = t.clientX; lastTouchY = t.clientY;
+                SESSION.input.yaw -= (t.clientX - lx) * CORE_PARAMS.SENSITIVITY;
+                SESSION.input.pitch -= (t.clientY - ly) * CORE_PARAMS.SENSITIVITY;
+                SESSION.input.pitch = Math.max(-1.4, Math.min(1.4, SESSION.input.pitch));
+                lx = t.clientX; ly = t.clientY;
             });
         }
 
-        // --- MODULE 7: INTERFACE TRIGGER ---
-        const handleInteraction = () => {
-            if (WORLD_STATE.booted && !WORLD_STATE.active) {
-                WORLD_STATE.active = true;
-                document.getElementById('terminal-overlay').style.opacity = '0';
+        window.ontouchstart = () => {
+            if (SESSION.ready && !SESSION.active) {
+                SESSION.active = true;
+                document.getElementById('boot-screen').style.opacity = '0';
                 setTimeout(() => {
-                    document.getElementById('terminal-overlay').style.display = 'none';
-                    document.getElementById('game-ui').style.display = 'block';
-                    announceFractureWard();
-                }, 3000);
-
-                [document.getElementById('snd-ambience'), document.getElementById('snd-steps'), document.getElementById('snd-breathing')].forEach(s => s.play().catch(()=>{}));
+                    document.getElementById('boot-screen').style.display = 'none';
+                    document.getElementById('game-hud').style.display = 'block';
+                }, 2000);
             }
         };
 
-        function announceFractureWard() {
-            const banner = document.getElementById('ward-announcement');
-            banner.style.opacity = "1"; banner.style.transform = "scale(1)";
-            setTimeout(() => { banner.style.opacity = "0"; banner.style.transform = "scale(0.5)"; }, 6000);
-        }
-
-        window.ontouchstart = handleInteraction;
-        window.onmousedown = handleInteraction;
-        window.onload = executeSystemBoot;
-
-        // VERBOSITY EXPANSION: METADATA
-        console.log("SANITY_S_FRACTURE: ARCHITECTURE_VALIDATED");
-        console.log("GEOMETRY_SPAN: 2000_UNITS_STABLE");
-        console.log("QUANTUM_SCOUT_GATING: OPERATIONAL");
-
+        window.onload = runBoot;
     </script>
 </body>
 </html>
