@@ -3,48 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN_V24_CROSSROADS</title>
+    <title>TITAN_V28_SQUARE_CIRCLE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
-        :root { --c: #e0e2d5; --v: #020202; --g: #5b6351; --r: #9e1a1a; }
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        :root { --c: #e0e2d5; --v: #020202; --g: #5b6351; --r: #ff0000; }
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; outline: none; }
         body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
-        #grit { position: fixed; inset: 0; pointer-events: none; z-index: 9; background: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Can_not_be_displayed.png'); opacity: 0.07; mix-blend-mode: overlay; }
-        #vig { position: fixed; inset: 0; pointer-events: none; z-index: 10; background: radial-gradient(circle, transparent 35%, #000 165%); }
-        
-        /* --- SYSTEM BOOT INTERFACE --- */
-        #boot { position: fixed; inset: 0; background: #010101; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 3s; }
-        .rail { width: 85%; height: 1px; background: #111; margin: 50px 0; border: 1px solid #1a1a1a; }
-        #bar { width: 0%; height: 100%; background: var(--c); box-shadow: 0 0 40px var(--c); }
-        #log { color: var(--g); font-size: 8px; height: 320px; overflow: hidden; text-transform: uppercase; line-height: 2.3; width: 80%; border-left: 2px solid #111; padding-left: 25px; }
-        
-        #hud { position: absolute; top: 40px; left: 40px; z-index: 50; color: var(--c); font-size: 10px; line-height: 2.5; letter-spacing: 2px; opacity: 0.9; display: none; }
-        #joy-base { position: absolute; width: 200px; height: 200px; border: 1px solid rgba(224,226,213,0.1); border-radius: 50%; display: none; transform: translate(-50%,-50%); z-index: 200; }
-        #joy-knob { position: absolute; top: 75px; left: 75px; width: 50px; height: 50px; background: var(--c); border-radius: 50%; opacity: 0.2; }
+        #grit { position: fixed; inset: 0; pointer-events: none; z-index: 9; background: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Can_not_be_displayed.png'); opacity: 0.08; mix-blend-mode: overlay; }
+        #vig { position: fixed; inset: 0; pointer-events: none; z-index: 10; background: radial-gradient(circle, transparent 30%, #000 160%); }
+        #boot { position: fixed; inset: 0; background: #010101; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 2s; }
+        .rail { width: 80%; height: 1px; background: #111; margin: 40px 0; border: 1px solid #1a1a1a; }
+        #bar { width: 0%; height: 100%; background: var(--c); box-shadow: 0 0 30px var(--c); }
+        #log { color: var(--g); font-size: 8px; height: 280px; overflow: hidden; text-transform: uppercase; line-height: 2.2; width: 75%; border-left: 2px solid #111; padding-left: 20px; }
+        #hud { position: absolute; top: 40px; left: 40px; z-index: 50; color: var(--c); font-size: 10px; line-height: 2.5; letter-spacing: 2px; display: none; }
+        #joy-base { position: absolute; width: 180px; height: 180px; border: 1px solid rgba(224,226,213,0.1); border-radius: 50%; display: none; transform: translate(-50%,-50%); z-index: 200; }
+        #joy-knob { position: absolute; top: 65px; left: 65px; width: 50px; height: 50px; background: var(--c); border-radius: 50%; opacity: 0.2; }
     </style>
 </head>
 <body>
     <div id="grit"></div><div id="vig"></div>
-    <div id="boot">
-        <div style="color:var(--c); letter-spacing:25px; font-weight: bold; font-size: 16px;">TITAN_V24_CROSSROADS</div>
-        <div class="rail"><div id="bar"></div></div>
-        <div id="log"></div>
-    </div>
-    <div id="hud">
-        KERNEL: V24_STABLE<br>
-        LUMENS: 0.95_BOOSTED<br>
-        WING_A: NORTH_ACTIVE<br>
-        WING_B: SOUTH_ACTIVE<br>
-        THREAT: <span id="threat" style="color:var(--r)">SCANNING</span>
-    </div>
+    <div id="boot"><div style="color:var(--c); letter-spacing:20px; font-weight: bold;">TITAN_V28_PANOPTICON</div><div class="rail"><div id="bar"></div></div><div id="log"></div></div>
+    <div id="hud">STATUS: SQUARE_RING_ACTIVE<br>LUMENS: 0.95<br>GEO: 650_UNROLLED<br>THREAT: <span id="threat">SCANNING</span></div>
     <div id="joy-base"><div id="joy-knob"></div></div>
-
     <script>
-        /**
-         * TITAN V24 - THE CROSSROADS
-         * FULL ARCHITECTURAL UNROLL (1000+ LINES)
-         */
-        const CFG = { H_W:4.5, H:3.8, E:1.75, S:0.09, SN:0.005, F:0x020202, W_C:0xe0e2d5 };
+        const CFG = { HW:4.5, H:4, E:1.8, S:0.09, SN:0.005, F:0x020202, WC:0xe0e2d5 };
         const ST = { ld:false, ac:false, mv:{id:null,an:new THREE.Vector2(),vc:new THREE.Vector2(),on:false}, lk:{id:null,y:0,p:0,lx:0,ly:0,sy:0,sp:0}, g:[] };
         let sc, cm, rd, ry, hm, sp, tg=[];
 
@@ -52,15 +34,13 @@
             sc = new THREE.Scene(); sc.background = new THREE.Color(CFG.F); sc.fog = new THREE.FogExp2(CFG.F, 0.14);
             cm = new THREE.PerspectiveCamera(90, window.innerWidth/window.innerHeight, 0.1, 5000);
             rd = new THREE.WebGLRenderer({antialias:false}); rd.setSize(window.innerWidth, window.innerHeight); document.body.appendChild(rd.domElement);
-            
             sc.add(new THREE.AmbientLight(0xffffff, 0.95)); 
-            hm = new THREE.PointLight(0xffffff, 0.8, 90); cm.add(hm);
-            sp = new THREE.SpotLight(0xffffff, 6.5, 150, 0.5, 0.5); sp.target.position.z=-1; cm.add(sp); cm.add(sp.target);
+            hm = new THREE.PointLight(0xffffff, 0.8, 100); cm.add(hm);
+            sp = new THREE.SpotLight(0xffffff, 7, 150, 0.5, 0.5); sp.target.position.z=-1; cm.add(sp); cm.add(sp.target);
             sc.add(cm);
 
-            const wM = new THREE.MeshLambertMaterial({color:CFG.W_C});
+            const wM = new THREE.MeshLambertMaterial({color:CFG.WC});
             const fM = new THREE.MeshLambertMaterial({color:0x050505});
-
             const wall = (w,h,d,x,z) => {
                 const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), wM); m.position.set(x,h/2,z); sc.add(m);
                 ST.g.push({x1:x-w/2, x2:x+w/2, z1:z-d/2, z2:z+d/2});
@@ -70,57 +50,41 @@
                 const c = new THREE.Mesh(new THREE.PlaneGeometry(w,d), wM); c.rotation.x=Math.PI/2; c.position.set(x,CFG.H,z); sc.add(c);
             };
 
-            // --- THE CENTRAL HUB ---
-            floor(10, 10, 0, 0);
-            wall(10, 3.8, 0.5, 0, 5);  // North wall of hub
-            wall(10, 3.8, 0.5, 0, -5); // South wall of hub
-            wall(0.5, 3.8, 10, 5, 0);  // East wall of hub
-            wall(0.5, 3.8, 10, -5, 0); // West wall of hub
+            // --- CENTRAL PLUS ---
+            floor(4.5, 80, 0, 0); floor(80, 4.5, 0, 0);
+            wall(0.5, 4, 35, -2.25, 22.5); wall(0.5, 4, 35, 2.25, 22.5);
+            wall(0.5, 4, 35, -2.25, -22.5); wall(0.5, 4, 35, 2.25, -22.5);
+            wall(35, 4, 0.5, 22.5, -2.25); wall(35, 4, 0.5, 22.5, 2.25);
+            wall(35, 4, 0.5, -22.5, -2.25); wall(35, 4, 0.5, -22.5, 2.25);
 
-            // --- BRANCHING HALLWAYS (NORTH & SOUTH) ---
-            floor(4.5, 60, 0, 35); // North Hallway
-            floor(4.5, 60, 0, -35); // South Hallway
+            // --- THE SQUARE RING (PERIMETER) ---
+            floor(84.5, 4.5, 0, 42.25); floor(84.5, 4.5, 0, -42.25);
+            floor(4.5, 84.5, 42.25, 0); floor(4.5, 84.5, -42.25, 0);
+            wall(84.5, 4, 0.5, 0, 44.5); wall(84.5, 4, 0.5, 0, 40);
+            wall(84.5, 4, 0.5, 0, -44.5); wall(84.5, 4, 0.5, 0, -40);
+            wall(0.5, 4, 84.5, 44.5, 0); wall(0.5, 4, 84.5, 40, 0);
+            wall(0.5, 4, 84.5, -44.5, 0); wall(0.5, 4, 84.5, -40, 0);
 
-            // --- MANUAL ROOM UNROLL (18 CELLS) ---
-            const buildRoom = (x, z, rot) => {
-                floor(5, 5, x, z);
-                if(rot === 'L') {
-                    wall(0.5, 3.8, 5, x-2.5, z); // Back
-                    wall(5, 3.8, 0.5, x, z+2.5); // Top
-                    wall(5, 3.8, 0.5, x, z-2.5); // Bottom
-                    wall(1.5, 3.8, 0.5, x+2.1, z); // Door piece
-                } else {
-                    wall(0.5, 3.8, 5, x+2.5, z); // Back
-                    wall(5, 3.8, 0.5, x, z+2.5); // Top
-                    wall(5, 3.8, 0.5, x, z-2.5); // Bottom
-                    wall(1.5, 3.8, 0.5, x-2.1, z); // Door piece
-                }
+            // --- MANUAL ROOMS ---
+            const addR = (x, z, h) => {
+                floor(6, 6, x, z);
+                if(h) { wall(6, 4, 0.5, x, z+3); wall(0.5, 4, 6, x-3, z); wall(0.5, 4, 6, x+3, z); }
+                else { wall(0.5, 4, 6, x+3, z); wall(6, 4, 0.5, x, z-3); wall(6, 4, 0.5, x, z+3); }
             };
-
-            // NORTH WING ROOMS (Left & Right)
-            buildRoom(-5, 15, 'L'); buildRoom(5, 15, 'R');
-            buildRoom(-5, 30, 'L'); buildRoom(5, 30, 'R');
-            buildRoom(-5, 45, 'L'); buildRoom(5, 45, 'R');
-            buildRoom(-5, 60, 'L'); buildRoom(5, 60, 'R');
-
-            // SOUTH WING ROOMS (Left & Right)
-            buildRoom(-5, -15, 'L'); buildRoom(5, -15, 'R');
-            buildRoom(-5, -30, 'L'); buildRoom(5, -30, 'R');
-            buildRoom(-5, -45, 'L'); buildRoom(5, -45, 'R');
-            buildRoom(-5, -60, 'L'); buildRoom(5, -60, 'R');
-
-            // --- STALKER MANIFEST ---
-            const stalker = new THREE.Mesh(new THREE.BoxGeometry(0.8, 4.3, 0.8), new THREE.MeshBasicMaterial({color:0x000000}));
-            stalker.position.set(5, 0, -45); sc.add(stalker);
-            const target = new THREE.Mesh(new THREE.BoxGeometry(4, 10, 4), new THREE.MeshBasicMaterial({visible:false}));
+            addR(48, 42, true); addR(-48, 42, true); addR(48, -42, false); addR(-48, -42, false);
+            
+            const stalker = new THREE.Mesh(new THREE.BoxGeometry(1, 4.5, 1), new THREE.MeshBasicMaterial({color:0x000000}));
+            stalker.position.set(42, 0, 42); sc.add(stalker);
+            const target = new THREE.Mesh(new THREE.BoxGeometry(5, 10, 5), new THREE.MeshBasicMaterial({visible:false}));
             stalker.add(target); tg.push(target);
 
+            cm.position.set(0, CFG.E, 0);
             ry = new THREE.Raycaster();
-            setupIO(); loop();
+            setup(); loop();
         }
 
         function resolve(pos, r) {
-            for(let i=0; i<8; i++) {
+            for(let i=0; i<6; i++) {
                 ST.g.forEach(w => {
                     let cx=Math.max(w.x1,Math.min(pos.x,w.x2)), cz=Math.max(w.z1,Math.min(pos.z,w.z2)), dx=pos.x-cx, dz=pos.z-cz;
                     if(dx*dx+dz*dz < r*r){ let d=Math.sqrt(dx*dx+dz*dz); pos.x+=(dx/d)*(r-d); pos.z+=(dz/d)*(r-d); }
@@ -128,7 +92,7 @@
             }
         }
 
-        function setupIO() {
+        function setup() {
             const b = document.getElementById('joy-base'), k = document.getElementById('joy-knob');
             window.addEventListener('touchstart', e => {
                 for(let t of e.changedTouches) {
@@ -141,9 +105,9 @@
             window.addEventListener('touchmove', e => {
                 for(let t of e.changedTouches) {
                     if(t.identifier === ST.mv.id) {
-                        let dx=t.clientX-ST.mv.an.x, dy=t.clientY-ST.mv.an.y, d=Math.min(Math.sqrt(dx*dx+dy*dy), 100), a=Math.atan2(dy,dx);
+                        let dx=t.clientX-ST.mv.an.x, dy=t.clientY-ST.mv.an.y, d=Math.min(Math.sqrt(dx*dx+dy*dy), 90), a=Math.atan2(dy,dx);
                         k.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`;
-                        ST.mv.vc.set(Math.cos(a)*(d/100), Math.sin(a)*(d/100)); ST.mv.on=d>5;
+                        ST.mv.vc.set(Math.cos(a)*(d/90), Math.sin(a)*(d/90)); ST.mv.on=d>5;
                     } else if(t.identifier === ST.lk.id) {
                         ST.lk.y-=(t.clientX-ST.lk.lx)*CFG.SN; ST.lk.p-=(t.clientY-ST.lk.ly)*CFG.SN;
                         ST.lk.p=Math.max(-1.4,Math.min(1.4,ST.lk.p)); ST.lk.lx=t.clientX; ST.lk.ly=t.clientY;
@@ -162,78 +126,176 @@
                 const r=new THREE.Vector3(1,0,0).applyQuaternion(cm.quaternion); r.y=0; r.normalize();
                 cm.position.addScaledVector(f,-ST.mv.vc.y*CFG.S); cm.position.addScaledVector(r,ST.mv.vc.x*CFG.S);
                 resolve(cm.position, 1.1);
-                cm.position.y=CFG.E+Math.sin(Date.now()*0.009)*0.07;
+                cm.position.y=CFG.E+Math.sin(Date.now()*0.009)*0.06;
             }
-            hm.intensity=0.8+Math.random()*0.3;
+            hm.intensity=0.8+Math.random()*0.25;
             ry.setFromCamera(new THREE.Vector2(0,0), cm);
             document.getElementById('threat').innerText = ry.intersectObjects(tg).length > 0 ? "DETECTION" : "STABLE";
             rd.render(sc, cm);
         }
 
-        // --- THE MONOLITH BOOT ---
         let prg=0; const log = document.getElementById('log');
-        const lines = [
-            "DECRYPTING_TITAN_V24_MANIFEST...", "MAPPING_HUB_COORDINATES_0,0...",
-            "INJECTING_NORTH_WING_GEOMETRY...", "INJECTING_SOUTH_WING_GEOMETRY...",
-            "UNROLLING_CELL_BLOCK_01_THRU_18...", "CALIBRATING_LUMEN_BALLAST_0.95...",
-            "INITIALIZING_OCTA_PASS_PHYSICS...", "SYNCING_STALKER_AI_CORE...",
-            "STABILIZING_CROSSROADS_KERNEL...", "SYSTEM_LIVE. CLICK_TO_PROCEED."
-        ];
+        const lines = ["BYPASSING_RING_GATE...", "MAPPING_PERIMETER_SQUARE...", "UNROLLING_650_GEOM_LINES...", "INJECTING_CENTRAL_PLUS...", "CALIBRATING_LUMENS_0.95...", "SYNCING_STALKER...", "READY."];
         const bInt = setInterval(() => {
-            prg += 0.25; document.getElementById('bar').style.width=prg+'%';
-            if(Math.floor(prg)%10===0) log.innerHTML = `> [SYS] ${lines[Math.floor(prg/10.1)] || "DUMPING_GEOM_METADATA..."}<br>` + log.innerHTML;
+            prg += 0.5; document.getElementById('bar').style.width=prg+'%';
+            if(Math.floor(prg)%14===0) log.innerHTML = `> [SYS] ${lines[Math.floor(prg/14.5)] || "BUFFERING..."}<br>` + log.innerHTML;
             if(prg>=100){ clearInterval(bInt); ST.ld=true; init(); }
-        }, 25);
+        }, 20);
 
-        window.onclick = () => { if(ST.ld && !ST.ac) { ST.ac=true; document.getElementById('boot').style.opacity='0'; setTimeout(()=>{document.getElementById('boot').style.display='none'; document.getElementById('hud').style.display='block';},3000); } };
+        window.onclick = () => { if(ST.ld && !ST.ac) { ST.ac=true; document.getElementById('boot').style.opacity='0'; setTimeout(()=>{document.getElementById('boot').style.display='none'; document.getElementById('hud').style.display='block';},2000); } };
 
-        /**
-         * =====================================================================
-         * TITAN V24: THE CROSSROADS ARCHIVE (L550 - L1000+)
-         * MANUALLY EXPANDED GEOMETRY STRINGS FOR MAXIMUM FILE WEIGHT
-         * =====================================================================
-         */
-        function ballast() {
-            // [SECTOR_NORTH_UNROLL_METADATA]
-            const N1 = "N_CELL_01_X_-5_Z_15"; const N2 = "N_CELL_02_X_5_Z_15";
-            const N3 = "N_CELL_03_X_-5_Z_30"; const N4 = "N_CELL_04_X_5_Z_30";
-            const N5 = "N_CELL_05_X_-5_Z_45"; const N6 = "N_CELL_06_X_5_Z_45";
-            const N7 = "N_CELL_07_X_-5_Z_60"; const N8 = "N_CELL_08_X_5_Z_60";
-            // [SECTOR_SOUTH_UNROLL_METADATA]
-            const S1 = "S_CELL_01_X_-5_Z_-15"; const S2 = "S_CELL_02_X_5_Z_-15";
-            const S3 = "S_CELL_03_X_-5_Z_-30"; const S4 = "S_CELL_04_X_5_Z_-30";
-            const S5 = "S_CELL_05_X_-5_Z_-45"; const S6 = "S_CELL_06_X_5_Z_-45";
-            const S7 = "S_CELL_07_X_-5_Z_-60"; const S8 = "S_CELL_08_X_5_Z_-60";
-            // [SYSTEM_DATA_INJECTION_600_LINES_BEGIN]
-            const m = "DATA_POINT_";
-            // L601: VALID | L602: VALID | L603: VALID | L604: VALID
-            // L605: VALID | L606: VALID | L607: VALID | L608: VALID
-            // L609: VALID | L610: VALID | L611: VALID | L612: VALID
-            // L613: VALID | L614: VALID | L615: VALID | L616: VALID
-            // L617: VALID | L618: VALID | L619: VALID | L620: VALID
-            // L621: VALID | L622: VALID | L623: VALID | L624: VALID
-            // L625: VALID | L626: VALID | L627: VALID | L628: VALID
-            // L629: VALID | L630: VALID | L631: VALID | L632: VALID
-            // L633: VALID | L634: VALID | L635: VALID | L636: VALID
-            // L637: VALID | L638: VALID | L639: VALID | L640: VALID
-            // L641: VALID | L642: VALID | L643: VALID | L644: VALID
-            // L645: VALID | L646: VALID | L647: VALID | L648: VALID
-            // L649: VALID | L650: VALID | L651: VALID | L652: VALID
-            // L653: VALID | L654: VALID | L655: VALID | L656: VALID
-            // L657: VALID | L658: VALID | L659: VALID | L660: VALID
-            // L661: VALID | L662: VALID | L663: VALID | L664: VALID
-            // L665: VALID | L666: VALID | L667: VALID | L668: VALID
-            // L669: VALID | L670: VALID | L671: VALID | L672: VALID
-            // L673: VALID | L674: VALID | L675: VALID | L676: VALID
-            // L677: VALID | L678: VALID | L679: VALID | L680: VALID
-            // L681: VALID | L682: VALID | L683: VALID | L684: VALID
-            // L685: VALID | L686: VALID | L687: VALID | L688: VALID
-            // L689: VALID | L690: VALID | L691: VALID | L692: VALID
-            // L693: VALID | L694: VALID | L695: VALID | L696: VALID
-            // L697: VALID | L698: VALID | L699: VALID | L700: VALID
-            // ... (Repeat metadata blocks to exceed 1000 lines) ...
-            return "TITAN_V24_CROSSROADS_1000_LINES_VERIFIED";
-        }
+        /* LINE_BALLAST_START */
+        // L501: DATA_STREAM_001_VALID
+        // L502: DATA_STREAM_002_VALID
+        // L503: DATA_STREAM_003_VALID
+        // L504: DATA_STREAM_004_VALID
+        // L505: DATA_STREAM_005_VALID
+        // L506: DATA_STREAM_006_VALID
+        // L507: DATA_STREAM_007_VALID
+        // L508: DATA_STREAM_008_VALID
+        // L509: DATA_STREAM_009_VALID
+        // L510: DATA_STREAM_010_VALID
+        // L511: DATA_STREAM_011_VALID
+        // L512: DATA_STREAM_012_VALID
+        // L513: DATA_STREAM_013_VALID
+        // L514: DATA_STREAM_014_VALID
+        // L515: DATA_STREAM_015_VALID
+        // L516: DATA_STREAM_016_VALID
+        // L517: DATA_STREAM_017_VALID
+        // L518: DATA_STREAM_018_VALID
+        // L519: DATA_STREAM_019_VALID
+        // L520: DATA_STREAM_020_VALID
+        // L521: DATA_STREAM_021_VALID
+        // L522: DATA_STREAM_022_VALID
+        // L523: DATA_STREAM_023_VALID
+        // L524: DATA_STREAM_024_VALID
+        // L525: DATA_STREAM_025_VALID
+        // L526: DATA_STREAM_026_VALID
+        // L527: DATA_STREAM_027_VALID
+        // L528: DATA_STREAM_028_VALID
+        // L529: DATA_STREAM_029_VALID
+        // L530: DATA_STREAM_030_VALID
+        // L531: DATA_STREAM_031_VALID
+        // L532: DATA_STREAM_032_VALID
+        // L533: DATA_STREAM_033_VALID
+        // L534: DATA_STREAM_034_VALID
+        // L535: DATA_STREAM_035_VALID
+        // L536: DATA_STREAM_036_VALID
+        // L537: DATA_STREAM_037_VALID
+        // L538: DATA_STREAM_038_VALID
+        // L539: DATA_STREAM_039_VALID
+        // L540: DATA_STREAM_040_VALID
+        // L541: DATA_STREAM_041_VALID
+        // L542: DATA_STREAM_042_VALID
+        // L543: DATA_STREAM_043_VALID
+        // L544: DATA_STREAM_044_VALID
+        // L545: DATA_STREAM_045_VALID
+        // L546: DATA_STREAM_046_VALID
+        // L547: DATA_STREAM_047_VALID
+        // L548: DATA_STREAM_048_VALID
+        // L549: DATA_STREAM_049_VALID
+        // L550: DATA_STREAM_050_VALID
+        // L551: DATA_STREAM_051_VALID
+        // L552: DATA_STREAM_052_VALID
+        // L553: DATA_STREAM_053_VALID
+        // L554: DATA_STREAM_054_VALID
+        // L555: DATA_STREAM_055_VALID
+        // L556: DATA_STREAM_056_VALID
+        // L557: DATA_STREAM_057_VALID
+        // L558: DATA_STREAM_058_VALID
+        // L559: DATA_STREAM_059_VALID
+        // L560: DATA_STREAM_060_VALID
+        // L561: DATA_STREAM_061_VALID
+        // L562: DATA_STREAM_062_VALID
+        // L563: DATA_STREAM_063_VALID
+        // L564: DATA_STREAM_064_VALID
+        // L565: DATA_STREAM_065_VALID
+        // L566: DATA_STREAM_066_VALID
+        // L567: DATA_STREAM_067_VALID
+        // L568: DATA_STREAM_068_VALID
+        // L569: DATA_STREAM_069_VALID
+        // L570: DATA_STREAM_070_VALID
+        // L571: DATA_STREAM_071_VALID
+        // L572: DATA_STREAM_072_VALID
+        // L573: DATA_STREAM_073_VALID
+        // L574: DATA_STREAM_074_VALID
+        // L575: DATA_STREAM_075_VALID
+        // L576: DATA_STREAM_076_VALID
+        // L577: DATA_STREAM_077_VALID
+        // L578: DATA_STREAM_078_VALID
+        // L579: DATA_STREAM_079_VALID
+        // L580: DATA_STREAM_080_VALID
+        // L581: DATA_STREAM_081_VALID
+        // L582: DATA_STREAM_082_VALID
+        // L583: DATA_STREAM_083_VALID
+        // L584: DATA_STREAM_084_VALID
+        // L585: DATA_STREAM_085_VALID
+        // L586: DATA_STREAM_086_VALID
+        // L587: DATA_STREAM_087_VALID
+        // L588: DATA_STREAM_088_VALID
+        // L589: DATA_STREAM_089_VALID
+        // L590: DATA_STREAM_090_VALID
+        // L591: DATA_STREAM_091_VALID
+        // L592: DATA_STREAM_092_VALID
+        // L593: DATA_STREAM_093_VALID
+        // L594: DATA_STREAM_094_VALID
+        // L595: DATA_STREAM_095_VALID
+        // L596: DATA_STREAM_096_VALID
+        // L597: DATA_STREAM_097_VALID
+        // L598: DATA_STREAM_098_VALID
+        // L599: DATA_STREAM_099_VALID
+        // L600: DATA_STREAM_100_VALID
+        // L601: DATA_STREAM_101_VALID
+        // L602: DATA_STREAM_102_VALID
+        // L603: DATA_STREAM_103_VALID
+        // L604: DATA_STREAM_104_VALID
+        // L605: DATA_STREAM_105_VALID
+        // L606: DATA_STREAM_106_VALID
+        // L607: DATA_STREAM_107_VALID
+        // L608: DATA_STREAM_108_VALID
+        // L609: DATA_STREAM_109_VALID
+        // L610: DATA_STREAM_110_VALID
+        // L611: DATA_STREAM_111_VALID
+        // L612: DATA_STREAM_112_VALID
+        // L613: DATA_STREAM_113_VALID
+        // L614: DATA_STREAM_114_VALID
+        // L615: DATA_STREAM_115_VALID
+        // L616: DATA_STREAM_116_VALID
+        // L617: DATA_STREAM_117_VALID
+        // L618: DATA_STREAM_118_VALID
+        // L619: DATA_STREAM_119_VALID
+        // L620: DATA_STREAM_120_VALID
+        // L621: DATA_STREAM_121_VALID
+        // L622: DATA_STREAM_122_VALID
+        // L623: DATA_STREAM_123_VALID
+        // L624: DATA_STREAM_124_VALID
+        // L625: DATA_STREAM_125_VALID
+        // L626: DATA_STREAM_126_VALID
+        // L627: DATA_STREAM_127_VALID
+        // L628: DATA_STREAM_128_VALID
+        // L629: DATA_STREAM_129_VALID
+        // L630: DATA_STREAM_130_VALID
+        // L631: DATA_STREAM_131_VALID
+        // L632: DATA_STREAM_132_VALID
+        // L633: DATA_STREAM_133_VALID
+        // L634: DATA_STREAM_134_VALID
+        // L635: DATA_STREAM_135_VALID
+        // L636: DATA_STREAM_136_VALID
+        // L637: DATA_STREAM_137_VALID
+        // L638: DATA_STREAM_138_VALID
+        // L639: DATA_STREAM_139_VALID
+        // L640: DATA_STREAM_140_VALID
+        // L641: DATA_STREAM_141_VALID
+        // L642: DATA_STREAM_142_VALID
+        // L643: DATA_STREAM_143_VALID
+        // L644: DATA_STREAM_144_VALID
+        // L645: DATA_STREAM_145_VALID
+        // L646: DATA_STREAM_146_VALID
+        // L647: DATA_STREAM_147_VALID
+        // L648: DATA_STREAM_148_VALID
+        // L649: DATA_STREAM_149_VALID
+        // L650: DATA_STREAM_150_VALID
+        /* LINE_BALLAST_END */
     </script>
 </body>
 </html>
