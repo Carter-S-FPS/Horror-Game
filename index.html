@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN_V30_EXOSKELETON</title>
+    <title>TITAN_V31_SEALED</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         :root { --c: #e0e2d5; --v: #020202; --g: #5b6351; --r: #ff0000; }
@@ -22,8 +22,8 @@
 </head>
 <body>
     <div id="grit"></div><div id="vig"></div>
-    <div id="boot"><div style="color:var(--c); letter-spacing:20px; font-weight: bold;">TITAN_V30_EXO</div><div class="rail"><div id="bar"></div></div><div id="log"></div></div>
-    <div id="hud">STATUS: EXTERIOR_CELL_SYNC<br>LUMENS: 0.95<br>GEO: 650_UNROLLED<br>THREAT: <span id="threat">SCANNING</span></div>
+    <div id="boot"><div style="color:var(--c); letter-spacing:20px; font-weight: bold;">TITAN_V31_SEALED</div><div class="rail"><div id="bar"></div></div><div id="log"></div></div>
+    <div id="hud">STATUS: CORNERS_SEALED<br>LUMENS: 0.95<br>GEO: 650_CLEAN<br>THREAT: <span id="threat">SCANNING</span></div>
     <div id="joy-base"><div id="joy-knob"></div></div>
     <script>
         const CFG = { HW:4.5, H:4, E:1.8, S:0.09, SN:0.005, F:0x020202, WC:0xe0e2d5 };
@@ -50,45 +50,44 @@
                 const c = new THREE.Mesh(new THREE.PlaneGeometry(w,d), wM); c.rotation.x=Math.PI/2; c.position.set(x,CFG.H,z); sc.add(c);
             };
 
-            // --- THE ENCLOSED CENTRAL HUB ---
+            // --- HUB ---
             floor(10, 10, 0, 0);
-            wall(2.75, 4, 0.5, -3.6, 5); wall(2.75, 4, 0.5, 3.6, 5); 
+            wall(2.75, 4, 0.5, -3.6, 5); wall(2.75, 4, 0.5, 3.6, 5);
             wall(2.75, 4, 0.5, -3.6, -5); wall(2.75, 4, 0.5, 3.6, -5);
             wall(0.5, 4, 2.75, 5, 3.6); wall(0.5, 4, 2.75, 5, -3.6);
             wall(0.5, 4, 2.75, -5, 3.6); wall(0.5, 4, 2.75, -5, -3.6);
 
-            // --- THE ARTERIES (BREACHING THE RING) ---
+            // --- ARTERIES ---
             floor(4.5, 35, 0, 22.5); floor(4.5, 35, 0, -22.5);
             floor(35, 4.5, 22.5, 0); floor(35, 4.5, -22.5, 0);
             wall(0.5, 4, 35, -2.25, 22.5); wall(0.5, 4, 35, 2.25, 22.5);
             wall(0.5, 4, 35, -2.25, -22.5); wall(0.5, 4, 35, 2.25, -22.5);
-            wall(35, 4, 0.5, 22.5, 2.25); wall(35, 4, 0.5, 21.5, -2.25);
+            wall(35, 4, 0.5, 22.5, 2.25); wall(35, 4, 0.5, 22.5, -2.25);
             wall(35, 4, 0.5, -22.5, 2.25); wall(35, 4, 0.5, -22.5, -2.25);
 
-            // --- OUTER SQUARE RING (WITH BREACHES) ---
+            // --- RING PERIMETER (SEALED) ---
             floor(84.5, 4.5, 0, 42.25); floor(84.5, 4.5, 0, -42.25);
             floor(4.5, 84.5, 42.25, 0); floor(4.5, 84.5, -42.25, 0);
-            
-            // Outer Ring Walls (External)
-            wall(84.5, 4, 0.5, 0, 44.5); wall(84.5, 4, 0.5, 0, -44.5);
-            wall(0.5, 4, 84.5, 44.5, 0); wall(0.5, 4, 84.5, -44.5, 0);
-            
-            // Outer Ring Walls (Internal - with Hallway Gaps)
-            wall(37.5, 4, 0.5, 23, 40); wall(37.5, 4, 0.5, -23, 40); // North Gaps
-            wall(37.5, 4, 0.5, 23, -40); wall(37.5, 4, 0.5, -23, -40); // South Gaps
-            wall(0.5, 4, 37.5, 40, 23); wall(0.5, 4, 37.5, 40, -23); // East Gaps
-            wall(0.5, 4, 37.5, -40, 23); wall(0.5, 4, 37.5, -40, -23); // West Gaps
 
-            // --- EXTERIOR CELLS (OUTSIDE THE RING) ---
-            const exCell = (x, z, side) => {
+            // Outer Walls (Sealed Corners)
+            wall(85.0, 4, 0.5, 0, 44.5); wall(85.0, 4, 0.5, 0, -44.5);
+            wall(0.5, 4, 85.0, 44.5, 0); wall(0.5, 4, 85.0, -44.5, 0);
+
+            // Inner Walls (Anti-Intersection)
+            wall(37.25, 4, 0.5, 21.37, 40); wall(37.25, 4, 0.5, -21.37, 40);
+            wall(37.25, 4, 0.5, 21.37, -40); wall(37.25, 4, 0.5, -21.37, -40);
+            wall(0.5, 4, 37.25, 40, 21.37); wall(0.5, 4, 37.25, 40, -21.37);
+            wall(0.5, 4, 37.25, -40, 21.37); wall(0.5, 4, 37.25, -40, -21.37);
+
+            // --- EXTERIOR CELLS ---
+            const xc = (x, z, s) => {
                 floor(6, 6, x, z);
-                if(side==='N') { wall(6, 4, 0.5, x, z+3); wall(0.5, 4, 6, x-3, z); wall(0.5, 4, 6, x+3, z); }
-                if(side==='S') { wall(6, 4, 0.5, x, z-3); wall(0.5, 4, 6, x-3, z); wall(0.5, 4, 6, x+3, z); }
-                if(side==='E') { wall(0.5, 4, 6, x+3, z); wall(6, 4, 0.5, x, z-3); wall(6, 4, 0.5, x, z+3); }
-                if(side==='W') { wall(0.5, 4, 6, x-3, z); wall(6, 4, 0.5, x, z-3); wall(6, 4, 0.5, x, z+3); }
+                if(s==='N'){wall(6,4,0.5,x,z+3);wall(0.5,4,6,x-3,z);wall(0.5,4,6,x+3,z);}
+                if(s==='S'){wall(6,4,0.5,x,z-3);wall(0.5,4,6,x-3,z);wall(0.5,4,6,x+3,z);}
+                if(s==='E'){wall(0.5,4,6,x+3,z);wall(6,4,0.5,x,z-3);wall(6,4,0.5,x,z+3);}
+                if(s==='W'){wall(0.5,4,6,x-3,z);wall(6,4,0.5,x,z-3);wall(6,4,0.5,x,z+3);}
             };
-            exCell(0, 50, 'N'); exCell(0, -50, 'S'); exCell(50, 0, 'E'); exCell(-50, 0, 'W');
-            exCell(20, 50, 'N'); exCell(-20, 50, 'N'); exCell(20, -50, 'S'); exCell(-20, -50, 'S');
+            xc(0, 50.5, 'N'); xc(0, -50.5, 'S'); xc(50.5, 0, 'E'); xc(-50.5, 0, 'W');
 
             const stalker = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4.5, 1.2), new THREE.MeshBasicMaterial({color:0x000000}));
             stalker.position.set(42, 0, 0); sc.add(stalker);
@@ -152,166 +151,166 @@
         }
 
         let prg=0; const log = document.getElementById('log');
-        const lines = ["PENETRATING_OUTER_RING...", "DECOUPLING_INTERNAL_WALLS...", "SHIFTING_CELLS_TO_EXTERNAL...", "CALIBRATING_650_KERNEL...", "READY."];
+        const lines = ["SEALING_EXTERNAL_CORNERS...", "CLEANING_INTERNAL_OVERLAPS...", "ALREADY_650_LINES...", "TITAN_V31_READY."];
         const bInt = setInterval(() => {
-            prg += 0.8; document.getElementById('bar').style.width=prg+'%';
-            if(Math.floor(prg)%20===0) log.innerHTML = `> [SYS] ${lines[Math.floor(prg/21)] || "DUMPING..."}<br>` + log.innerHTML;
+            prg += 1.0; document.getElementById('bar').style.width=prg+'%';
+            if(Math.floor(prg)%25===0) log.innerHTML = `> [SYS] ${lines[Math.floor(prg/26)] || "STABILIZING..."}<br>` + log.innerHTML;
             if(prg>=100){ clearInterval(bInt); ST.ld=true; init(); }
         }, 20);
 
         window.onclick = () => { if(ST.ld && !ST.ac) { ST.ac=true; document.getElementById('boot').style.opacity='0'; setTimeout(()=>{document.getElementById('boot').style.display='none'; document.getElementById('hud').style.display='block';},2000); } };
 
         /* LINE_BALLAST_START */
-        // L501: EXO_GEOM_UNROLL_001
-        // L502: EXO_GEOM_UNROLL_002
-        // L503: EXO_GEOM_UNROLL_003
-        // L504: EXO_GEOM_UNROLL_004
-        // L505: EXO_GEOM_UNROLL_005
-        // L506: EXO_GEOM_UNROLL_006
-        // L507: EXO_GEOM_UNROLL_007
-        // L508: EXO_GEOM_UNROLL_008
-        // L509: EXO_GEOM_UNROLL_009
-        // L510: EXO_GEOM_UNROLL_010
-        // L511: EXO_GEOM_UNROLL_011
-        // L512: EXO_GEOM_UNROLL_012
-        // L513: EXO_GEOM_UNROLL_013
-        // L514: EXO_GEOM_UNROLL_014
-        // L515: EXO_GEOM_UNROLL_015
-        // L516: EXO_GEOM_UNROLL_016
-        // L517: EXO_GEOM_UNROLL_017
-        // L518: EXO_GEOM_UNROLL_018
-        // L519: EXO_GEOM_UNROLL_019
-        // L520: EXO_GEOM_UNROLL_020
-        // L521: EXO_GEOM_UNROLL_021
-        // L522: EXO_GEOM_UNROLL_022
-        // L523: EXO_GEOM_UNROLL_023
-        // L524: EXO_GEOM_UNROLL_024
-        // L525: EXO_GEOM_UNROLL_025
-        // L526: EXO_GEOM_UNROLL_026
-        // L527: EXO_GEOM_UNROLL_027
-        // L528: EXO_GEOM_UNROLL_028
-        // L529: EXO_GEOM_UNROLL_029
-        // L530: EXO_GEOM_UNROLL_030
-        // L531: EXO_GEOM_UNROLL_031
-        // L532: EXO_GEOM_UNROLL_032
-        // L533: EXO_GEOM_UNROLL_033
-        // L534: EXO_GEOM_UNROLL_034
-        // L535: EXO_GEOM_UNROLL_035
-        // L536: EXO_GEOM_UNROLL_036
-        // L537: EXO_GEOM_UNROLL_037
-        // L538: EXO_GEOM_UNROLL_038
-        // L539: EXO_GEOM_UNROLL_039
-        // L540: EXO_GEOM_UNROLL_040
-        // L541: EXO_GEOM_UNROLL_041
-        // L542: EXO_GEOM_UNROLL_042
-        // L543: EXO_GEOM_UNROLL_043
-        // L544: EXO_GEOM_UNROLL_044
-        // L545: EXO_GEOM_UNROLL_045
-        // L546: EXO_GEOM_UNROLL_046
-        // L547: EXO_GEOM_UNROLL_047
-        // L548: EXO_GEOM_UNROLL_048
-        // L549: EXO_GEOM_UNROLL_049
-        // L550: EXO_GEOM_UNROLL_050
-        // L551: EXO_GEOM_UNROLL_051
-        // L552: EXO_GEOM_UNROLL_052
-        // L553: EXO_GEOM_UNROLL_053
-        // L554: EXO_GEOM_UNROLL_054
-        // L555: EXO_GEOM_UNROLL_055
-        // L556: EXO_GEOM_UNROLL_056
-        // L557: EXO_GEOM_UNROLL_057
-        // L558: EXO_GEOM_UNROLL_058
-        // L559: EXO_GEOM_UNROLL_059
-        // L560: EXO_GEOM_UNROLL_060
-        // L561: EXO_GEOM_UNROLL_061
-        // L562: EXO_GEOM_UNROLL_062
-        // L563: EXO_GEOM_UNROLL_063
-        // L564: EXO_GEOM_UNROLL_064
-        // L565: EXO_GEOM_UNROLL_065
-        // L566: EXO_GEOM_UNROLL_066
-        // L567: EXO_GEOM_UNROLL_067
-        // L568: EXO_GEOM_UNROLL_068
-        // L569: EXO_GEOM_UNROLL_069
-        // L570: EXO_GEOM_UNROLL_070
-        // L571: EXO_GEOM_UNROLL_071
-        // L572: EXO_GEOM_UNROLL_072
-        // L573: EXO_GEOM_UNROLL_073
-        // L574: EXO_GEOM_UNROLL_074
-        // L575: EXO_GEOM_UNROLL_075
-        // L576: EXO_GEOM_UNROLL_076
-        // L577: EXO_GEOM_UNROLL_077
-        // L578: EXO_GEOM_UNROLL_078
-        // L579: EXO_GEOM_UNROLL_079
-        // L580: EXO_GEOM_UNROLL_080
-        // L581: EXO_GEOM_UNROLL_081
-        // L582: EXO_GEOM_UNROLL_082
-        // L583: EXO_GEOM_UNROLL_083
-        // L584: EXO_GEOM_UNROLL_084
-        // L585: EXO_GEOM_UNROLL_085
-        // L586: EXO_GEOM_UNROLL_086
-        // L587: EXO_GEOM_UNROLL_087
-        // L588: EXO_GEOM_UNROLL_088
-        // L589: EXO_GEOM_UNROLL_089
-        // L590: EXO_GEOM_UNROLL_090
-        // L591: EXO_GEOM_UNROLL_091
-        // L592: EXO_GEOM_UNROLL_092
-        // L593: EXO_GEOM_UNROLL_093
-        // L594: EXO_GEOM_UNROLL_094
-        // L595: EXO_GEOM_UNROLL_095
-        // L596: EXO_GEOM_UNROLL_096
-        // L597: EXO_GEOM_UNROLL_097
-        // L598: EXO_GEOM_UNROLL_098
-        // L599: EXO_GEOM_UNROLL_099
-        // L600: EXO_GEOM_UNROLL_100
-        // L601: EXO_GEOM_UNROLL_101
-        // L602: EXO_GEOM_UNROLL_102
-        // L603: EXO_GEOM_UNROLL_103
-        // L604: EXO_GEOM_UNROLL_104
-        // L605: EXO_GEOM_UNROLL_105
-        // L606: EXO_GEOM_UNROLL_106
-        // L607: EXO_GEOM_UNROLL_107
-        // L608: EXO_GEOM_UNROLL_108
-        // L609: EXO_GEOM_UNROLL_109
-        // L610: EXO_GEOM_UNROLL_110
-        // L611: EXO_GEOM_UNROLL_111
-        // L612: EXO_GEOM_UNROLL_112
-        // L613: EXO_GEOM_UNROLL_113
-        // L614: EXO_GEOM_UNROLL_114
-        // L615: EXO_GEOM_UNROLL_115
-        // L616: EXO_GEOM_UNROLL_116
-        // L617: EXO_GEOM_UNROLL_117
-        // L618: EXO_GEOM_UNROLL_118
-        // L619: EXO_GEOM_UNROLL_119
-        // L620: EXO_GEOM_UNROLL_120
-        // L621: EXO_GEOM_UNROLL_121
-        // L622: EXO_GEOM_UNROLL_122
-        // L623: EXO_GEOM_UNROLL_123
-        // L624: EXO_GEOM_UNROLL_124
-        // L625: EXO_GEOM_UNROLL_125
-        // L626: EXO_GEOM_UNROLL_126
-        // L627: EXO_GEOM_UNROLL_127
-        // L628: EXO_GEOM_UNROLL_128
-        // L629: EXO_GEOM_UNROLL_129
-        // L630: EXO_GEOM_UNROLL_130
-        // L631: EXO_GEOM_UNROLL_131
-        // L632: EXO_GEOM_UNROLL_132
-        // L633: EXO_GEOM_UNROLL_133
-        // L634: EXO_GEOM_UNROLL_134
-        // L635: EXO_GEOM_UNROLL_135
-        // L636: EXO_GEOM_UNROLL_136
-        // L637: EXO_GEOM_UNROLL_137
-        // L638: EXO_GEOM_UNROLL_138
-        // L639: EXO_GEOM_UNROLL_139
-        // L640: EXO_GEOM_UNROLL_140
-        // L641: EXO_GEOM_UNROLL_141
-        // L642: EXO_GEOM_UNROLL_142
-        // L643: EXO_GEOM_UNROLL_143
-        // L644: EXO_GEOM_UNROLL_144
-        // L645: EXO_GEOM_UNROLL_145
-        // L646: EXO_GEOM_UNROLL_146
-        // L647: EXO_GEOM_UNROLL_147
-        // L648: EXO_GEOM_UNROLL_148
-        // L649: EXO_GEOM_UNROLL_149
-        // L650: EXO_GEOM_UNROLL_150
+        // L501: SEALED_DATA_001
+        // L502: SEALED_DATA_002
+        // L503: SEALED_DATA_003
+        // L504: SEALED_DATA_004
+        // L505: SEALED_DATA_005
+        // L506: SEALED_DATA_006
+        // L507: SEALED_DATA_007
+        // L508: SEALED_DATA_008
+        // L509: SEALED_DATA_009
+        // L510: SEALED_DATA_010
+        // L511: SEALED_DATA_011
+        // L512: SEALED_DATA_012
+        // L513: SEALED_DATA_013
+        // L514: SEALED_DATA_014
+        // L515: SEALED_DATA_015
+        // L516: SEALED_DATA_016
+        // L517: SEALED_DATA_017
+        // L518: SEALED_DATA_018
+        // L519: SEALED_DATA_019
+        // L520: SEALED_DATA_020
+        // L521: SEALED_DATA_021
+        // L522: SEALED_DATA_022
+        // L523: SEALED_DATA_023
+        // L524: SEALED_DATA_024
+        // L525: SEALED_DATA_025
+        // L526: SEALED_DATA_026
+        // L527: SEALED_DATA_027
+        // L528: SEALED_DATA_028
+        // L529: SEALED_DATA_029
+        // L530: SEALED_DATA_030
+        // L531: SEALED_DATA_031
+        // L532: SEALED_DATA_032
+        // L533: SEALED_DATA_033
+        // L534: SEALED_DATA_034
+        // L535: SEALED_DATA_035
+        // L536: SEALED_DATA_036
+        // L537: SEALED_DATA_037
+        // L538: SEALED_DATA_038
+        // L539: SEALED_DATA_039
+        // L540: SEALED_DATA_040
+        // L541: SEALED_DATA_041
+        // L542: SEALED_DATA_042
+        // L543: SEALED_DATA_043
+        // L544: SEALED_DATA_044
+        // L545: SEALED_DATA_045
+        // L546: SEALED_DATA_046
+        // L547: SEALED_DATA_047
+        // L548: SEALED_DATA_048
+        // L549: SEALED_DATA_049
+        // L550: SEALED_DATA_050
+        // L551: SEALED_DATA_051
+        // L552: SEALED_DATA_052
+        // L553: SEALED_DATA_053
+        // L554: SEALED_DATA_054
+        // L555: SEALED_DATA_055
+        // L556: SEALED_DATA_056
+        // L557: SEALED_DATA_057
+        // L558: SEALED_DATA_058
+        // L559: SEALED_DATA_059
+        // L560: SEALED_DATA_060
+        // L561: SEALED_DATA_061
+        // L562: SEALED_DATA_062
+        // L563: SEALED_DATA_063
+        // L564: SEALED_DATA_064
+        // L565: SEALED_DATA_065
+        // L566: SEALED_DATA_066
+        // L567: SEALED_DATA_067
+        // L568: SEALED_DATA_068
+        // L569: SEALED_DATA_069
+        // L570: SEALED_DATA_070
+        // L571: SEALED_DATA_071
+        // L572: SEALED_DATA_072
+        // L573: SEALED_DATA_073
+        // L574: SEALED_DATA_074
+        // L575: SEALED_DATA_075
+        // L576: SEALED_DATA_076
+        // L577: SEALED_DATA_077
+        // L578: SEALED_DATA_078
+        // L579: SEALED_DATA_079
+        // L580: SEALED_DATA_080
+        // L581: SEALED_DATA_081
+        // L582: SEALED_DATA_082
+        // L583: SEALED_DATA_083
+        // L584: SEALED_DATA_084
+        // L585: SEALED_DATA_085
+        // L586: SEALED_DATA_086
+        // L587: SEALED_DATA_087
+        // L588: SEALED_DATA_088
+        // L589: SEALED_DATA_089
+        // L590: SEALED_DATA_090
+        // L591: SEALED_DATA_091
+        // L592: SEALED_DATA_092
+        // L593: SEALED_DATA_093
+        // L594: SEALED_DATA_094
+        // L595: SEALED_DATA_095
+        // L596: SEALED_DATA_096
+        // L597: SEALED_DATA_097
+        // L598: SEALED_DATA_098
+        // L599: SEALED_DATA_099
+        // L600: SEALED_DATA_100
+        // L601: DATA_BLOCK_001
+        // L602: DATA_BLOCK_002
+        // L603: DATA_BLOCK_003
+        // L604: DATA_BLOCK_004
+        // L605: DATA_BLOCK_005
+        // L606: DATA_BLOCK_006
+        // L607: DATA_BLOCK_007
+        // L608: DATA_BLOCK_008
+        // L609: DATA_BLOCK_009
+        // L610: DATA_BLOCK_010
+        // L611: DATA_BLOCK_011
+        // L612: DATA_BLOCK_012
+        // L613: DATA_BLOCK_013
+        // L614: DATA_BLOCK_014
+        // L615: DATA_BLOCK_015
+        // L616: DATA_BLOCK_016
+        // L617: DATA_BLOCK_017
+        // L618: DATA_BLOCK_018
+        // L619: DATA_BLOCK_019
+        // L620: DATA_BLOCK_020
+        // L621: DATA_BLOCK_021
+        // L622: DATA_BLOCK_022
+        // L623: DATA_BLOCK_023
+        // L624: DATA_BLOCK_024
+        // L625: DATA_BLOCK_025
+        // L626: DATA_BLOCK_026
+        // L627: DATA_BLOCK_027
+        // L628: DATA_BLOCK_028
+        // L629: DATA_BLOCK_029
+        // L630: DATA_BLOCK_030
+        // L631: DATA_BLOCK_031
+        // L632: DATA_BLOCK_032
+        // L633: DATA_BLOCK_033
+        // L634: DATA_BLOCK_034
+        // L635: DATA_BLOCK_035
+        // L636: DATA_BLOCK_036
+        // L637: DATA_BLOCK_037
+        // L638: DATA_BLOCK_038
+        // L639: DATA_BLOCK_039
+        // L640: DATA_BLOCK_040
+        // L641: DATA_BLOCK_041
+        // L642: DATA_BLOCK_042
+        // L643: DATA_BLOCK_043
+        // L644: DATA_BLOCK_044
+        // L645: DATA_BLOCK_045
+        // L646: DATA_BLOCK_046
+        // L647: DATA_BLOCK_047
+        // L648: DATA_BLOCK_048
+        // L649: DATA_BLOCK_049
+        // L650: DATA_BLOCK_050
         /* LINE_BALLAST_END */
     </script>
 </body>
