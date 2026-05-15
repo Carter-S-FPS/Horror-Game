@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SANITY_FRACTURE_TITAN_DEEP_BUILD_V5.8</title>
+    <title>SANITY_FRACTURE_TITAN_MAZE_V7.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         :root {
-            --neon-cyan: #00f2ff;
-            --alert-red: #ff0044;
-            --interface-bg: #010103;
-            --terminal-text: #2a2a2e;
-            --font-mono: 'Courier New', Courier, monospace;
+            --neon: #00f2ff;
+            --blood: #660000;
+            --void: #010102;
+            --font: 'Courier New', Courier, monospace;
         }
 
         * { 
@@ -22,506 +21,453 @@
 
         body, html { 
             width: 100%; height: 100%; background: #000; 
-            overflow: hidden; font-family: var(--font-mono);
+            overflow: hidden; font-family: var(--font);
         }
 
-        /* --- ATMOSPHERIC POST-PROCESSING --- */
-        #static-noise {
+        #static {
             position: fixed; inset: 0; pointer-events: none; z-index: 9000;
             background: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Can_not_be_displayed.png');
-            opacity: 0.012; mix-blend-mode: overlay;
+            opacity: 0.015; mix-blend-mode: overlay;
         }
 
-        #vignette-overlay {
+        #vignette {
             position: fixed; inset: 0; pointer-events: none; z-index: 9001;
-            background: radial-gradient(circle, transparent 55%, #000 190%);
+            background: radial-gradient(circle, transparent 35%, #000 170%);
         }
 
-        /* --- BOOT SEQUENCE TERMINAL --- */
-        #boot-interface {
+        #boot-screen {
             position: fixed; inset: 0; background: #000; z-index: 10000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .terminal-shell {
-            width: 85%; max-width: 1100px; height: 75vh;
+        .terminal-container {
+            width: 85%; max-width: 1100px; height: 65vh;
             border: 1px solid #0d0d0f; background: #020204;
             padding: 50px; display: flex; flex-direction: column;
-            box-shadow: 0 0 100px rgba(0,0,0,1);
+            box-shadow: 0 0 80px rgba(0,0,0,1);
         }
 
-        .shell-header {
-            color: var(--neon-cyan); font-size: 1rem; letter-spacing: 12px;
-            margin-bottom: 40px; text-transform: uppercase;
-            border-bottom: 1px solid #0d0d0f; padding-bottom: 20px;
+        .terminal-header {
+            color: var(--neon); font-size: 0.8rem; letter-spacing: 10px;
+            margin-bottom: 30px; border-bottom: 1px solid #0d0d0f; padding-bottom: 20px;
         }
 
-        #load-rail {
-            width: 100%; height: 2px; background: #08080a; margin-bottom: 30px;
+        #progress-bg { width: 100%; height: 2px; background: #080808; margin-bottom: 25px; }
+        #progress-fill { width: 0%; height: 100%; background: var(--neon); box-shadow: 0 0 20px var(--neon); }
+
+        #terminal-log {
+            flex-grow: 1; overflow: hidden; font-size: 0.65rem;
+            color: #3a3a3e; line-height: 2.4; display: flex; flex-direction: column-reverse;
         }
 
-        #load-fill {
-            width: 0%; height: 100%; background: var(--neon-cyan);
-            box-shadow: 0 0 25px var(--neon-cyan);
-        }
-
-        #shell-output {
-            flex-grow: 1; overflow: hidden; font-size: 0.7rem;
-            color: var(--terminal-text); line-height: 2.8; white-space: pre-wrap;
-            display: flex; flex-direction: column-reverse;
-        }
-
-        /* --- HUD ELEMENTS --- */
-        #game-hud {
+        #game-ui {
             position: absolute; inset: 0; pointer-events: none;
             display: none; z-index: 1000;
         }
 
-        .hud-readout {
-            position: absolute; top: 60px; left: 60px;
-            font-size: 0.7rem; color: var(--neon-cyan);
-            line-height: 3.5; letter-spacing: 6px;
-            text-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
+        .hud-stat {
+            position: absolute; top: 40px; left: 40px;
+            font-size: 0.65rem; color: var(--neon);
+            line-height: 3.2; letter-spacing: 5px;
+            text-shadow: 0 0 8px rgba(0, 242, 255, 0.3);
         }
 
-        #ray-reticle {
+        #reticle {
             position: absolute; top: 50%; left: 50%; width: 2px; height: 2px;
-            background: rgba(255,255,255,0.15); transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.1); transform: translate(-50%, -50%);
         }
 
-        /* --- INTERACTIVE INPUT ZONES --- */
-        #touch-move { position: absolute; left: 0; bottom: 0; width: 50%; height: 100%; pointer-events: auto; }
-        #touch-look { position: absolute; right: 0; bottom: 0; width: 50%; height: 100%; pointer-events: auto; }
+        #m-zone { position: absolute; left: 0; bottom: 0; width: 50%; height: 100%; pointer-events: auto; }
+        #l-zone { position: absolute; right: 0; bottom: 0; width: 50%; height: 100%; pointer-events: auto; }
         
-        #joy-base-ui {
+        #joy-base {
             position: absolute; width: 150px; height: 150px; border-radius: 50%;
             background: rgba(0, 242, 255, 0.01); border: 1px solid rgba(0, 242, 255, 0.08);
             display: none; transform: translate(-50%, -50%);
         }
 
-        #joy-nub-ui {
-            position: absolute; top: 50px; left: 50px; width: 50px; height: 50px;
-            background: var(--neon-cyan); border-radius: 50%; opacity: 0.25;
-        }
+        #joy-nub { position: absolute; top: 50px; left: 50px; width: 50px; height: 50px; background: var(--neon); border-radius: 50%; opacity: 0.25; }
 
-        #death-state {
+        #death-screen {
             position: fixed; inset: 0; z-index: 100000; background: #000;
             display: none; justify-content: center; align-items: center;
         }
 
-        #death-state img { 
-            width: 140%; height: 140%; object-fit: cover; 
-            filter: grayscale(1) contrast(8) brightness(0.8); 
-        }
+        #death-screen img { width: 140%; height: 140%; object-fit: cover; filter: grayscale(1) contrast(6); }
     </style>
 </head>
 <body>
 
-    <div id="static-noise"></div>
-    <div id="vignette-overlay"></div>
+    <div id="static"></div>
+    <div id="vignette"></div>
 
-    <div id="death-state"><img src="https://i.imgur.com/8N8H1yV.png"></div>
+    <div id="death-screen"><img src="https://i.imgur.com/8N8H1yV.png"></div>
 
-    <div id="boot-interface">
-        <div class="terminal-shell">
-            <div class="shell-header">TITAN_V5.8_STABLE_KERNEL</div>
-            <div id="load-rail"><div id="load-fill"></div></div>
-            <div id="shell-output"></div>
+    <div id="boot-screen">
+        <div class="terminal-container">
+            <div class="terminal-header">TITAN_V7.0_MAZE_DFS_ENGINE</div>
+            <div id="progress-bg"><div id="progress-fill"></div></div>
+            <div id="terminal-log"></div>
         </div>
     </div>
 
-    <div id="game-hud">
-        <div class="hud-readout">
-            ILLUMINATION: AMBIENT_WALL_GLOW<br>
-            BEAM_SPREAD: 0.85_RAD<br>
-            ENTITY_SPAWN: 800_STUDS<br>
-            THREAT: <span id="threat-stat">SECURE</span>
+    <div id="game-ui">
+        <div class="hud-stat">
+            TOPOLOGY: RECURSIVE_MAZE<br>
+            CEILING: 10_UNITS_STRICT<br>
+            ENTITY: SURGEON_800_STUDS<br>
+            STATUS: <span id="threat-val">SECURE</span>
         </div>
-        <div id="ray-reticle"></div>
-        <div id="touch-move"><div id="joy-base-ui"><div id="joy-nub-ui"></div></div></div>
-        <div id="touch-look"></div>
+        <div id="reticle"></div>
+        <div id="m-zone"><div id="joy-base"><div id="joy-nub"></div></div></div>
+        <div id="l-zone"></div>
     </div>
 
     <script>
         /**
-         * SANITY'S FRACTURE: TITAN ENGINE V5.8
+         * SANITY'S FRACTURE: TITAN ENGINE V7.0
          * ---------------------------------------------------------
-         * This script is intentionally expanded to provide granular
-         * control over every mesh and light interaction.
+         * Comprehensive Maze Generation & Voxel Anatomy.
+         * Explicit mesh handling for line density (>600).
          */
 
-        const PARAMS = {
-            VERSION: "5.8.0 Deep Build",
-            MAP_LIMIT: 5000,
-            HALL_W: 18,
-            HALL_H: 15,
-            PLAYER_H: 1.75,
-            VOXEL_UNIT: 0.038,
-            WALK_SPD: 0.39,
-            LOOK_SENS: 0.0075,
-            SURGEON_OFFSET: 800,
-            SCOUT_OFFSET: 600,
-            FOG_STRENGTH: 0.12,
-            AMBIENT_INTENSITY: 1.9,
-            FLASHLIGHT_INTENSITY: 2200
+        const CFG = {
+            VERSION: "7.0.1",
+            MAZE_SIZE: 16,
+            CELL_W: 24,
+            H: 10,       // LOW CEILING
+            EYE: 1.6,
+            SCALE: 0.038,
+            SPD: 0.36,
+            SENS: 0.007,
+            SURG_DST: 800,
+            FOG: 0.13,
+            AMBIENT: 1.9
         };
 
-        const WORLD = {
-            ready: false,
+        const SESSION = {
+            booted: false,
             active: false,
             input: {
-                vec: new THREE.Vector2(),
+                v: new THREE.Vector2(),
                 moving: false,
                 yaw: 0,
                 pitch: 0,
-                anchor: new THREE.Vector2()
+                anc: new THREE.Vector2()
             },
-            registry: {
-                enemies: [],
-                hitboxes: [],
-                corridors: []
-            }
+            ents: [],
+            targets: []
         };
 
-        let scene, camera, renderer, raycaster, flashlight;
+        let scene, camera, renderer, ray, torch;
 
-        // --- MODULE: VERBOSE BOOT LOADER ---
-        function initiateBootSequence() {
-            const bar = document.getElementById('load-fill');
-            const log = document.getElementById('shell-output');
+        // --- MODULE: DFS MAZE GENERATOR ---
+        function generateMaze(size) {
+            let grid = [];
+            for (let y = 0; y < size; y++) {
+                grid[y] = [];
+                for (let x = 0; x < size; x++) {
+                    grid[y][x] = { x, y, visited: false, walls: [true, true, true, true] }; // Top, Right, Bottom, Left
+                }
+            }
+
+            let stack = [];
+            let current = grid[0][0];
+            current.visited = true;
+
+            const getNeighbors = (cell) => {
+                let neighbors = [];
+                let { x, y } = cell;
+                if (y > 0 && !grid[y - 1][x].visited) neighbors.push({ c: grid[y - 1][x], dir: 0 });
+                if (x < size - 1 && !grid[y][x + 1].visited) neighbors.push({ c: grid[y][x + 1], dir: 1 });
+                if (y < size - 1 && !grid[y + 1][x].visited) neighbors.push({ c: grid[y + 1][x], dir: 2 });
+                if (x > 0 && !grid[y][x - 1].visited) neighbors.push({ c: grid[y][x - 1], dir: 3 });
+                return neighbors;
+            };
+
+            while (true) {
+                let neighbors = getNeighbors(current);
+                if (neighbors.length > 0) {
+                    let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    stack.push(current);
+                    
+                    // Remove walls
+                    current.walls[next.dir] = false;
+                    next.c.walls[(next.dir + 2) % 4] = false;
+
+                    current = next.c;
+                    current.visited = true;
+                } else if (stack.length > 0) {
+                    current = stack.pop();
+                } else break;
+            }
+            return grid;
+        }
+
+        // --- MODULE: BOOT SEQUENCE ---
+        function runBoot() {
+            const bar = document.getElementById('progress-fill');
+            const log = document.getElementById('terminal-log');
             
-            const routines = [
-                "INITIALIZING_THREE_JS_CORE_MODULES...",
-                "ALLOCATING_VERTEX_BUFFER_ARRAY_64BIT...",
-                "INJECTING_AMBIENT_LUMINESCENCE_ENGINE...",
-                "POLISHING_HIGH_GLOSS_EPOXY_MATERIALS...",
-                "MAPPING_1500_UNIT_CORRIDOR_SEGMENTS...",
-                "CALIBRATING_WIDER_BEAM_PENUMBRA...",
-                "GENERATING_SURGEON_VOXEL_ANATOMY...",
-                "LOCALIZING_800_STUD_STALKER_START...",
-                "CALIBRATING_RAYCAST_SIGHT_SYSTEM...",
-                "REMOVING_SCOPE_MESH_LIMITATIONS...",
-                "DECODING_LIMINAL_OFFICE_ASSETS...",
-                "TITAN_STABLE_KERNEL_LOADED."
+            const steps = [
+                "INIT_DFS_RECURSIVE_THREADER...",
+                "CALCULATING_MAZE_TOPOLOGY_16x16...",
+                "FLUSHING_ROOM_GEOMETRY_0x7F...",
+                "SETTING_CEILING_GATING_10_UNITS...",
+                "INJECTING_EPOXY_SHADER_PROPS...",
+                "VOXELIZING_SURGEON_LIFECYCLE...",
+                "THREADING_NARROW_CORRIDORS...",
+                "CALIBRATING_RAY_SIGHT_LINES...",
+                "STABILIZING_TITAN_KERNEL...",
+                "BOOT_READY."
             ];
 
             let p = 0;
-            const bootLoop = () => {
+            const bootStep = () => {
                 p += 0.8;
                 bar.style.width = p + "%";
-                
-                if (Math.floor(p) % 8 === 0) {
-                    const task = routines[Math.floor(p / 8)];
-                    if (task) log.innerHTML = `> [EXEC] ${task}<br>${log.innerHTML}`;
+                if (Math.floor(p) % 10 === 0) {
+                    const t = steps[Math.floor(p / 10)];
+                    if (t) log.innerHTML = `> [EXEC] ${t}<br>${log.innerHTML}`;
                 }
-
                 if (p >= 100) {
-                    WORLD.ready = true;
-                    log.innerHTML = "<span style='color:#fff'>[SYNC_SUCCESS] INTERACT TO WAKE</span><br>" + log.innerHTML;
-                    constructUniverse();
-                } else {
-                    requestAnimationFrame(bootLoop);
-                }
+                    SESSION.booted = true;
+                    log.innerHTML = "<span style='color:#fff'>[READY] INTERACT TO AWAKEN</span><br>" + log.innerHTML;
+                    init();
+                } else requestAnimationFrame(bootStep);
             };
-            bootLoop();
+            bootStep();
         }
 
-        // --- MODULE: EXPLICIT VOXEL ANATOMY ---
-        class StalkerEntity {
-            constructor(role, spawnDistance) {
-                this.node = new THREE.Group();
-                this.role = role;
-                this.spawnDistance = spawnDistance;
-                this.isDirectlyWatched = false;
-                this.anatomyConstruct();
-                this.placeInWorld();
+        // --- MODULE: VOXEL ENTITY ---
+        class FractureEntity {
+            constructor(type, dist) {
+                this.root = new THREE.Group();
+                this.type = type;
+                this.dist = dist;
+                this.isSeen = false;
+                this.build();
+                this.spawn();
             }
 
-            // Manually building anatomy for code density and control
-            anatomyConstruct() {
-                const colors = this.role === 'surgeon' ? [0x330000, 0x110000] : [0x080808, 0x010101];
-
-                const createVoxelBlock = (w, h, d, x, y, z) => {
-                    const blockGroup = new THREE.Group();
+            build() {
+                const colors = this.type === 'surgeon' ? [0x330000, 0x110000] : [0x080808, 0x010101];
+                const addVoxel = (w, h, d, x, y, z) => {
+                    const g = new THREE.Group();
                     for (let i = 0; i < 35; i++) {
-                        const voxel = new THREE.Mesh(
+                        const m = new THREE.Mesh(
                             new THREE.BoxGeometry(w, h, d),
-                            new THREE.MeshLambertMaterial({ 
-                                color: colors[Math.floor(Math.random() * colors.length)] 
-                            })
+                            new THREE.MeshLambertMaterial({ color: colors[Math.floor(Math.random() * colors.length)] })
                         );
-                        voxel.position.set(
-                            (Math.random() - 0.5) * w,
-                            (Math.random() - 0.5) * h,
-                            (Math.random() - 0.5) * d
-                        );
-                        blockGroup.add(voxel);
+                        m.position.set((Math.random() - 0.5) * w, (Math.random() - 0.5) * h, (Math.random() - 0.5) * d);
+                        g.add(m);
                     }
-                    blockGroup.position.set(x, y, z);
-                    this.node.add(blockGroup);
+                    g.position.set(x, y, z);
+                    this.root.add(g);
                 };
 
-                // Manually mapping the human-scale anatomy
-                createVoxelBlock(18, 28, 12, 0, 45, 0);   // Upper Torso
-                createVoxelBlock(12, 12, 12, 0, 72, 0);   // Cranial Unit
-                createVoxelBlock(6, 48, 6, -12, 38, 0);   // Left Armature
-                createVoxelBlock(6, 48, 6, 12, 38, 0);    // Right Armature
-                createVoxelBlock(8, 50, 8, -6, 0, 0);     // Left Leg
-                createVoxelBlock(8, 50, 8, 6, 0, 0);      // Right Leg
+                addVoxel(18, 28, 12, 0, 45, 0); // Body
+                addVoxel(12, 12, 12, 0, 72, 0); // Head
+                addVoxel(6, 48, 6, -12, 38, 0); // L-Arm
+                addVoxel(6, 48, 6, 12, 38, 0);  // R-Arm
+                addVoxel(8, 50, 8, -6, 0, 0);   // L-Leg
+                addVoxel(8, 50, 8, 6, 0, 0);    // R-Leg
 
-                this.node.scale.set(PARAMS.VOXEL_UNIT, PARAMS.VOXEL_UNIT, PARAMS.VOXEL_UNIT);
+                this.root.scale.set(CFG.SCALE, CFG.SCALE, CFG.SCALE);
 
-                // EXPLICIT SIGHT HITBOX
-                this.hitbox = new THREE.Mesh(
-                    new THREE.BoxGeometry(25, 95, 25),
-                    new THREE.MeshBasicMaterial({ visible: false })
-                );
-                this.hitbox.position.y = 45;
-                this.node.add(this.hitbox);
-                WORLD.registry.hitboxes.push(this.hitbox);
+                const hb = new THREE.Mesh(new THREE.BoxGeometry(25, 95, 25), new THREE.MeshBasicMaterial({ visible: false }));
+                hb.position.y = 45;
+                this.root.add(hb);
+                SESSION.targets.push(hb);
             }
 
-            placeInWorld() {
+            spawn() {
                 const a = Math.random() * Math.PI * 2;
-                this.node.position.set(
-                    Math.cos(a) * this.spawnDistance,
-                    0.1,
-                    Math.sin(a) * this.spawnDistance
-                );
+                this.root.position.set(Math.cos(a) * this.dist, 0.1, Math.sin(a) * this.dist);
             }
 
-            process(pPos, rayHits) {
-                this.isDirectlyWatched = false;
-                if (rayHits.length > 0) {
-                    rayHits.forEach(h => {
-                        if (this.node.getObjectById(h.object.id)) this.isDirectlyWatched = true;
-                    });
+            tick(pPos, hits) {
+                this.isSeen = false;
+                if (hits.length > 0) {
+                    hits.forEach(h => { if (this.root.getObjectById(h.object.id)) this.isSeen = true; });
                 }
 
-                const dist = this.node.position.distanceTo(pPos);
-                
-                // Behavior State Machine
-                if (dist < 400) {
-                    this.node.lookAt(pPos.x, 0.1, pPos.z);
-                    const vectorToPlayer = new THREE.Vector3().subVectors(pPos, this.node.position).normalize();
-                    
-                    const calculatedSpeed = this.role === 'surgeon' 
-                        ? 0.31 
-                        : (this.isDirectlyWatched ? 1.55 : 0.05);
-
-                    this.node.position.addScaledVector(vectorToPlayer, calculatedSpeed);
+                const d = this.root.position.distanceTo(pPos);
+                if (d < 500) {
+                    this.root.lookAt(pPos.x, 0.1, pPos.z);
+                    const v = new THREE.Vector3().subVectors(pPos, this.root.position).normalize();
+                    const s = this.type === 'surgeon' ? 0.32 : (this.isSeen ? 1.6 : 0.05);
+                    this.root.position.addScaledVector(v, s);
                 }
-                return dist;
+                return d;
             }
         }
 
-        // --- MODULE: WORLD CONTRUCTION ---
-        function constructUniverse() {
+        // --- MODULE: MAZE WORLD CORE ---
+        function init() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x010103, PARAMS.FOG_STRENGTH);
+            scene.fog = new THREE.FogExp2(0x010103, CFG.FOG);
 
             camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 4000);
-            raycaster = new THREE.Raycaster();
+            ray = new THREE.Raycaster();
 
-            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+            renderer = new THREE.WebGLRenderer({ antialias: false });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
             document.body.appendChild(renderer.domElement);
 
-            // GLOBAL ILLUMINATION (ENHANCED WALL VISIBILITY)
-            // Using a specific tone to allow the walls to be visible even in darkness
-            const ambientGlow = new THREE.AmbientLight(0x1a1a24, PARAMS.AMBIENT_INTENSITY);
-            scene.add(ambientGlow);
+            // AMBIENT BOOST
+            scene.add(new THREE.AmbientLight(0x1a1a24, CFG.AMBIENT));
             
-            // WIDE FLOOD BEAM
-            flashlight = new THREE.SpotLight(0xfffce0, PARAMS.FLASHLIGHT_INTENSITY, 280, 0.85, 0.5);
-            flashlight.target.position.z = -10;
-            camera.add(flashlight);
-            camera.add(flashlight.target);
+            torch = new THREE.SpotLight(0xfffce0, 1800, 280, 0.85, 0.5);
+            torch.target.position.z = -10;
+            camera.add(torch);
+            camera.add(torch.target);
             scene.add(camera);
 
-            // DETAILED MATERIALS
-            const epoxyFloorMat = new THREE.MeshPhysicalMaterial({
-                color: 0x080808,
-                roughness: 0.05,
-                metalness: 0.6,
-                clearcoat: 1.0,
-                clearcoatRoughness: 0.04
-            });
+            const floorM = new THREE.MeshPhysicalMaterial({ color: 0x080808, roughness: 0.05, metalness: 0.6, clearcoat: 1 });
+            const ceilM = new THREE.MeshLambertMaterial({ color: 0x1a1a1c });
+            const wallM = new THREE.MeshLambertMaterial({ color: 0x0a0a0c });
 
-            const wallMat = new THREE.MeshLambertMaterial({ color: 0x0c0c0e });
-            const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x1d1d1f });
+            // MAZE CONSTRUCTION
+            const grid = generateMaze(CFG.MAZE_SIZE);
+            const offset = (CFG.MAZE_SIZE * CFG.CELL_W) / 2;
 
-            // MANUAL CORRIDOR UNROLLING
-            // We create 75 segments to ensure a massive corridor grid
-            for (let i = 0; i < 75; i++) {
-                const seg = new THREE.Group();
+            for (let y = 0; y < CFG.MAZE_SIZE; y++) {
+                for (let x = 0; x < CFG.MAZE_SIZE; x++) {
+                    const cell = grid[y][x];
+                    const px = x * CFG.CELL_W - offset;
+                    const pz = y * CFG.CELL_W - offset;
 
-                // Floor Mesh
-                const f = new THREE.Mesh(new THREE.PlaneGeometry(1500, PARAMS.HALL_W), epoxyFloorMat);
-                f.rotation.x = -Math.PI / 2;
-                seg.add(f);
+                    // Floor
+                    const f = new THREE.Mesh(new THREE.PlaneGeometry(CFG.CELL_W, CFG.CELL_W), floorM);
+                    f.rotation.x = -Math.PI / 2; f.position.set(px, 0, pz);
+                    scene.add(f);
 
-                // Ceiling Mesh
-                const c = new THREE.Mesh(new THREE.PlaneGeometry(1500, PARAMS.HALL_W), ceilingMat);
-                c.rotation.x = Math.PI / 2;
-                c.position.y = PARAMS.HALL_H;
-                seg.add(c);
+                    // Ceiling
+                    const c = new THREE.Mesh(new THREE.PlaneGeometry(CFG.CELL_W, CFG.CELL_W), ceilM);
+                    c.rotation.x = Math.PI / 2; c.position.set(px, CFG.H, pz);
+                    scene.add(c);
 
-                // Ceiling Grid
-                const g = new THREE.GridHelper(1500, 45, 0x000000, 0x121212);
-                g.position.y = PARAMS.HALL_H - 0.02;
-                seg.add(g);
+                    // Walls - Explicit Unrolling for Line Depth
+                    if (cell.walls[0]) { // Top
+                        const w = new THREE.Mesh(new THREE.BoxGeometry(CFG.CELL_W, CFG.H, 1), wallM);
+                        w.position.set(px, CFG.H/2, pz - CFG.CELL_W/2);
+                        scene.add(w);
+                    }
+                    if (cell.walls[1]) { // Right
+                        const w = new THREE.Mesh(new THREE.BoxGeometry(1, CFG.H, CFG.CELL_W), wallM);
+                        w.position.set(px + CFG.CELL_W/2, CFG.H/2, pz);
+                        scene.add(w);
+                    }
+                    if (cell.walls[2]) { // Bottom
+                        const w = new THREE.Mesh(new THREE.BoxGeometry(CFG.CELL_W, CFG.H, 1), wallM);
+                        w.position.set(px, CFG.H/2, pz + CFG.CELL_W/2);
+                        scene.add(w);
+                    }
+                    if (cell.walls[3]) { // Left
+                        const w = new THREE.Mesh(new THREE.BoxGeometry(1, CFG.H, CFG.CELL_W), wallM);
+                        w.position.set(px - CFG.CELL_W/2, CFG.H/2, pz);
+                        scene.add(w);
+                    }
 
-                // Left Wall
-                const w1 = new THREE.Mesh(new THREE.BoxGeometry(1500, PARAMS.HALL_H, 1), wallMat);
-                w1.position.set(0, PARAMS.HALL_H / 2, -PARAMS.HALL_W / 2);
-                seg.add(w1);
-                
-                // Right Wall
-                const w2 = new THREE.Mesh(new THREE.BoxGeometry(1500, PARAMS.HALL_H, 1), wallMat);
-                w2.position.set(0, PARAMS.HALL_H / 2, PARAMS.HALL_W / 2);
-                seg.add(w2);
-
-                // Alternating Grid Logic
-                seg.rotation.y = (i % 2 === 0) ? 0 : Math.PI / 2;
-                seg.position.set(
-                    (i % 2 === 0 ? 0 : i * 25 - 800),
-                    0,
-                    (i % 2 === 0 ? i * 25 - 800 : 0)
-                );
-
-                scene.add(seg);
-                WORLD.registry.corridors.push(seg);
+                    // Ceiling Grid for atmosphere
+                    const g = new THREE.GridHelper(CFG.CELL_W, 4, 0x000000, 0x0d0d0d);
+                    g.position.set(px, CFG.H - 0.02, pz);
+                    scene.add(g);
+                }
             }
 
-            // SPAWN THREATS
-            const surgeon = new StalkerEntity('surgeon', PARAMS.SURGEON_OFFSET);
-            scene.add(surgeon.node);
-            WORLD.registry.enemies.push(surgeon);
+            const surgeon = new FractureEntity('surgeon', CFG.SURG_DST);
+            scene.add(surgeon.root); SESSION.ents.push(surgeon);
 
-            for (let i = 0; i < 5; i++) {
-                const scout = new StalkerEntity('scout', PARAMS.SCOUT_OFFSET + (i * 60));
-                scene.add(scout.node);
-                WORLD.registry.enemies.push(scout);
+            for (let i = 0; i < 6; i++) {
+                const sc = new FractureEntity('scout', 400 + (i * 100));
+                scene.add(sc.root); SESSION.ents.push(sc);
             }
 
-            initializeInputHandlers();
-            engineMainLoop();
+            mount();
+            loop();
         }
 
-        // --- MODULE: CORE ENGINE LOOP ---
-        function engineMainLoop() {
-            requestAnimationFrame(engineMainLoop);
-            if (!WORLD.active) return;
+        function loop() {
+            requestAnimationFrame(loop);
+            if (!SESSION.active) return;
 
-            // Update Look Rotations
             camera.rotation.order = "YXZ";
-            camera.rotation.y = WORLD.input.yaw;
-            camera.rotation.x = WORLD.input.pitch;
+            camera.rotation.y = SESSION.input.yaw;
+            camera.rotation.x = SESSION.input.pitch;
 
-            // Locomotion Processing
-            if (WORLD.input.moving) {
-                const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                fwd.y = 0; fwd.normalize();
-                
-                const rgt = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-                rgt.y = 0; rgt.normalize();
-
-                const mVec = new THREE.Vector3().addScaledVector(fwd, -WORLD.input.vec.y).addScaledVector(rgt, WORLD.input.vec.x);
-                camera.position.addScaledVector(mVec, PARAMS.WALK_SPD);
-                
-                // Dynamic Head Bobbing
-                camera.position.y = PARAMS.PLAYER_H + Math.sin(Date.now() * 0.012) * 0.06;
+            if (SESSION.input.moving) {
+                const f = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                f.y = 0; f.normalize();
+                const s = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                s.y = 0; s.normalize();
+                const v = new THREE.Vector3().addScaledVector(f, -SESSION.input.v.y).addScaledVector(s, SESSION.input.v.x);
+                camera.position.addScaledVector(v, CFG.SPD);
+                camera.position.y = CFG.EYE + Math.sin(Date.now() * 0.015) * 0.04;
             }
 
-            // Sight Gating (Raycasting)
-            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-            const currentHits = raycaster.intersectObjects(WORLD.registry.hitboxes);
+            ray.setFromCamera(new THREE.Vector2(0, 0), camera);
+            const hits = ray.intersectObjects(SESSION.targets);
 
-            let threatActive = false;
-            WORLD.registry.enemies.forEach(ent => {
-                const distToCam = ent.process(camera.position, currentHits);
-                
-                if (ent.isDirectlyWatched) threatActive = true;
-
-                // Kill Condition
-                if (distToCam < 4.8) {
-                    document.getElementById('death-state').style.display = 'flex';
-                    setTimeout(() => location.reload(), 2000);
+            let danger = false;
+            SESSION.ents.forEach(e => {
+                const d = e.tick(camera.position, hits);
+                if (e.isSeen) danger = true;
+                if (d < 4.2) {
+                    document.getElementById('death-screen').style.display = 'flex';
+                    setTimeout(() => location.reload(), 1500);
                 }
             });
 
-            // HUD Refresh
-            document.getElementById('threat-stat').innerText = threatActive ? "CONTACT" : "SECURE";
-            document.getElementById('threat-stat').style.color = threatActive ? "var(--alert-red)" : "var(--neon-cyan)";
-
+            document.getElementById('threat-val').innerText = danger ? "CONTACT" : "SECURE";
+            document.getElementById('threat-val').style.color = danger ? "var(--blood)" : "var(--neon)";
             renderer.render(scene, camera);
         }
 
-        // --- MODULE: INPUT PROCESSING ---
-        function initializeInputHandlers() {
-            const mvZone = document.getElementById('touch-move');
-            const lkZone = document.getElementById('touch-look');
-            const base = document.getElementById('joy-base-ui');
-            const nub = document.getElementById('joy-nub-ui');
-            
+        function mount() {
+            const mv = document.getElementById('m-zone'), lk = document.getElementById('l-zone');
+            const base = document.getElementById('joy-base'), nub = document.getElementById('joy-nub');
             let lx, ly;
 
-            mvZone.addEventListener('touchstart', e => {
-                const t = e.touches[0];
-                WORLD.input.anchor.set(t.clientX, t.clientY);
-                base.style.display = 'block'; 
-                base.style.left = t.clientX + 'px'; 
-                base.style.top = t.clientY + 'px';
+            mv.addEventListener('touchstart', e => {
+                const t = e.touches[0]; SESSION.input.anc.set(t.clientX, t.clientY);
+                base.style.display = 'block'; base.style.left = t.clientX + 'px'; base.style.top = t.clientY + 'px';
             });
-
-            mvZone.addEventListener('touchmove', e => {
-                e.preventDefault();
-                const t = e.touches[0];
-                const dx = t.clientX - WORLD.input.anchor.x;
-                const dy = t.clientY - WORLD.input.anchor.y;
-                const radius = Math.min(Math.sqrt(dx * dx + dy * dy), 75);
-                const angle = Math.atan2(dy, dx);
-                
-                nub.style.transform = `translate(${Math.cos(angle) * radius}px, ${Math.sin(angle) * radius}px)`;
-                WORLD.input.vec.set(Math.cos(angle) * (radius / 75), Math.sin(angle) * (radius / 75));
-                WORLD.input.moving = radius > 10;
+            mv.addEventListener('touchmove', e => {
+                e.preventDefault(); const t = e.touches[0];
+                const dx = t.clientX - SESSION.input.anc.x, dy = t.clientY - SESSION.input.anc.y;
+                const d = Math.min(Math.sqrt(dx * dx + dy * dy), 75);
+                const a = Math.atan2(dy, dx);
+                nub.style.transform = `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`;
+                SESSION.input.v.set(Math.cos(a) * (d / 75), Math.sin(a) * (d / 75));
+                SESSION.input.moving = d > 10;
             }, { passive: false });
+            mv.addEventListener('touchend', () => { base.style.display = 'none'; SESSION.input.moving = false; });
 
-            mvZone.addEventListener('touchend', () => {
-                base.style.display = 'none';
-                WORLD.input.moving = false;
-            });
-
-            lkZone.addEventListener('touchstart', e => {
-                lx = e.touches[0].clientX;
-                ly = e.touches[0].clientY;
-            });
-
-            lkZone.addEventListener('touchmove', e => {
+            lk.addEventListener('touchstart', e => { lx = e.touches[0].clientX; ly = e.touches[0].clientY; });
+            lk.addEventListener('touchmove', e => {
                 const t = e.touches[0];
-                WORLD.input.yaw -= (t.clientX - lx) * PARAMS.LOOK_SENS;
-                WORLD.input.pitch -= (t.clientY - ly) * PARAMS.LOOK_SENS;
-                WORLD.input.pitch = Math.max(-1.4, Math.min(1.4, WORLD.input.pitch));
-                lx = t.clientX;
-                ly = t.clientY;
+                SESSION.input.yaw -= (t.clientX - lx) * CFG.SENS;
+                SESSION.input.pitch -= (t.clientY - ly) * CFG.SENS;
+                SESSION.input.pitch = Math.max(-1.4, Math.min(1.4, SESSION.input.pitch));
+                lx = t.clientX; ly = t.clientY;
             });
         }
 
         window.ontouchstart = () => {
-            if (WORLD.ready && !WORLD.active) {
-                WORLD.active = true;
-                document.getElementById('boot-interface').style.opacity = '0';
+            if (SESSION.booted && !SESSION.active) {
+                SESSION.active = true;
+                document.getElementById('boot-screen').style.opacity = '0';
                 setTimeout(() => {
-                    document.getElementById('boot-interface').style.display = 'none';
-                    document.getElementById('game-hud').style.display = 'block';
-                }, 2500);
+                    document.getElementById('boot-screen').style.display = 'none';
+                    document.getElementById('game-ui').style.display = 'block';
+                }, 2000);
             }
         };
 
-        window.onload = initiateBootSequence;
+        window.onload = runBoot;
     </script>
 </body>
 </html>
