@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SANITY_FRACTURE_TITAN_MAZE_V7.0</title>
+    <title>SANITY_FRACTURE_TITAN_V7.5_COMPRESSED</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         :root {
-            --neon: #00f2ff;
-            --blood: #660000;
-            --void: #010102;
-            --font: 'Courier New', Courier, monospace;
+            --neon-blue: #00f2ff;
+            --alert-red: #990011;
+            --black-void: #010102;
+            --terminal-font: 'Courier New', Courier, monospace;
         }
 
         * { 
@@ -21,154 +21,157 @@
 
         body, html { 
             width: 100%; height: 100%; background: #000; 
-            overflow: hidden; font-family: var(--font);
+            overflow: hidden; font-family: var(--terminal-font);
         }
 
-        #static {
+        #noise-layer {
             position: fixed; inset: 0; pointer-events: none; z-index: 9000;
             background: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Can_not_be_displayed.png');
             opacity: 0.015; mix-blend-mode: overlay;
         }
 
-        #vignette {
+        #vignette-layer {
             position: fixed; inset: 0; pointer-events: none; z-index: 9001;
-            background: radial-gradient(circle, transparent 35%, #000 170%);
+            background: radial-gradient(circle, transparent 30%, #000 150%);
         }
 
-        #boot-screen {
+        #boot-interface {
             position: fixed; inset: 0; background: #000; z-index: 10000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 1.8s ease-out;
         }
 
-        .terminal-container {
-            width: 85%; max-width: 1100px; height: 65vh;
-            border: 1px solid #0d0d0f; background: #020204;
-            padding: 50px; display: flex; flex-direction: column;
-            box-shadow: 0 0 80px rgba(0,0,0,1);
+        .terminal-shell {
+            width: 90%; max-width: 1100px; height: 70vh;
+            border: 1px solid #111; background: #020204;
+            padding: 45px; display: flex; flex-direction: column;
         }
 
         .terminal-header {
-            color: var(--neon); font-size: 0.8rem; letter-spacing: 10px;
-            margin-bottom: 30px; border-bottom: 1px solid #0d0d0f; padding-bottom: 20px;
+            color: var(--neon-blue); font-size: 0.8rem; letter-spacing: 12px;
+            margin-bottom: 35px; border-bottom: 1px solid #0d0d0f; padding-bottom: 15px;
+            text-transform: uppercase;
         }
 
-        #progress-bg { width: 100%; height: 2px; background: #080808; margin-bottom: 25px; }
-        #progress-fill { width: 0%; height: 100%; background: var(--neon); box-shadow: 0 0 20px var(--neon); }
+        #load-progress-bg { width: 100%; height: 1px; background: #08080a; margin-bottom: 30px; }
+        #load-progress-fill { width: 0%; height: 100%; background: var(--neon-blue); box-shadow: 0 0 15px var(--neon-blue); }
 
-        #terminal-log {
+        #terminal-output {
             flex-grow: 1; overflow: hidden; font-size: 0.65rem;
-            color: #3a3a3e; line-height: 2.4; display: flex; flex-direction: column-reverse;
+            color: #2a2a2e; line-height: 2.2; display: flex; flex-direction: column-reverse;
         }
 
-        #game-ui {
+        #game-hud {
             position: absolute; inset: 0; pointer-events: none;
             display: none; z-index: 1000;
         }
 
-        .hud-stat {
-            position: absolute; top: 40px; left: 40px;
-            font-size: 0.65rem; color: var(--neon);
-            line-height: 3.2; letter-spacing: 5px;
-            text-shadow: 0 0 8px rgba(0, 242, 255, 0.3);
+        .hud-stats {
+            position: absolute; top: 45px; left: 45px;
+            font-size: 0.65rem; color: var(--neon-blue);
+            line-height: 3.5; letter-spacing: 5px;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
         }
 
-        #reticle {
+        #crosshair {
             position: absolute; top: 50%; left: 50%; width: 2px; height: 2px;
-            background: rgba(255,255,255,0.1); transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.08); transform: translate(-50%, -50%);
         }
 
-        #m-zone { position: absolute; left: 0; bottom: 0; width: 50%; height: 100%; pointer-events: auto; }
-        #l-zone { position: absolute; right: 0; bottom: 0; width: 50%; height: 100%; pointer-events: auto; }
+        /* --- CONTROL MAPPING --- */
+        #input-move { position: absolute; left: 0; bottom: 0; width: 50%; height: 100%; pointer-events: auto; }
+        #input-look { position: absolute; right: 0; bottom: 0; width: 50%; height: 100%; pointer-events: auto; }
         
-        #joy-base {
-            position: absolute; width: 150px; height: 150px; border-radius: 50%;
+        #joy-base-element {
+            position: absolute; width: 140px; height: 140px; border-radius: 50%;
             background: rgba(0, 242, 255, 0.01); border: 1px solid rgba(0, 242, 255, 0.08);
             display: none; transform: translate(-50%, -50%);
         }
 
-        #joy-nub { position: absolute; top: 50px; left: 50px; width: 50px; height: 50px; background: var(--neon); border-radius: 50%; opacity: 0.25; }
+        #joy-nub-element { position: absolute; top: 45px; left: 45px; width: 50px; height: 50px; background: var(--neon-blue); border-radius: 50%; opacity: 0.2; }
 
-        #death-screen {
+        #death-state-overlay {
             position: fixed; inset: 0; z-index: 100000; background: #000;
             display: none; justify-content: center; align-items: center;
         }
 
-        #death-screen img { width: 140%; height: 140%; object-fit: cover; filter: grayscale(1) contrast(6); }
+        #death-state-overlay img { width: 140%; height: 140%; object-fit: cover; filter: contrast(5) grayscale(1); }
     </style>
 </head>
 <body>
 
-    <div id="static"></div>
-    <div id="vignette"></div>
+    <div id="noise-layer"></div>
+    <div id="vignette-layer"></div>
 
-    <div id="death-screen"><img src="https://i.imgur.com/8N8H1yV.png"></div>
+    <div id="death-state-overlay"><img src="https://i.imgur.com/8N8H1yV.png"></div>
 
-    <div id="boot-screen">
-        <div class="terminal-container">
-            <div class="terminal-header">TITAN_V7.0_MAZE_DFS_ENGINE</div>
-            <div id="progress-bg"><div id="progress-fill"></div></div>
-            <div id="terminal-log"></div>
+    <div id="boot-interface">
+        <div class="terminal-shell">
+            <div class="terminal-header">TITAN_V7.5_CEILING_COMPRESSOR</div>
+            <div id="load-progress-bg"><div id="load-progress-fill"></div></div>
+            <div id="terminal-output"></div>
         </div>
     </div>
 
-    <div id="game-ui">
-        <div class="hud-stat">
+    <div id="game-hud">
+        <div class="hud-stats">
+            CEILING_GATING: 6.5_UNITS<br>
+            HALL_WIDTH: 10_UNITS<br>
             TOPOLOGY: RECURSIVE_MAZE<br>
-            CEILING: 10_UNITS_STRICT<br>
-            ENTITY: SURGEON_800_STUDS<br>
-            STATUS: <span id="threat-val">SECURE</span>
+            THREAT: <span id="threat-indicator">SECURE</span>
         </div>
-        <div id="reticle"></div>
-        <div id="m-zone"><div id="joy-base"><div id="joy-nub"></div></div></div>
-        <div id="l-zone"></div>
+        <div id="crosshair"></div>
+        <div id="input-move"><div id="joy-base-element"><div id="joy-nub-element"></div></div></div>
+        <div id="input-look"></div>
     </div>
 
     <script>
         /**
-         * SANITY'S FRACTURE: TITAN ENGINE V7.0
+         * SANITY'S FRACTURE: TITAN ENGINE V7.5
          * ---------------------------------------------------------
-         * Comprehensive Maze Generation & Voxel Anatomy.
+         * Comprehensive Maze Generation & Compressed Geometry.
          * Explicit mesh handling for line density (>600).
          */
 
-        const CFG = {
-            VERSION: "7.0.1",
-            MAZE_SIZE: 16,
-            CELL_W: 24,
-            H: 10,       // LOW CEILING
-            EYE: 1.6,
-            SCALE: 0.038,
-            SPD: 0.36,
-            SENS: 0.007,
-            SURG_DST: 800,
-            FOG: 0.13,
-            AMBIENT: 1.9
+        const PARAMS = {
+            VERSION: "7.5.0-COMPRESS",
+            MAZE_DIM: 18,
+            CELL_SIZE: 16,
+            CEILING_H: 6.5,  // EXTREMELY LOW
+            PLAYER_H: 1.55,
+            VOXEL_UNIT: 0.038,
+            WALK_SPD: 0.35,
+            LOOK_SENS: 0.007,
+            STALKER_DST: 800,
+            FOG_DENSE: 0.14,
+            AMBIENT_INT: 1.95
         };
 
-        const SESSION = {
-            booted: false,
-            active: false,
+        const STATE = {
+            isReady: false,
+            isLive: false,
             input: {
-                v: new THREE.Vector2(),
-                moving: false,
+                vec: new THREE.Vector2(),
+                isMoving: false,
                 yaw: 0,
                 pitch: 0,
-                anc: new THREE.Vector2()
+                anchor: new THREE.Vector2()
             },
-            ents: [],
-            targets: []
+            registry: {
+                entities: [],
+                hitboxes: []
+            }
         };
 
-        let scene, camera, renderer, ray, torch;
+        let scene, camera, renderer, raycaster, flashlight;
 
-        // --- MODULE: DFS MAZE GENERATOR ---
-        function generateMaze(size) {
+        // --- MODULE: MAZE GENERATOR (DFS) ---
+        function buildMazeTopology(dim) {
             let grid = [];
-            for (let y = 0; y < size; y++) {
+            for (let y = 0; y < dim; y++) {
                 grid[y] = [];
-                for (let x = 0; x < size; x++) {
-                    grid[y][x] = { x, y, visited: false, walls: [true, true, true, true] }; // Top, Right, Bottom, Left
+                for (let x = 0; x < dim; x++) {
+                    grid[y][x] = { x, y, visited: false, walls: [true, true, true, true] };
                 }
             }
 
@@ -176,26 +179,23 @@
             let current = grid[0][0];
             current.visited = true;
 
-            const getNeighbors = (cell) => {
+            const fetchNeighbors = (c) => {
                 let neighbors = [];
-                let { x, y } = cell;
+                let { x, y } = c;
                 if (y > 0 && !grid[y - 1][x].visited) neighbors.push({ c: grid[y - 1][x], dir: 0 });
-                if (x < size - 1 && !grid[y][x + 1].visited) neighbors.push({ c: grid[y][x + 1], dir: 1 });
-                if (y < size - 1 && !grid[y + 1][x].visited) neighbors.push({ c: grid[y + 1][x], dir: 2 });
+                if (x < dim - 1 && !grid[y][x + 1].visited) neighbors.push({ c: grid[y][x + 1], dir: 1 });
+                if (y < dim - 1 && !grid[y + 1][x].visited) neighbors.push({ c: grid[y + 1][x], dir: 2 });
                 if (x > 0 && !grid[y][x - 1].visited) neighbors.push({ c: grid[y][x - 1], dir: 3 });
                 return neighbors;
             };
 
             while (true) {
-                let neighbors = getNeighbors(current);
+                let neighbors = fetchNeighbors(current);
                 if (neighbors.length > 0) {
                     let next = neighbors[Math.floor(Math.random() * neighbors.length)];
                     stack.push(current);
-                    
-                    // Remove walls
                     current.walls[next.dir] = false;
                     next.c.walls[(next.dir + 2) % 4] = false;
-
                     current = next.c;
                     current.visited = true;
                 } else if (stack.length > 0) {
@@ -205,55 +205,55 @@
             return grid;
         }
 
-        // --- MODULE: BOOT SEQUENCE ---
-        function runBoot() {
-            const bar = document.getElementById('progress-fill');
-            const log = document.getElementById('terminal-log');
+        // --- MODULE: BOOT LOADER ---
+        function triggerBoot() {
+            const bar = document.getElementById('load-progress-fill');
+            const log = document.getElementById('terminal-output');
             
-            const steps = [
-                "INIT_DFS_RECURSIVE_THREADER...",
-                "CALCULATING_MAZE_TOPOLOGY_16x16...",
-                "FLUSHING_ROOM_GEOMETRY_0x7F...",
-                "SETTING_CEILING_GATING_10_UNITS...",
-                "INJECTING_EPOXY_SHADER_PROPS...",
-                "VOXELIZING_SURGEON_LIFECYCLE...",
-                "THREADING_NARROW_CORRIDORS...",
-                "CALIBRATING_RAY_SIGHT_LINES...",
-                "STABILIZING_TITAN_KERNEL...",
+            const logs = [
+                "CRUSHING_CEILING_VECTORS_TO_6.5...",
+                "THREADING_RECURSIVE_MAZE_DFS...",
+                "ALLOCATING_10_UNIT_CORRIDOR_GATING...",
+                "INJECTING_AMBIENT_WALL_LUMINESCENCE...",
+                "VOXELIZING_SURGEON_800_THRESHOLD...",
+                "FLUSHING_ROOM_GEOMETRY_BUFFER...",
+                "CALIBRATING_FLOOD_BEAM_OPTICS...",
+                "POLISHING_EPOXY_REFLECTIONS...",
+                "STABILIZING_TITAN_7.5_STABLE...",
                 "BOOT_READY."
             ];
 
             let p = 0;
-            const bootStep = () => {
-                p += 0.8;
+            const bootLoop = () => {
+                p += 0.9;
                 bar.style.width = p + "%";
                 if (Math.floor(p) % 10 === 0) {
-                    const t = steps[Math.floor(p / 10)];
+                    const t = logs[Math.floor(p / 10)];
                     if (t) log.innerHTML = `> [EXEC] ${t}<br>${log.innerHTML}`;
                 }
                 if (p >= 100) {
-                    SESSION.booted = true;
-                    log.innerHTML = "<span style='color:#fff'>[READY] INTERACT TO AWAKEN</span><br>" + log.innerHTML;
-                    init();
-                } else requestAnimationFrame(bootStep);
+                    STATE.isReady = true;
+                    log.innerHTML = "<span style='color:#fff'>[SYNC_SUCCESS] TOUCH TO START</span><br>" + log.innerHTML;
+                    initWorld();
+                } else requestAnimationFrame(bootLoop);
             };
-            bootStep();
+            bootLoop();
         }
 
-        // --- MODULE: VOXEL ENTITY ---
-        class FractureEntity {
+        // --- MODULE: EXPLICIT VOXEL ENTITY ---
+        class FractureStalker {
             constructor(type, dist) {
-                this.root = new THREE.Group();
+                this.node = new THREE.Group();
                 this.type = type;
                 this.dist = dist;
-                this.isSeen = false;
-                this.build();
-                this.spawn();
+                this.isVisible = false;
+                this.constructAnatomy();
+                this.spawnInMaze();
             }
 
-            build() {
+            constructAnatomy() {
                 const colors = this.type === 'surgeon' ? [0x330000, 0x110000] : [0x080808, 0x010101];
-                const addVoxel = (w, h, d, x, y, z) => {
+                const addVoxelSeg = (w, h, d, x, y, z) => {
                     const g = new THREE.Group();
                     for (let i = 0; i < 35; i++) {
                         const m = new THREE.Mesh(
@@ -264,210 +264,216 @@
                         g.add(m);
                     }
                     g.position.set(x, y, z);
-                    this.root.add(g);
+                    this.node.add(g);
                 };
 
-                addVoxel(18, 28, 12, 0, 45, 0); // Body
-                addVoxel(12, 12, 12, 0, 72, 0); // Head
-                addVoxel(6, 48, 6, -12, 38, 0); // L-Arm
-                addVoxel(6, 48, 6, 12, 38, 0);  // R-Arm
-                addVoxel(8, 50, 8, -6, 0, 0);   // L-Leg
-                addVoxel(8, 50, 8, 6, 0, 0);    // R-Leg
+                // Explicit anatomical threading
+                addVoxelSeg(18, 28, 12, 0, 45, 0); // Torso
+                addVoxelSeg(12, 12, 12, 0, 72, 0); // Head
+                addVoxelSeg(6, 48, 6, -12, 38, 0); // L-Arm
+                addVoxelSeg(6, 48, 6, 12, 38, 0);  // R-Arm
+                addVoxelSeg(8, 50, 8, -6, 0, 0);   // L-Leg
+                addVoxelSeg(8, 50, 8, 6, 0, 0);    // R-Leg
 
-                this.root.scale.set(CFG.SCALE, CFG.SCALE, CFG.SCALE);
+                this.node.scale.set(PARAMS.VOXEL_UNIT, PARAMS.VOXEL_UNIT, PARAMS.VOXEL_UNIT);
 
-                const hb = new THREE.Mesh(new THREE.BoxGeometry(25, 95, 25), new THREE.MeshBasicMaterial({ visible: false }));
-                hb.position.y = 45;
-                this.root.add(hb);
-                SESSION.targets.push(hb);
+                const hitbox = new THREE.Mesh(new THREE.BoxGeometry(25, 95, 25), new THREE.MeshBasicMaterial({ visible: false }));
+                hitbox.position.y = 45;
+                this.node.add(hitbox);
+                STATE.registry.hitboxes.push(hitbox);
             }
 
-            spawn() {
+            spawnInMaze() {
                 const a = Math.random() * Math.PI * 2;
-                this.root.position.set(Math.cos(a) * this.dist, 0.1, Math.sin(a) * this.dist);
+                this.node.position.set(Math.cos(a) * this.dist, 0.1, Math.sin(a) * this.dist);
             }
 
-            tick(pPos, hits) {
-                this.isSeen = false;
-                if (hits.length > 0) {
-                    hits.forEach(h => { if (this.root.getObjectById(h.object.id)) this.isSeen = true; });
+            tick(pPos, rayHits) {
+                this.isVisible = false;
+                if (rayHits.length > 0) {
+                    rayHits.forEach(h => { if (this.node.getObjectById(h.object.id)) this.isVisible = true; });
                 }
 
-                const d = this.root.position.distanceTo(pPos);
+                const d = this.node.position.distanceTo(pPos);
                 if (d < 500) {
-                    this.root.lookAt(pPos.x, 0.1, pPos.z);
-                    const v = new THREE.Vector3().subVectors(pPos, this.root.position).normalize();
-                    const s = this.type === 'surgeon' ? 0.32 : (this.isSeen ? 1.6 : 0.05);
-                    this.root.position.addScaledVector(v, s);
+                    this.node.lookAt(pPos.x, 0.1, pPos.z);
+                    const v = new THREE.Vector3().subVectors(pPos, this.node.position).normalize();
+                    const s = this.type === 'surgeon' ? 0.32 : (this.isVisible ? 1.55 : 0.05);
+                    this.node.position.addScaledVector(v, s);
                 }
                 return d;
             }
         }
 
-        // --- MODULE: MAZE WORLD CORE ---
-        function init() {
+        // --- MODULE: WORLD INITIALIZATION ---
+        function initWorld() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x010103, CFG.FOG);
+            scene.fog = new THREE.FogExp2(0x010103, PARAMS.FOG_DENSE);
 
             camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 4000);
-            ray = new THREE.Raycaster();
+            raycaster = new THREE.Raycaster();
 
-            renderer = new THREE.WebGLRenderer({ antialias: false });
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            // AMBIENT BOOST
-            scene.add(new THREE.AmbientLight(0x1a1a24, CFG.AMBIENT));
+            // GLOBAL ILLUMINATION
+            scene.add(new THREE.AmbientLight(0x1a1a24, PARAMS.AMBIENT_INT));
             
-            torch = new THREE.SpotLight(0xfffce0, 1800, 280, 0.85, 0.5);
-            torch.target.position.z = -10;
-            camera.add(torch);
-            camera.add(torch.target);
+            flashlight = new THREE.SpotLight(0xfffce0, 1800, 260, 0.85, 0.5);
+            flashlight.target.position.z = -10;
+            camera.add(flashlight);
+            camera.add(flashlight.target);
             scene.add(camera);
 
-            const floorM = new THREE.MeshPhysicalMaterial({ color: 0x080808, roughness: 0.05, metalness: 0.6, clearcoat: 1 });
-            const ceilM = new THREE.MeshLambertMaterial({ color: 0x1a1a1c });
-            const wallM = new THREE.MeshLambertMaterial({ color: 0x0a0a0c });
+            const floorMat = new THREE.MeshPhysicalMaterial({ color: 0x080808, roughness: 0.06, metalness: 0.5, clearcoat: 1 });
+            const ceilMat = new THREE.MeshLambertMaterial({ color: 0x141416 });
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0x08080a });
 
-            // MAZE CONSTRUCTION
-            const grid = generateMaze(CFG.MAZE_SIZE);
-            const offset = (CFG.MAZE_SIZE * CFG.CELL_W) / 2;
+            // MAZE CONSTRUCTION (UNROLLED)
+            const grid = buildMazeTopology(PARAMS.MAZE_DIM);
+            const gridOffset = (PARAMS.MAZE_DIM * PARAMS.CELL_SIZE) / 2;
 
-            for (let y = 0; y < CFG.MAZE_SIZE; y++) {
-                for (let x = 0; x < CFG.MAZE_SIZE; x++) {
+            for (let y = 0; y < PARAMS.MAZE_DIM; y++) {
+                for (let x = 0; x < PARAMS.MAZE_DIM; x++) {
                     const cell = grid[y][x];
-                    const px = x * CFG.CELL_W - offset;
-                    const pz = y * CFG.CELL_W - offset;
+                    const cx = x * PARAMS.CELL_SIZE - gridOffset;
+                    const cz = y * PARAMS.CELL_SIZE - gridOffset;
 
-                    // Floor
-                    const f = new THREE.Mesh(new THREE.PlaneGeometry(CFG.CELL_W, CFG.CELL_W), floorM);
-                    f.rotation.x = -Math.PI / 2; f.position.set(px, 0, pz);
+                    // Floor Plane
+                    const f = new THREE.Mesh(new THREE.PlaneGeometry(PARAMS.CELL_SIZE, PARAMS.CELL_SIZE), floorMat);
+                    f.rotation.x = -Math.PI / 2; f.position.set(cx, 0, cz);
                     scene.add(f);
 
-                    // Ceiling
-                    const c = new THREE.Mesh(new THREE.PlaneGeometry(CFG.CELL_W, CFG.CELL_W), ceilM);
-                    c.rotation.x = Math.PI / 2; c.position.set(px, CFG.H, pz);
+                    // Ceiling Plane (ULTRA LOW)
+                    const c = new THREE.Mesh(new THREE.PlaneGeometry(PARAMS.CELL_SIZE, PARAMS.CELL_SIZE), ceilMat);
+                    c.rotation.x = Math.PI / 2; c.position.set(cx, PARAMS.CEILING_H, cz);
                     scene.add(c);
 
-                    // Walls - Explicit Unrolling for Line Depth
-                    if (cell.walls[0]) { // Top
-                        const w = new THREE.Mesh(new THREE.BoxGeometry(CFG.CELL_W, CFG.H, 1), wallM);
-                        w.position.set(px, CFG.H/2, pz - CFG.CELL_W/2);
-                        scene.add(w);
-                    }
-                    if (cell.walls[1]) { // Right
-                        const w = new THREE.Mesh(new THREE.BoxGeometry(1, CFG.H, CFG.CELL_W), wallM);
-                        w.position.set(px + CFG.CELL_W/2, CFG.H/2, pz);
-                        scene.add(w);
-                    }
-                    if (cell.walls[2]) { // Bottom
-                        const w = new THREE.Mesh(new THREE.BoxGeometry(CFG.CELL_W, CFG.H, 1), wallM);
-                        w.position.set(px, CFG.H/2, pz + CFG.CELL_W/2);
-                        scene.add(w);
-                    }
-                    if (cell.walls[3]) { // Left
-                        const w = new THREE.Mesh(new THREE.BoxGeometry(1, CFG.H, CFG.CELL_W), wallM);
-                        w.position.set(px - CFG.CELL_W/2, CFG.H/2, pz);
-                        scene.add(w);
-                    }
-
-                    // Ceiling Grid for atmosphere
-                    const g = new THREE.GridHelper(CFG.CELL_W, 4, 0x000000, 0x0d0d0d);
-                    g.position.set(px, CFG.H - 0.02, pz);
+                    // Ceiling Detail
+                    const g = new THREE.GridHelper(PARAMS.CELL_SIZE, 4, 0x000000, 0x0d0d0d);
+                    g.position.set(cx, PARAMS.CEILING_H - 0.02, cz);
                     scene.add(g);
+
+                    // Wall Meshes (Manually threading for density)
+                    if (cell.walls[0]) { // Top Wall
+                        const w = new THREE.Mesh(new THREE.BoxGeometry(PARAMS.CELL_SIZE, PARAMS.CEILING_H, 1), wallMat);
+                        w.position.set(cx, PARAMS.CEILING_H / 2, cz - PARAMS.CELL_SIZE / 2);
+                        scene.add(w);
+                    }
+                    if (cell.walls[1]) { // Right Wall
+                        const w = new THREE.Mesh(new THREE.BoxGeometry(1, PARAMS.CEILING_H, PARAMS.CELL_SIZE), wallMat);
+                        w.position.set(cx + PARAMS.CELL_SIZE / 2, PARAMS.CEILING_H / 2, cz);
+                        scene.add(w);
+                    }
+                    if (cell.walls[2]) { // Bottom Wall
+                        const w = new THREE.Mesh(new THREE.BoxGeometry(PARAMS.CELL_SIZE, PARAMS.CEILING_H, 1), wallMat);
+                        w.position.set(cx, PARAMS.CEILING_H / 2, cz + PARAMS.CELL_SIZE / 2);
+                        scene.add(w);
+                    }
+                    if (cell.walls[3]) { // Left Wall
+                        const w = new THREE.Mesh(new THREE.BoxGeometry(1, PARAMS.CEILING_H, PARAMS.CELL_SIZE), wallMat);
+                        w.position.set(cx - PARAMS.CELL_SIZE / 2, PARAMS.CEILING_H / 2, cz);
+                        scene.add(w);
+                    }
                 }
             }
 
-            const surgeon = new FractureEntity('surgeon', CFG.SURG_DST);
-            scene.add(surgeon.root); SESSION.ents.push(surgeon);
+            const surgeon = new FractureStalker('surgeon', PARAMS.STALKER_DST);
+            scene.add(surgeon.node); STATE.registry.entities.push(surgeon);
 
-            for (let i = 0; i < 6; i++) {
-                const sc = new FractureEntity('scout', 400 + (i * 100));
-                scene.add(sc.root); SESSION.ents.push(sc);
+            for (let i = 0; i < 5; i++) {
+                const scout = new FractureStalker('scout', 450 + (i * 80));
+                scene.add(scout.node); STATE.registry.entities.push(scout);
             }
 
-            mount();
-            loop();
+            setupControls();
+            mainLoop();
         }
 
-        function loop() {
-            requestAnimationFrame(loop);
-            if (!SESSION.active) return;
+        // --- MODULE: MAIN ENGINE LOOP ---
+        function mainLoop() {
+            requestAnimationFrame(mainLoop);
+            if (!STATE.isLive) return;
 
             camera.rotation.order = "YXZ";
-            camera.rotation.y = SESSION.input.yaw;
-            camera.rotation.x = SESSION.input.pitch;
+            camera.rotation.y = STATE.input.yaw;
+            camera.rotation.x = STATE.input.pitch;
 
-            if (SESSION.input.moving) {
-                const f = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                f.y = 0; f.normalize();
-                const s = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-                s.y = 0; s.normalize();
-                const v = new THREE.Vector3().addScaledVector(f, -SESSION.input.v.y).addScaledVector(s, SESSION.input.v.x);
-                camera.position.addScaledVector(v, CFG.SPD);
-                camera.position.y = CFG.EYE + Math.sin(Date.now() * 0.015) * 0.04;
+            if (STATE.input.isMoving) {
+                const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                fwd.y = 0; fwd.normalize();
+                const rgt = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                rgt.y = 0; rgt.normalize();
+                const mv = new THREE.Vector3().addScaledVector(fwd, -STATE.input.vec.y).addScaledVector(rgt, STATE.input.vec.x);
+                camera.position.addScaledVector(mv, PARAMS.WALK_SPD);
+                
+                // Low-Altitude Bobbing
+                camera.position.y = PARAMS.PLAYER_H + Math.sin(Date.now() * 0.018) * 0.035;
             }
 
-            ray.setFromCamera(new THREE.Vector2(0, 0), camera);
-            const hits = ray.intersectObjects(SESSION.targets);
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            const currentHits = raycaster.intersectObjects(STATE.registry.hitboxes);
 
-            let danger = false;
-            SESSION.ents.forEach(e => {
-                const d = e.tick(camera.position, hits);
-                if (e.isSeen) danger = true;
-                if (d < 4.2) {
-                    document.getElementById('death-screen').style.display = 'flex';
-                    setTimeout(() => location.reload(), 1500);
+            let threatDetected = false;
+            STATE.registry.entities.forEach(ent => {
+                const dist = ent.tick(camera.position, currentHits);
+                if (ent.isVisible) threatDetected = true;
+                if (dist < 4.0) {
+                    document.getElementById('death-state-overlay').style.display = 'flex';
+                    setTimeout(() => location.reload(), 1800);
                 }
             });
 
-            document.getElementById('threat-val').innerText = danger ? "CONTACT" : "SECURE";
-            document.getElementById('threat-val').style.color = danger ? "var(--blood)" : "var(--neon)";
+            document.getElementById('threat-indicator').innerText = threatDetected ? "CONTACT" : "SECURE";
+            document.getElementById('threat-indicator').style.color = threatDetected ? "var(--alert-red)" : "var(--neon-blue)";
+
             renderer.render(scene, camera);
         }
 
-        function mount() {
-            const mv = document.getElementById('m-zone'), lk = document.getElementById('l-zone');
-            const base = document.getElementById('joy-base'), nub = document.getElementById('joy-nub');
+        // --- MODULE: INTERFACE SETUP ---
+        function setupControls() {
+            const mv = document.getElementById('input-move'), lk = document.getElementById('input-look');
+            const base = document.getElementById('joy-base-element'), nub = document.getElementById('joy-nub-element');
             let lx, ly;
 
             mv.addEventListener('touchstart', e => {
-                const t = e.touches[0]; SESSION.input.anc.set(t.clientX, t.clientY);
+                const t = e.touches[0]; STATE.input.anchor.set(t.clientX, t.clientY);
                 base.style.display = 'block'; base.style.left = t.clientX + 'px'; base.style.top = t.clientY + 'px';
             });
             mv.addEventListener('touchmove', e => {
                 e.preventDefault(); const t = e.touches[0];
-                const dx = t.clientX - SESSION.input.anc.x, dy = t.clientY - SESSION.input.anc.y;
-                const d = Math.min(Math.sqrt(dx * dx + dy * dy), 75);
+                const dx = t.clientX - STATE.input.anchor.x, dy = t.clientY - STATE.input.anchor.y;
+                const d = Math.min(Math.sqrt(dx * dx + dy * dy), 70);
                 const a = Math.atan2(dy, dx);
                 nub.style.transform = `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px)`;
-                SESSION.input.v.set(Math.cos(a) * (d / 75), Math.sin(a) * (d / 75));
-                SESSION.input.moving = d > 10;
+                STATE.input.vec.set(Math.cos(a) * (d / 70), Math.sin(a) * (d / 70));
+                STATE.input.isMoving = d > 10;
             }, { passive: false });
-            mv.addEventListener('touchend', () => { base.style.display = 'none'; SESSION.input.moving = false; });
+            mv.addEventListener('touchend', () => { base.style.display = 'none'; STATE.input.isMoving = false; });
 
             lk.addEventListener('touchstart', e => { lx = e.touches[0].clientX; ly = e.touches[0].clientY; });
             lk.addEventListener('touchmove', e => {
                 const t = e.touches[0];
-                SESSION.input.yaw -= (t.clientX - lx) * CFG.SENS;
-                SESSION.input.pitch -= (t.clientY - ly) * CFG.SENS;
-                SESSION.input.pitch = Math.max(-1.4, Math.min(1.4, SESSION.input.pitch));
+                STATE.input.yaw -= (t.clientX - lx) * PARAMS.LOOK_SENS;
+                STATE.input.pitch -= (t.clientY - ly) * PARAMS.LOOK_SENS;
+                STATE.input.pitch = Math.max(-1.4, Math.min(1.4, STATE.input.pitch));
                 lx = t.clientX; ly = t.clientY;
             });
         }
 
         window.ontouchstart = () => {
-            if (SESSION.booted && !SESSION.active) {
-                SESSION.active = true;
-                document.getElementById('boot-screen').style.opacity = '0';
+            if (STATE.isReady && !STATE.isLive) {
+                STATE.isLive = true;
+                document.getElementById('boot-interface').style.opacity = '0';
                 setTimeout(() => {
-                    document.getElementById('boot-screen').style.display = 'none';
-                    document.getElementById('game-ui').style.display = 'block';
-                }, 2000);
+                    document.getElementById('boot-interface').style.display = 'none';
+                    document.getElementById('game-hud').style.display = 'block';
+                }, 1800);
             }
         };
 
-        window.onload = runBoot;
+        window.onload = triggerBoot;
     </script>
 </body>
 </html>
