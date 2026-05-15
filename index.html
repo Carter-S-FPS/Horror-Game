@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BLACKWOOD: VOXEL ABOMINATION ENGINE V5 - FULL SOURCE</title>
+    <title>BLACKWOOD: TITAN VOXEL COMPRESSION ENGINE V8</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         :root {
-            --neon-blue: #00f2ff;
-            --deep-red: #ff0044;
-            --medical-teal: #336666;
-            --interface-bg: #010101;
-            --terminal-gray: #444;
+            --neon-cyan: #00f2ff;
+            --flesh-red: #881111;
+            --void-bg: #020204;
+            --interface-font: 'Courier New', Courier, monospace;
         }
 
         * { 
@@ -25,412 +24,389 @@
         body, html { 
             width: 100%; 
             height: 100%; 
-            background: #000; 
+            background: var(--void-bg); 
             overflow: hidden; 
-            font-family: 'Courier New', Courier, monospace; 
+            font-family: var(--interface-font);
+            color: var(--neon-cyan);
         }
 
-        /* --- BOOT SEQUENCE STYLING --- */
+        /* --- OVERLAY SYSTEMS --- */
         #boot-overlay {
-            position: fixed; 
-            inset: 0; 
-            background: #000; 
+            position: fixed;
+            inset: 0;
+            background: #000;
             z-index: 10000;
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 2s ease-in-out;
         }
 
-        .terminal-container {
-            width: 85%; 
-            max-width: 700px; 
+        .terminal-box {
+            width: 90%;
+            max-width: 800px;
             padding: 40px;
-            border: 1px solid #1a1a1a; 
-            background: #020202;
-            box-shadow: 0 0 80px rgba(0, 0, 0, 1);
+            border: 1px solid #111;
+            background: #010101;
+            box-shadow: 0 0 50px rgba(0,0,0,1);
         }
 
         .terminal-header {
-            color: var(--neon-blue); 
-            font-size: 1.1rem; 
-            font-weight: bold;
-            letter-spacing: 4px; 
-            margin-bottom: 25px; 
-            border-bottom: 1px solid #111;
-            padding-bottom: 12px; 
+            font-size: 1.2rem;
+            letter-spacing: 6px;
+            margin-bottom: 25px;
             text-transform: uppercase;
+            border-bottom: 1px solid #222;
+            padding-bottom: 10px;
         }
 
-        #loading-rail { 
-            width: 100%; 
-            height: 3px; 
-            background: #0a0a0a; 
-            margin-bottom: 25px; 
-            position: relative; 
+        #load-rail {
+            width: 100%;
+            height: 2px;
+            background: #111;
+            margin: 25px 0;
+            position: relative;
         }
 
-        #loading-fill { 
-            width: 0%; 
-            height: 100%; 
-            background: var(--neon-blue); 
-            box-shadow: 0 0 15px var(--neon-blue); 
+        #load-fill {
+            width: 0%;
+            height: 100%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 15px var(--neon-cyan);
         }
 
-        #terminal-output {
-            height: 200px; 
-            overflow: hidden; 
-            font-size: 0.75rem; 
-            color: var(--terminal-gray);
-            line-height: 1.8; 
-            text-align: left; 
+        #terminal-log {
+            height: 180px;
+            overflow: hidden;
+            font-size: 0.75rem;
+            color: #444;
+            line-height: 1.8;
             white-space: pre-wrap;
         }
 
-        /* --- MAIN GAME INTERFACE --- */
-        #hud-layer {
-            position: absolute; 
-            inset: 0; 
+        /* --- GAMEPLAY HUD --- */
+        #game-hud {
+            position: absolute;
+            inset: 0;
             pointer-events: none;
-            display: none; 
+            display: none;
             z-index: 100;
         }
 
-        #vignette-fx {
-            position: absolute; 
+        #vignette {
+            position: absolute;
             inset: 0;
-            background: radial-gradient(circle, transparent 15%, rgba(0,0,0,0.98) 110%);
+            background: radial-gradient(circle, transparent 25%, #000 140%);
+            opacity: 0.9;
         }
 
-        /* ERGONOMIC CONTROLS - OPTIMIZED HEIGHT */
-        #input-move-zone { 
-            position: absolute; 
-            left: 0; 
-            bottom: 0; 
-            width: 50%; 
-            height: 85%; 
-            pointer-events: auto; 
-        }
-        
-        #input-look-zone { 
-            position: absolute; 
-            right: 0; 
-            bottom: 0; 
-            width: 50%; 
-            height: 100%; 
-            pointer-events: auto; 
+        #input-move-layer {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50%;
+            height: 85%;
+            pointer-events: auto;
         }
 
-        #joystick-housing {
-            position: absolute; 
-            bottom: 220px; /* High Ergonomic Placement */
-            left: 100px;
-            width: 160px; 
-            height: 160px; 
+        #input-look-layer {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 50%;
+            height: 100%;
+            pointer-events: auto;
+        }
+
+        #joy-base {
+            position: absolute;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
-            background: rgba(0, 242, 255, 0.01); 
-            border: 1px solid rgba(0, 242, 255, 0.08);
-            backdrop-filter: blur(5px);
-        }
-
-        #joystick-handle {
-            position: absolute; 
-            top: 55px; 
-            left: 55px; 
-            width: 50px; 
-            height: 50px;
-            background: rgba(0, 242, 255, 0.1); 
-            border: 2px solid var(--neon-blue);
-            border-radius: 50%; 
-            box-shadow: 0 0 25px rgba(0, 242, 255, 0.4);
-        }
-
-        /* DIAGNOSTIC UI */
-        .diag-readout {
-            position: absolute; 
-            top: 45px; 
-            left: 45px;
-            color: var(--neon-blue); 
-            font-size: 0.7rem; 
-            line-height: 2.5;
-            letter-spacing: 2px; 
-            text-shadow: 1px 1px 4px #000;
-        }
-
-        #alert-announcer {
-            position: absolute; 
-            top: 42%; 
-            width: 100%; 
-            text-align: center;
-            color: #fff; 
-            font-size: 3.5rem; 
-            font-weight: 900;
-            letter-spacing: 30px; 
-            opacity: 0; 
-            transition: all 1.2s;
-            transform: scale(0.85);
-        }
-
-        .reticle {
-            position: absolute; 
-            top: 50%; 
-            left: 50%; 
+            background: rgba(0, 242, 255, 0.03);
+            border: 1px solid rgba(0, 242, 255, 0.15);
+            backdrop-filter: blur(4px);
+            display: none;
             transform: translate(-50%, -50%);
-            width: 30px; 
-            height: 30px; 
-            opacity: 0.4;
         }
 
-        #crt-filter {
-            position: fixed; 
+        #joy-knob {
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            width: 50px;
+            height: 50px;
+            background: var(--neon-cyan);
+            border-radius: 50%;
+            opacity: 0.25;
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        .data-readout {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            font-size: 0.75rem;
+            line-height: 2.2;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        #alert-modal {
+            position: absolute;
+            top: 42%;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: 30px;
+            opacity: 0;
+            transition: transform 1.5s, opacity 1s;
+            transform: scale(0.9);
+        }
+
+        #crt-fx {
+            position: fixed;
             inset: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.04));
-            background-size: 100% 4px, 4px 100%;
-            pointer-events: none; 
-            z-index: 999;
+            pointer-events: none;
+            z-index: 1000;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+            opacity: 0.7;
         }
     </style>
 </head>
 <body>
 
-    <div id="crt-filter"></div>
+    <div id="crt-fx"></div>
 
     <div id="boot-overlay">
-        <div class="terminal-container">
-            <div class="terminal-header">SYSTEM_INIT_VOXEL_ENGINE_V5</div>
-            <div id="loading-rail"><div id="loading-fill"></div></div>
-            <div id="terminal-output"></div>
+        <div class="terminal-box">
+            <div class="terminal-header">CORE_VOXEL_ENGINE_v8.0.4</div>
+            <div id="load-rail"><div id="load-fill"></div></div>
+            <div id="terminal-log"></div>
         </div>
     </div>
 
-    <div id="hud-layer">
-        <div id="vignette-fx"></div>
-        <div class="reticle">
-            <div style="width:100%; height:1px; background:var(--neon-blue); position:absolute; top:50%;"></div>
-            <div style="height:100%; width:1px; background:var(--neon-blue); position:absolute; left:50%;"></div>
+    <div id="game-hud">
+        <div id="vignette"></div>
+        <div class="data-readout">
+            BUFFER: 40x40x40_LATTICE<br>
+            SCALAR: 0.0825_COMPRESSION<br>
+            LIGHT_BIAS: +1.25_EV<br>
+            THREAT: <span id="ui-threat">STABLE</span><br>
+            SYNC: <span id="ui-sync">--</span><br>
+            WARD: <span id="ui-ward">01</span>
         </div>
-        
-        <div class="diag-readout">
-            VOXEL_DENSITY: 40x40x40<br>
-            COMPRESSION: 0.085<br>
-            THREAT_INDEX: <span id="val-threat">MINIMAL</span><br>
-            BIO_SYNC: <span id="val-sync">99.8%</span><br>
-            WARD_ID: <span id="val-ward">01</span>
+        <div id="alert-modal">WARD 01</div>
+        <div id="input-move-layer">
+            <div id="joy-base"><div id="joy-knob"></div></div>
         </div>
-
-        <div id="alert-announcer">WARD 01</div>
-
-        <div id="input-move-zone">
-            <div id="joystick-housing"><div id="joystick-handle"></div></div>
-        </div>
-        <div id="input-look-zone"></div>
+        <div id="input-look-layer"></div>
     </div>
+
+    <audio id="snd-amb" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
+    <audio id="snd-step" loop><source src="mixkit-footsteps-in-a-tunnel-loop-543.wav" type="audio/wav"></audio>
+    <audio id="snd-breath" loop><source src="mixkit-creepy-demon-heavy-breathing-2240.wav" type="audio/wav"></audio>
 
     <script>
         /**
-         * BLACKWOOD ABOMINATION ENGINE V5
-         * 1,000+ LINE VERBOSE ARCHITECTURE
-         * FEATURE: SHRINK-COMPRESSED 40x40x40 ENTITIES
+         * BLACKWOOD: THE TITAN VOXEL COMPRESSION ENGINE (V8)
+         * - FIXED JOYSTICK INVERSION (Anchored Center)
+         * - ENHANCED VISIBILITY (High-Bias Lighting)
+         * - 40x40x40 VOXEL COMPRESSION LOGIC
          */
 
-        // --- GLOBAL ENGINE STATE DEFINITION ---
-        const CORE = {
-            isInitialized: false,
-            isPlaying: false,
+        // --- GLOBAL ENGINE STATE ---
+        const ENGINE = {
+            initialized: false,
+            running: false,
             floor: 1,
-            mazeDim: 15,
-            gridScale: 26,
+            mazeSize: 15,
+            gridUnit: 26,
             playerHeight: 1.85,
-            movementSpeed: 0.15,
-            rotationSpeed: 0.0048,
-            collisionPadding: 1.4,
+            camFov: 80,
+            fogDensity: 0.042,
+            playerSpeed: 0.155,
+            lookSensitivity: 0.005,
+            collisionRadius: 1.45,
             entities: [],
-            geometryBuffer: [],
+            wallGeometry: [],
             input: {
-                mv: new THREE.Vector2(0, 0),
-                isInputActive: false,
+                moveVec: new THREE.Vector2(0, 0),
+                active: false,
                 yaw: 0,
-                pitch: 0
+                pitch: 0,
+                joyAnchor: new THREE.Vector2(0, 0)
             },
-            audio: {
-                ambience: null,
-                footsteps: null,
-                breathing: null
+            shaders: {
+                voxelVertex: `
+                    varying vec3 vNormal;
+                    varying vec3 vViewPosition;
+                    void main() {
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        vNormal = normalize(normalMatrix * normal);
+                        vViewPosition = -mvPosition.xyz;
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                voxelFragment: `
+                    uniform vec3 uColor;
+                    varying vec3 vNormal;
+                    void main() {
+                        float dotProd = max(dot(vNormal, vec3(0.0, 1.0, 1.0)), 0.2);
+                        gl_FragColor = vec4(uColor * dotProd, 1.0);
+                    }
+                `
             }
         };
 
-        let scene, camera, renderer, clock, spotLight, uiTimer;
+        let scene, camera, renderer, clock, flashlight, ambLight;
 
-        // --- 1. THE TERMINAL BOOT SEQUENCE ---
-        function initiateBootProcess() {
-            const fill = document.getElementById('loading-fill');
-            const output = document.getElementById('terminal-output');
-            
-            const systemTasks = [
-                "Establishing WebGL2 Rendering Context...",
-                "Mapping 40x40x40 Internal Voxel Arrays...",
-                "Generating Procedural Limb Buffers...",
-                "Injecting 'Surgeon' Behavioral Matrix...",
-                "Compressing Geometry (Scalar 0.085)...",
+        // --- 1. BOOT SEQUENCE CONTROLLER ---
+        function initiateBootSequence() {
+            const fill = document.getElementById('load-fill');
+            const log = document.getElementById('terminal-log');
+            const processes = [
+                "Establishing WebGL 2.0 High-Performance Context...",
+                "Mapping 40x40x40 Voxel Density Grids...",
+                "Initializing 'Surgeon' Behavioral Matrix...",
+                "Allocating Vertex Arrays for Compressed Mesh...",
+                "Reducing Fog Density to 0.042 (Visibility Fix)...",
+                "Anchoring Fixed-Center Dynamic Joystick...",
+                "Injecting Medical-Teal Voxel Color Palettes...",
                 "Building Ward 1: Diagnostic Center...",
                 "Building Ward 2: The Theatre...",
-                "Building Ward 3: Isolation...",
-                "Adjusting Joystick Ergonomics (Y-Offset: 220)...",
-                "Applying Medical Teal Color Jitter...",
-                "Initializing Spatial Audio Pan-Pot...",
+                "Building Ward 3: Isolation Unit...",
+                "Optimizing Spatial Audio Pan-Buffer...",
                 "System Core Synchronized."
             ];
 
             let progress = 0;
-            const sequence = setInterval(() => {
-                progress += Math.random() * 1.5;
-                
+            const timer = setInterval(() => {
+                progress += Math.random() * 1.8;
                 if (progress >= 100) {
                     progress = 100;
-                    clearInterval(sequence);
-                    CORE.isInitialized = true;
-                    output.innerHTML = "<span style='color:#fff'>[CRITICAL] TAP SCREEN TO LINK</span><br>" + output.innerHTML;
-                    setup3DWorld();
+                    clearInterval(timer);
+                    ENGINE.initialized = true;
+                    log.innerHTML = "<span style='color:#fff'>[READY] CLICK TO COMMENCE NEURAL LINK</span><br>" + log.innerHTML;
+                    setupWorldSystems();
                 }
-
                 fill.style.width = progress + "%";
-                
                 if (Math.floor(progress) % 8 === 0) {
-                    const taskIndex = Math.floor(progress / 8);
-                    if (systemTasks[taskIndex]) {
-                        output.innerHTML = `> ${systemTasks[taskIndex]}<br>${output.innerHTML}`;
-                    }
+                    const idx = Math.floor(progress / 8);
+                    if (processes[idx]) log.innerHTML = `> ${processes[idx]}<br>${log.innerHTML}`;
                 }
-            }, 30);
+            }, 35);
         }
 
-        const handleUserActivation = () => {
-            if (!CORE.isInitialized || CORE.isPlaying) return;
-            CORE.isPlaying = true;
-            
+        const handleStartTrigger = () => {
+            if (!ENGINE.initialized || ENGINE.running) return;
+            ENGINE.running = true;
             document.getElementById('boot-overlay').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('boot-overlay').style.display = 'none';
-                document.getElementById('hud-layer').style.display = 'block';
-                triggerFloorAlert();
-            }, 1600);
+                document.getElementById('game-hud').style.display = 'block';
+                triggerAlert();
+            }, 1800);
 
-            // Audio Asset Binding
-            CORE.audio.ambience = document.getElementById('snd-amb');
-            CORE.audio.footsteps = document.getElementById('snd-step');
-            CORE.audio.breathing = document.getElementById('snd-breath');
-            
-            CORE.audio.ambience.volume = 0.4;
-            CORE.audio.footsteps.volume = 0;
-            CORE.audio.breathing.volume = 0;
-
-            [CORE.audio.ambience, CORE.audio.footsteps, CORE.audio.breathing].forEach(audio => {
-                audio.play().catch(() => console.warn("Audio Context Wait"));
-            });
+            // Audio Activation
+            const a1 = document.getElementById('snd-amb'), 
+                  a2 = document.getElementById('snd-step'), 
+                  a3 = document.getElementById('snd-breath');
+            a1.volume = 0.45; a2.volume = 0; a3.volume = 0;
+            [a1, a2, a3].forEach(s => s.play().catch(() => {}));
         };
 
-        window.addEventListener('touchstart', handleUserActivation);
-        window.addEventListener('mousedown', handleUserActivation);
-        window.onload = initiateBootProcess;
+        window.ontouchstart = handleStartTrigger;
+        window.onmousedown = handleStartTrigger;
+        window.onload = initiateBootSequence;
 
-        // --- 2. THE ABOMINATION FACTORY (40x40x40 Logic) ---
-        class AbominationComponent {
+        // --- 2. THE ABOMINATION FACTORY (40x40x40) ---
+        class VoxelAbomination {
             constructor(isBoss, floor) {
-                this.container = new THREE.Group();
+                this.root = new THREE.Group();
                 this.isBoss = isBoss;
                 this.floor = floor;
-                this.moveVelocity = isBoss ? 0.088 : 0.045 + (Math.random() * 0.04);
+                this.moveSpeed = isBoss ? 0.092 : 0.045 + Math.random() * 0.035;
                 
-                // Palette Definition
-                this.colors = isBoss 
-                    ? [0x000000, 0x0a0a0a, 0x121212, 0x1a1a1a] 
-                    : [0x336666, 0x447777, 0x2d4d4d, 0x5a8a8a, 0xeeeeee];
-                
-                this.buildCompressedVoxelBody();
+                this.palettes = isBoss 
+                    ? [0x000000, 0x111111, 0x080808, 0x1a1a1a] 
+                    : [0x336666, 0x447777, 0x2d4d4d, 0x5a8a8a, 0xcccccc];
+
+                this.constructMeshLattice();
             }
 
             /**
-             * Internal Build Process: 
-             * Constructs parts at 40x40x40 volume and then compresses
+             * Internal Constructor: Builds limbs at massive internal scales
+             * then compresses the entire root group to 0.08 scale.
              */
-            buildCompressedVoxelBody() {
-                const internalVoxelDim = 40; 
+            constructMeshLattice() {
+                const buildPart = (w, h, d, px, py, pz) => {
+                    const partGroup = new THREE.Group();
+                    // Each body part is composed of 40 individual jittered voxels
+                    for(let i=0; i<40; i++) {
+                        const mat = new THREE.MeshLambertMaterial({ 
+                            color: this.palettes[Math.floor(Math.random() * this.palettes.length)] 
+                        });
+                        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+                        
+                        // Jitter within the part's 40x40x40 bounds
+                        mesh.position.set(
+                            (Math.random() - 0.5) * (w * 0.55),
+                            (Math.random() - 0.5) * (h * 0.55),
+                            (Math.random() - 0.5) * (d * 0.55)
+                        );
+                        partGroup.add(mesh);
+                    }
+                    partGroup.position.set(px, py, pz);
+                    this.root.add(partGroup);
+                };
 
-                // We define limb factories that place voxels in a 40x40x40 space
-                this.generateLimb(internalVoxelDim, internalVoxelDim, internalVoxelDim, 0, internalVoxelDim, 0); // TORSO
-                this.generateLimb(30, 30, 30, 0, 85, 0); // HEAD
-                this.generateLimb(15, 60, 15, -35, 45, 0); // LEFT ARM
-                this.generateLimb(15, 60, 15, 35, 45, 0); // RIGHT ARM
-                this.generateLimb(20, 60, 20, -20, -15, 0); // LEFT LEG
-                this.generateLimb(20, 60, 20, 20, -15, 0); // RIGHT LEG
+                // Build using Titan-scale units
+                buildPart(40, 40, 40, 0, 40, 0);     // TORSO
+                buildPart(30, 30, 30, 0, 85, 0);     // HEAD
+                buildPart(15, 65, 15, -35, 45, 0);   // LEFT_ARM
+                buildPart(15, 65, 15, 35, 45, 0);    // RIGHT_ARM
+                buildPart(20, 60, 20, -20, -15, 0);  // LEFT_LEG
+                buildPart(20, 60, 20, 20, -15, 0);   // RIGHT_LEG
 
-                // APPLY COMPRESSION SCALAR
-                // This turns the massive 40-unit parts into terrifyingly dense small objects
-                this.container.scale.set(0.085, 0.085, 0.085);
+                // THE CRITICAL COMPRESSION STEP
+                this.root.scale.set(0.0825, 0.0825, 0.0825);
 
                 if (this.isBoss) {
-                    const glowingVisor = new THREE.Mesh(
-                        new THREE.BoxGeometry(45, 5, 5),
+                    const visor = new THREE.Mesh(
+                        new THREE.BoxGeometry(45, 5, 5), 
                         new THREE.MeshBasicMaterial({ color: 0xff0000 })
                     );
-                    glowingVisor.position.set(0, 90, 18);
-                    this.container.add(glowingVisor);
+                    visor.position.set(0, 90, 18);
+                    this.root.add(visor);
                 }
             }
 
-            generateLimb(w, h, d, x, y, z) {
-                const limbGroup = new THREE.Group();
-                const density = 40; // Every limb is composed of 40 individual jittered blocks
+            tick(pPos) {
+                if (this.floor !== ENGINE.floor) return 1000;
 
-                for (let i = 0; i < density; i++) {
-                    const colorIndex = Math.floor(Math.random() * this.colors.length);
-                    const mesh = new THREE.Mesh(
-                        new THREE.BoxGeometry(
-                            w * (0.8 + Math.random() * 0.4),
-                            h * (0.8 + Math.random() * 0.4),
-                            d * (0.8 + Math.random() * 0.4)
-                        ),
-                        new THREE.MeshLambertMaterial({ color: this.colors[colorIndex] })
-                    );
-                    
-                    // Jitter placement within the allocated volume
-                    mesh.position.set(
-                        (Math.random() - 0.5) * (w * 0.4),
-                        (Math.random() - 0.5) * (h * 0.4),
-                        (Math.random() - 0.5) * (d * 0.4)
-                    );
-                    limbGroup.add(mesh);
+                const dist = this.root.position.distanceTo(pPos);
+                if (dist < 72) {
+                    this.root.lookAt(pPos.x, this.root.position.y, pPos.z);
+                    const moveDir = new THREE.Vector3().subVectors(pPos, this.root.position).normalize();
+                    moveDir.y = 0;
+                    this.root.position.addScaledVector(moveDir, this.moveSpeed);
                 }
-                
-                limbGroup.position.set(x, y, z);
-                this.container.add(limbGroup);
-            }
-
-            updateBehavior(playerPos) {
-                if (this.floor !== CORE.floor) return 1000;
-
-                const distanceToTarget = this.container.position.distanceTo(playerPos);
-                
-                // Behavioral Trigger Zone
-                if (distanceToTarget < 75) {
-                    this.container.lookAt(playerPos.x, this.container.position.y, playerPos.z);
-                    const moveVector = new THREE.Vector3().subVectors(playerPos, this.container.position).normalize();
-                    moveVector.y = 0;
-                    this.container.position.addScaledVector(moveVector, this.moveVelocity);
-                }
-                
-                return distanceToTarget;
+                return dist;
             }
         }
 
-        // --- 3. THE 3D ENGINE CORE ---
-        function setup3DWorld() {
+        // --- 3. WORLD SYSTEMS SETUP ---
+        function setupWorldSystems() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x050608, 0.065);
+            scene.fog = new THREE.FogExp2(0x08090b, ENGINE.fogDensity);
 
-            camera = new THREE.PerspectiveCamera(80, window.innerWidth/window.innerHeight, 0.1, 2000);
+            camera = new THREE.PerspectiveCamera(ENGINE.camFov, window.innerWidth / window.innerHeight, 0.1, 2000);
             clock = new THREE.Clock();
 
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
@@ -438,277 +414,229 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
             document.body.appendChild(renderer.domElement);
 
-            // Lighting Setup
-            scene.add(new THREE.AmbientLight(0x405070, 0.8));
-            
-            spotLight = new THREE.SpotLight(0xfffce0, 480);
-            spotLight.angle = Math.PI/7;
-            spotLight.penumbra = 0.6;
-            spotLight.decay = 2.0;
-            spotLight.distance = 160;
-            camera.add(spotLight);
-            spotLight.position.set(0, 0, 0.1);
-            spotLight.target.position.set(0, 0, -5);
-            camera.add(spotLight.target);
+            // Visibility Buff: High Bias Ambient Light
+            ambLight = new THREE.AmbientLight(0x556688, 1.3);
+            scene.add(ambLight);
 
+            flashlight = new THREE.SpotLight(0xfffce0, 520, 180, Math.PI / 7.2, 0.55);
+            flashlight.position.set(0, 0, 0.1);
+            flashlight.target.position.set(0, 0, -5);
+            camera.add(flashlight);
+            camera.add(flashlight.target);
             scene.add(camera);
 
-            constructMultiLevelMaze();
-            initializeEntities();
-            setupErgonomicInput();
-            mainEngineLoop();
+            generateTriWardLabyrinth();
+            populateEntities();
+            initializeInputLayer();
+            mainRenderLoop();
         }
 
-        function constructMultiLevelMaze() {
+        function generateTriWardLabyrinth() {
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0x181a20 });
             const floorMat = new THREE.MeshLambertMaterial({ color: 0x050505 });
 
-            for (let fIdx = 0; fIdx < 3; fIdx++) {
-                const fOffset = fIdx * 30;
-                const levelGrp = new THREE.Group();
-                levelGrp.position.y = fOffset;
+            for (let f = 0; f < 3; f++) {
+                const wardGroup = new THREE.Group();
+                wardGroup.position.y = f * 30;
 
-                // MAZE GENERATION LOGIC (Recursive Backtracker)
-                const grid = Array(CORE.mazeDim).fill().map(() => Array(CORE.mazeDim).fill(15));
+                // Recursive Backtracker Logic for Maze
+                const grid = Array(ENGINE.mazeSize).fill().map(() => Array(ENGINE.mazeSize).fill(15));
                 const stack = [[0, 0]];
-                const visitedSet = new Set(['0,0']);
-
+                const seen = new Set(['0,0']);
+                
                 while (stack.length > 0) {
                     const [cx, cy] = stack[stack.length - 1];
                     const neighs = [];
-                    [[0,1,1,4],[0,-1,4,1],[1,0,2,8],[-1,0,8,2]].forEach(([dx, dy, wall, opp]) => {
-                        const nx = cx + dx, ny = cy + dy;
-                        if (nx >= 0 && nx < CORE.mazeDim && ny >= 0 && ny < CORE.mazeDim && !visitedSet.has(`${nx},${ny}`)) {
-                            neighs.push([nx, ny, wall, opp]);
+                    [[0,1,1,4],[0,-1,4,1],[1,0,2,8],[-1,0,8,2]].forEach(([dx, dy, w, op]) => {
+                        const nx = cx+dx, ny = cy+dy;
+                        if (nx>=0 && nx<ENGINE.mazeSize && ny>=0 && ny<ENGINE.mazeSize && !seen.has(`${nx},${ny}`)) {
+                            neighs.push([nx, ny, w, op]);
                         }
                     });
-
                     if (neighs.length > 0) {
-                        const [nx, ny, wBit, oBit] = neighs[Math.floor(Math.random() * neighs.length)];
-                        grid[cy][cx] -= wBit;
-                        grid[ny][nx] -= oBit;
-                        visitedSet.add(`${nx},${ny}`);
-                        stack.push([nx, ny]);
-                    } else {
-                        stack.pop();
-                    }
+                        const [nx, ny, w, op] = neighs[Math.floor(Math.random() * neighs.length)];
+                        grid[cy][cx] -= w; grid[ny][nx] -= op;
+                        seen.add(`${nx},${ny}`); stack.push([nx, ny]);
+                    } else stack.pop();
                 }
 
-                // Building the Level
-                for (let y = 0; y < CORE.mazeDim; y++) {
-                    for (let x = 0; x < CORE.mazeDim; x++) {
-                        const px = x * CORE.gridScale - (CORE.mazeDim * CORE.gridScale) / 2;
-                        const pz = y * CORE.gridScale - (CORE.mazeDim * CORE.gridScale) / 2;
+                for (let y = 0; y < ENGINE.mazeSize; y++) {
+                    for (let x = 0; x < ENGINE.mazeSize; x++) {
+                        const px = x * ENGINE.gridUnit - (ENGINE.mazeSize * ENGINE.gridUnit) / 2;
+                        const pz = y * ENGINE.gridUnit - (ENGINE.mazeSize * ENGINE.gridUnit) / 2;
                         const v = grid[y][x];
-
-                        if (v & 1) addWallBuffer(px, pz - CORE.gridScale/2, 0, levelGrp);
-                        if (v & 4) addWallBuffer(px, pz + CORE.gridScale/2, 0, levelGrp);
-                        if (v & 8) addWallBuffer(px - CORE.gridScale/2, pz, Math.PI/2, levelGrp);
-                        if (v & 2) addWallBuffer(px + CORE.gridScale/2, pz, Math.PI/2, levelGrp);
+                        if (v & 1) appendWall(px, pz - ENGINE.gridUnit / 2, 0, wardGroup);
+                        if (v & 4) appendWall(px, pz + ENGINE.gridUnit / 2, 0, wardGroup);
+                        if (v & 8) appendWall(px - ENGINE.gridUnit / 2, pz, Math.PI / 2, wardGroup);
+                        if (v & 2) appendWall(px + ENGINE.gridUnit / 2, pz, Math.PI / 2, wardGroup);
                     }
                 }
 
                 const plane = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), floorMat);
                 plane.rotation.x = -Math.PI / 2;
-                levelGrp.add(plane);
+                wardGroup.add(plane);
 
-                // Entrance/Exit portals
                 const exitGateway = new THREE.Mesh(
-                    new THREE.BoxGeometry(7, 0.5, 7),
-                    new THREE.MeshBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.35 })
+                    new THREE.BoxGeometry(8, 0.5, 8), 
+                    new THREE.MeshBasicMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.4 })
                 );
-                exitGateway.position.set((CORE.mazeDim/2 - 1) * CORE.gridScale, 0.1, (CORE.mazeDim/2 - 1) * CORE.gridScale);
-                levelGrp.add(exitGateway);
+                exitGateway.position.set((ENGINE.mazeSize/2 - 1) * ENGINE.gridUnit, 0.1, (ENGINE.mazeSize/2 - 1) * ENGINE.gridUnit);
+                wardGroup.add(exitGateway);
 
-                scene.add(levelGrp);
+                scene.add(wardGroup);
             }
         }
 
-        function addWallBuffer(x, z, r, g) {
-            const wallMesh = new THREE.Mesh(
-                new THREE.BoxGeometry(CORE.gridScale, 18, 1.4),
-                new THREE.MeshLambertMaterial({ color: 0x141418 })
-            );
-            wallMesh.position.set(x, 9, z);
-            wallMesh.rotation.y = r;
-            g.add(wallMesh);
-            CORE.geometryBuffer.push(wallMesh);
+        function appendWall(x, z, r, g) {
+            const w = new THREE.Mesh(new THREE.BoxGeometry(ENGINE.gridUnit, 18, 1.6), new THREE.MeshLambertMaterial({color: 0x1c1e25}));
+            w.position.set(x, 9, z);
+            w.rotation.y = r;
+            g.add(w);
+            ENGINE.wallGeometry.push(w);
         }
 
-        function initializeEntities() {
-            // THE SURGEON (Primary Stalker)
-            const surgeon = new AbominationComponent(true, 1);
-            surgeon.container.position.set(-65, 0, -65);
-            scene.add(surgeon.container);
-            CORE.entities.push(surgeon);
+        function populateEntities() {
+            const boss = new VoxelAbomination(true, 1);
+            boss.root.position.set(-65, 0, -65);
+            scene.add(boss.root);
+            ENGINE.entities.push(boss);
 
-            // THE PATIENTS (Compressed Abominations)
-            for (let i = 0; i < 28; i++) {
+            for (let i = 0; i < 26; i++) {
                 const targetFloor = (i % 3) + 1;
-                const patient = new AbominationComponent(false, targetFloor);
-                patient.container.position.set(
-                    (Math.random() * 220) - 110,
-                    (targetFloor - 1) * 30,
-                    (Math.random() * 220) - 110
-                );
-                scene.add(patient.container);
-                CORE.entities.push(patient);
+                const minion = new VoxelAbomination(false, targetFloor);
+                minion.root.position.set(Math.random() * 200 - 100, (targetFloor - 1) * 30, Math.random() * 200 - 100);
+                scene.add(minion.root);
+                ENGINE.entities.push(minion);
             }
         }
 
-        // --- 4. ERGONOMIC INPUT SYSTEM (Height Optimized) ---
-        function setupErgonomicInput() {
-            const mvZone = document.getElementById('input-move-zone');
-            const lkZone = document.getElementById('input-look-zone');
-            const stick = document.getElementById('joystick-handle');
+        // --- 4. THE JOYSTICK FIX (Fixed Center) ---
+        function initializeInputLayer() {
+            const moveLayer = document.getElementById('input-move-layer');
+            const lookLayer = document.getElementById('input-look-layer');
+            const joyBase = document.getElementById('joy-base');
+            const joyKnob = document.getElementById('joy-knob');
             
-            let startTouchX, startTouchY, lastX, lastY;
+            let lastLookX, lastLookY;
 
-            mvZone.addEventListener('touchstart', e => {
+            moveLayer.addEventListener('touchstart', (e) => {
                 const touch = e.touches[0];
-                startTouchX = touch.clientX;
-                startTouchY = touch.clientY;
+                ENGINE.input.joyAnchor.set(touch.clientX, touch.clientY);
+                joyBase.style.display = 'block';
+                joyBase.style.left = touch.clientX + 'px';
+                joyBase.style.top = touch.clientY + 'px';
             });
 
-            mvZone.addEventListener('touchmove', e => {
+            moveLayer.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 const touch = e.touches[0];
-                const deltaX = touch.clientX - startTouchX;
-                const deltaY = touch.clientY - startTouchY;
-                const maxDist = 55;
-                const distance = Math.min(Math.sqrt(deltaX**2 + deltaY**2), maxDist);
-                const angle = Math.atan2(deltaY, deltaX);
+                const dx = touch.clientX - ENGINE.input.joyAnchor.x;
+                const dy = touch.clientY - ENGINE.input.joyAnchor.y;
+                const maxPull = 55;
+                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), maxPull);
+                const angle = Math.atan2(dy, dx);
 
-                stick.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+                joyKnob.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px)`;
                 
-                CORE.input.mv.set(
-                    Math.cos(angle) * (distance / maxDist),
-                    Math.sin(angle) * (distance / maxDist)
+                // Normalized Input Mapping
+                ENGINE.input.moveVec.set(
+                    Math.cos(angle) * (dist / maxPull),
+                    Math.sin(angle) * (dist / maxPull)
                 );
-                CORE.input.isInputActive = distance > 5;
+                ENGINE.input.active = dist > 6;
             }, { passive: false });
 
-            mvZone.addEventListener('touchend', () => {
-                stick.style.transform = `translate(0,0)`;
-                CORE.input.isInputActive = false;
-                CORE.input.mv.set(0, 0);
+            moveLayer.addEventListener('touchend', () => {
+                joyBase.style.display = 'none';
+                ENGINE.input.active = false;
+                ENGINE.input.moveVec.set(0, 0);
             });
 
-            lkZone.addEventListener('touchstart', e => {
-                const t = e.touches[0];
-                lastX = t.clientX;
-                lastY = t.clientY;
+            lookLayer.addEventListener('touchstart', (e) => {
+                lastLookX = e.touches[0].clientX;
+                lastLookY = e.touches[0].clientY;
             });
 
-            lkZone.addEventListener('touchmove', e => {
-                const t = e.touches[0];
-                CORE.input.yaw -= (t.clientX - lastX) * CORE.rotationSpeed;
-                CORE.input.pitch -= (t.clientY - lastY) * CORE.rotationSpeed;
-                CORE.input.pitch = Math.max(-1.45, Math.min(1.45, CORE.input.pitch));
-                lastX = t.clientX;
-                lastY = t.clientY;
+            lookLayer.addEventListener('touchmove', (e) => {
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - lastLookX;
+                const deltaY = touch.clientY - lastLookY;
+                
+                ENGINE.input.yaw -= deltaX * ENGINE.lookSensitivity;
+                ENGINE.input.pitch -= deltaY * ENGINE.lookSensitivity;
+                ENGINE.input.pitch = Math.max(-1.42, Math.min(1.42, ENGINE.input.pitch));
+                
+                lastLookX = touch.clientX;
+                lastLookY = touch.clientY;
             });
         }
 
-        // --- 5. CORE UPDATE LOOP (Octree Collision) ---
-        function mainEngineLoop() {
-            requestAnimationFrame(mainEngineLoop);
+        // --- 5. CORE RENDER LOOP ---
+        function mainRenderLoop() {
+            requestAnimationFrame(mainRenderLoop);
             
-            if (CORE.isPlaying) {
-                const deltaTime = clock.getDelta();
-
-                // View Management
+            if (ENGINE.running) {
                 camera.rotation.order = "YXZ";
-                camera.rotation.y = CORE.input.yaw;
-                camera.rotation.x = CORE.input.pitch;
+                camera.rotation.y = ENGINE.input.yaw;
+                camera.rotation.x = ENGINE.input.pitch;
 
-                // Physics & Navigation
-                if (CORE.input.isInputActive) {
+                if (ENGINE.input.active) {
                     const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
                     const side = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-                    fwd.y = 0; side.y = 0;
-                    fwd.normalize(); side.normalize();
+                    fwd.y = 0; side.y = 0; fwd.normalize(); side.normalize();
 
                     const moveDir = new THREE.Vector3()
-                        .addScaledVector(fwd, -CORE.input.mv.y)
-                        .addScaledVector(side, CORE.input.mv.x);
-                    
-                    // VERBOSE COLLISION RESOLUTION
-                    const collider = new THREE.Raycaster(camera.position, moveDir.clone().normalize(), 0, CORE.collisionPadding);
-                    const intersections = collider.intersectObjects(CORE.geometryBuffer);
+                        .addScaledVector(fwd, -ENGINE.input.moveVec.y)
+                        .addScaledVector(side, ENGINE.input.moveVec.x);
 
-                    if (intersections.length === 0) {
-                        camera.position.addScaledVector(moveDir, CORE.movementSpeed);
-                        // Head Bobbing Procedural Animation
-                        camera.position.y = ((CORE.floor - 1) * 30) + CORE.playerHeight + Math.sin(Date.now() * 0.007) * 0.07;
+                    const ray = new THREE.Raycaster(camera.position, moveDir.clone().normalize(), 0, ENGINE.collisionRadius);
+                    if (ray.intersectObjects(ENGINE.wallGeometry).length === 0) {
+                        camera.position.addScaledVector(moveDir, ENGINE.playerSpeed);
+                        // Procedural Walk Cycle (Bobbing)
+                        camera.position.y = ((ENGINE.floor - 1) * 30) + ENGINE.playerHeight + Math.sin(Date.now() * 0.008) * 0.06;
                     }
-                    CORE.audio.footsteps.volume = 0.5;
+                    document.getElementById('snd-step').volume = 0.5;
                 } else {
-                    CORE.audio.footsteps.volume = 0;
+                    document.getElementById('snd-step').volume = 0;
                 }
 
-                // Update All Entities
-                let minThreatDist = 1000;
-                CORE.entities.forEach(entity => {
-                    const dist = entity.updateBehavior(camera.position);
-                    if (entity.floor === CORE.floor && dist < minThreatDist) {
-                        minThreatDist = dist;
-                    }
-
-                    // Boss-Specific Breathing Logic
-                    if (entity.isBoss && entity.floor === CORE.floor && dist < 20) {
-                        CORE.audio.breathing.volume = 1.0 - (dist / 20);
+                // Entity Management
+                let closestDist = 1000;
+                ENGINE.entities.forEach(ent => {
+                    const d = ent.tick(camera.position);
+                    if (ent.floor === ENGINE.floor && d < closestDist) closestDist = d;
+                    if (ent.isBoss && ent.floor === ENGINE.floor && d < 20) {
+                        document.getElementById('snd-breath').volume = 1 - (d / 20);
                     }
                 });
 
-                // Interface Logic
-                refreshHUDDiagnostics(minThreatDist);
+                // UI Logic
+                document.getElementById('ui-threat').innerText = closestDist < 18 ? "CRITICAL" : (closestDist < 42 ? "ELEVATED" : "STABLE");
+                document.getElementById('ui-threat').style.color = closestDist < 18 ? "red" : "var(--neon-cyan)";
+                document.getElementById('ui-sync').innerText = (98 + Math.random() * 1.5).toFixed(1) + "%";
 
-                // Exit Detection Logic
-                const exX = (CORE.mazeDim/2 - 1) * CORE.gridScale;
-                const exZ = (CORE.mazeDim/2 - 1) * CORE.gridScale;
-                const portalCenter = new THREE.Vector3(exX, (CORE.floor - 1) * 30, exZ);
-                
-                if (camera.position.distanceTo(portalCenter) < 5 && CORE.floor < 3) {
-                    handleFloorTransition();
+                // Progress Check
+                const goalX = (ENGINE.mazeSize/2 - 1) * ENGINE.gridUnit;
+                const goalZ = (ENGINE.mazeSize/2 - 1) * ENGINE.gridUnit;
+                if (camera.position.distanceTo(new THREE.Vector3(goalX, (ENGINE.floor - 1) * 30, goalZ)) < 6 && ENGINE.floor < 3) {
+                    ENGINE.floor++;
+                    camera.position.set(0, (ENGINE.floor - 1) * 30 + ENGINE.playerHeight, 0);
+                    document.getElementById('ui-ward').innerText = "0" + ENGINE.floor;
+                    triggerAlert();
                 }
             }
 
             renderer.render(scene, camera);
         }
 
-        function refreshHUDDiagnostics(dist) {
-            const threatUi = document.getElementById('val-threat');
-            const syncUi = document.getElementById('val-sync');
-
-            if (dist < 18) {
-                threatUi.innerText = "CRITICAL";
-                threatUi.style.color = "var(--deep-red)";
-            } else if (dist < 45) {
-                threatUi.innerText = "ELEVATED";
-                threatUi.style.color = "orange";
-            } else {
-                threatUi.innerText = "MINIMAL";
-                threatUi.style.color = "var(--neon-blue)";
-            }
-
-            syncUi.innerText = (99 + Math.random()).toFixed(1) + "%";
-        }
-
-        function handleFloorTransition() {
-            CORE.floor++;
-            camera.position.set(0, ((CORE.floor - 1) * 30) + CORE.playerHeight, 0);
-            document.getElementById('val-ward').innerText = "0" + CORE.floor;
-            triggerFloorAlert();
-        }
-
-        function triggerFloorAlert() {
-            const alert = document.getElementById('alert-announcer');
-            alert.innerText = "WARD 0" + CORE.floor;
-            alert.style.opacity = "1";
-            alert.style.transform = "scale(1)";
+        function triggerAlert() {
+            const el = document.getElementById('alert-modal');
+            el.innerText = "WARD 0" + ENGINE.floor;
+            el.style.opacity = "1";
+            el.style.transform = "scale(1)";
             setTimeout(() => {
-                alert.style.opacity = "0";
-                alert.style.transform = "scale(0.85)";
+                el.style.opacity = "0";
+                el.style.transform = "scale(0.85)";
             }, 3000);
         }
 
