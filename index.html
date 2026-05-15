@@ -3,74 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BLACKWOOD: THE 3-STORY MAZE</title>
-    
+    <title>BLACKWOOD: THE TRI-LEVEL ABOMINATION</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
-
     <style>
         :root { 
-            --nv-blue: #e0ebff;
-            --alert: #ff3300;
-            --floor-text: #00ffcc;
+            --terminal-cyan: #00f2ff;
+            --warning-red: #ff3300;
+            --interface-bg: rgba(0, 5, 10, 0.9);
         }
-        
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
-        body, html { width: 100%; height: 100%; background: #020205; overflow: hidden; font-family: 'Courier New', monospace; }
+        body, html { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
 
-        #boot {
+        /* --- PRE-FLIGHT INTERFACE --- */
+        #boot-seq {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: flex; justify-content: center; align-items: center;
-            z-index: 10000; transition: opacity 1s;
+            background: radial-gradient(circle, #050505 0%, #000 100%);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10000; transition: opacity 1.5s;
         }
-
-        #boot-content { width: 300px; text-align: center; color: var(--nv-blue); }
-        #bar-container { width: 100%; height: 2px; background: #111; margin: 20px 0; }
-        #bar { width: 0%; height: 100%; background: var(--nv-blue); box-shadow: 0 0 15px var(--nv-blue); }
-
-        #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 100; }
-        #move-pad { position: absolute; left: 0; top: 0; width: 50%; height: 100%; pointer-events: auto; }
-        #look-pad { position: absolute; right: 0; top: 0; width: 50%; height: 100%; pointer-events: auto; }
-
-        #joy-base {
-            position: absolute; bottom: 60px; left: 60px; width: 100px; height: 100px;
-            border: 1px solid rgba(255,255,255,0.2); border-radius: 50%;
+        .console-box { 
+            width: 90%; max-width: 500px; border: 1px solid #111; 
+            background: #020202; padding: 30px; box-shadow: 0 0 50px rgba(0,0,0,1);
         }
-        #joy-knob {
-            position: absolute; top: 30px; left: 30px; width: 40px; height: 40px;
-            background: rgba(255,255,255,0.1); border: 1px solid white; border-radius: 50%;
-        }
+        .header { color: var(--terminal-cyan); font-size: 1rem; font-weight: 900; letter-spacing: 5px; margin-bottom: 25px; }
+        #load-bar-rail { width: 100%; height: 2px; background: #111; margin-bottom: 15px; position: relative; }
+        #load-bar-fill { width: 0%; height: 100%; background: var(--terminal-cyan); box-shadow: 0 0 15px var(--terminal-cyan); }
+        #log-stream { height: 100px; overflow: hidden; font-size: 0.6rem; color: #444; line-height: 1.5; text-align: left; }
 
-        #stats { position: absolute; top: 20px; left: 20px; color: var(--floor-text); font-size: 0.7rem; letter-spacing: 2px; }
-        #floor-announcer { 
-            position: absolute; top: 40%; width: 100%; text-align: center; 
-            color: white; font-size: 2rem; opacity: 0; transition: opacity 1s; 
-        }
+        /* --- PRIMARY HUD --- */
+        #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 100; }
+        #vignette { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, transparent 25%, rgba(0,0,0,1) 100%); }
+        #reticle { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; border: 1px solid rgba(0,242,255,0.2); transform: translate(-50%, -50%); border-radius: 50%; }
 
-        #vignette { 
-            position: absolute; width: 100%; height: 100%; 
-            background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.9) 100%); 
-        }
+        #left-control { position: absolute; left: 0; top: 0; width: 50%; height: 100%; pointer-events: auto; }
+        #right-control { position: absolute; right: 0; top: 0; width: 50%; height: 100%; pointer-events: auto; }
+
+        #joy-base { position: absolute; bottom: 70px; left: 70px; width: 130px; height: 130px; border: 1px solid rgba(255,255,255,0.05); border-radius: 50%; }
+        #joy-stick { position: absolute; top: 40px; left: 40px; width: 50px; height: 50px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.5); border-radius: 50%; }
+
+        #status-panel { position: absolute; top: 30px; left: 30px; color: var(--terminal-cyan); font-size: 0.65rem; line-height: 1.8; }
+        #floor-tag { position: absolute; bottom: 30px; right: 30px; color: #fff; font-size: 1.2rem; letter-spacing: 5px; opacity: 0.4; }
+        
+        #scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.1) 50%); background-size: 100% 4px; pointer-events: none; z-index: 60; }
     </style>
 </head>
 <body>
 
-    <div id="boot">
-        <div id="boot-content">
-            <h2 style="letter-spacing: 8px;">GENERATING MAZE</h2>
-            <div id="bar-container"><div id="bar"></div></div>
-            <p id="boot-status" style="font-size: 0.6rem; opacity: 0.6;">CONSTRUCTING FLOORS...</p>
+    <div id="scanline"></div>
+    <div id="boot-seq">
+        <div class="console-box">
+            <div class="header">SYSTEM_RECOVERY_MODE</div>
+            <div id="load-bar-rail"><div id="load-bar-fill"></div></div>
+            <div id="log-stream"></div>
         </div>
     </div>
 
-    <div id="ui">
+    <div id="hud">
         <div id="vignette"></div>
-        <div id="stats">
-            FLOOR: <span id="floor-val">1</span>/3<br>
-            THREAT_LEVEL: <span id="threat">LOW</span>
+        <div id="reticle"></div>
+        <div id="status-panel">
+            UNIT_ID: GA-109<br>
+            PULSE: <span id="pulse-val">72</span> BPM<br>
+            THREAT: <span id="threat-lvl" style="color:var(--terminal-cyan)">NONE</span><br>
+            FLOOR_LVL: <span id="floor-val">01</span><br>
+            STAIRS_FOUND: <span id="stair-val">FALSE</span>
         </div>
-        <div id="floor-announcer">FLOOR 1</div>
-        <div id="move-pad"><div id="joy-base"><div id="joy-knob"></div></div></div>
-        <div id="look-pad"></div>
+        <div id="floor-tag">WARD_01</div>
+        <div id="left-control"><div id="joy-base"><div id="joy-stick"></div></div></div>
+        <div id="right-control"></div>
     </div>
 
     <audio id="amb" loop><source src="mixkit-horror-ambience-2482.wav" type="audio/wav"></audio>
@@ -79,314 +79,357 @@
 
     <script>
         /**
-         * BLACKWOOD: TRIPLE-STORY MAZE ENGINE
-         * Logic: Recursive Backtracker Maze + 40-unit Block Entities
+         * BLACKWOOD CORE ENGINE v16.0
+         * Target: 750+ Lines of High-Fidelity Procedural Maze Logic
          */
 
-        const CORE = {
+        const APP = {
             ready: false, playing: false,
-            currentFloor: 1,
-            mazeSize: 10,
-            cellSize: 15, // Distance between maze walls
-            speed: 0.1,
-            lookSense: 0.004,
-            entities: [],
-            mazeData: [],
-            input: { mVec: new THREE.Vector2(), yaw: 0, pitch: 0, active: false }
+            floor: 1, size: 14, dim: 16,
+            height: 1.7, speed: 0.09, rot: 0.0035,
+            ents: [], obstacles: [],
+            input: { mv: new THREE.Vector2(), yaw: 0, pitch: 0, active: false }
         };
 
-        let scene, camera, renderer, clock, flashlight, ambient;
-        let sfx = {};
+        let scene, camera, renderer, clock, torch, ambLight, sky;
+        let audio = {};
 
-        // --- 1. MAZE GENERATION ALGORITHM ---
-        function generateMazeData() {
-            const maze = [];
-            for (let f = 0; f < 3; f++) {
-                const grid = Array(CORE.mazeSize).fill().map(() => Array(CORE.mazeSize).fill(15)); // 15 is binary for 4 walls
-                const stack = [[0, 0]];
-                const visited = new Set(['0,0']);
-                
-                while (stack.length > 0) {
-                    const [x, y] = stack[stack.length - 1];
-                    const neighbors = [];
-                    [[0, 1, 1, 4], [0, -1, 4, 1], [1, 0, 2, 8], [-1, 0, 8, 2]].forEach(([dx, dy, wall, opp]) => {
-                        const nx = x + dx, ny = y + dy;
-                        if (nx >= 0 && nx < CORE.mazeSize && ny >= 0 && ny < CORE.mazeSize && !visited.has(`${nx},${ny}`)) {
-                            neighbors.push([nx, ny, wall, opp]);
-                        }
-                    });
+        // --- 1. BOOT PIPELINE (Explicit Logging) ---
+        function initiateBoot() {
+            const bar = document.getElementById('load-bar-fill');
+            const log = document.getElementById('log-stream');
+            const tasks = [
+                "Allocating physical buffer for 40x40x40 entities...",
+                "Initializing Recursive Backtracker for Level 1...",
+                "Mapping navigation nodes for Level 2...",
+                "Synthesizing block-based limb geometry...",
+                "Injecting 'Surgeon' chase algorithms...",
+                "Enabling high-visibility optics (+70%)...",
+                "Establishing neural link with GA-109...",
+                "Initialization Successful."
+            ];
 
-                    if (neighbors.length > 0) {
-                        const [nx, ny, wall, opp] = neighbors[Math.floor(Math.random() * neighbors.length)];
-                        grid[y][x] -= wall;
-                        grid[ny][nx] -= opp;
-                        visited.add(`${nx},${ny}`);
-                        stack.push([nx, ny]);
-                    } else {
-                        stack.pop();
+            let p = 0;
+            const step = () => {
+                p += Math.random() * 1.5;
+                if (p >= 100) {
+                    p = 100;
+                    APP.ready = true;
+                    log.innerHTML = "<span style='color:#fff; font-weight:bold'>[SYSTEM] PRESS TO ENGAGE</span><br>" + log.innerHTML;
+                    constructWorld();
+                } else {
+                    bar.style.width = p + "%";
+                    if (Math.floor(p) % 12 === 0) {
+                        const msg = tasks[Math.floor(p/12)];
+                        log.innerHTML = `> ${msg}<br>${log.innerHTML}`;
                     }
+                    requestAnimationFrame(step);
                 }
-                maze.push(grid);
-            }
-            return maze;
+            };
+            step();
         }
 
-        // --- 2. 3D BUILDING ---
-        function setup3D() {
+        const start = () => {
+            if (!APP.ready || APP.playing) return;
+            APP.playing = true;
+            document.getElementById('boot-seq').style.opacity = '0';
+            setTimeout(() => document.getElementById('boot-seq').style.display = 'none', 1500);
+            document.getElementById('hud').style.display = 'block';
+
+            audio.amb = document.getElementById('amb');
+            audio.step = document.getElementById('step');
+            audio.breath = document.getElementById('breath');
+            audio.amb.volume = 0.3; audio.step.volume = 0; audio.breath.volume = 0;
+            [audio.amb, audio.step, audio.breath].forEach(s => s.play().catch(()=>{}));
+        };
+
+        window.addEventListener('mousedown', start);
+        window.addEventListener('touchstart', start);
+        window.onload = initiateBoot;
+
+        // --- 2. THE CHUNKY ENTITY FACTORY (40x40x40 Geometry) ---
+        function createBlockEntity(color, isSurgeon) {
+            const ent = new THREE.Group();
+            const mat = new THREE.MeshLambertMaterial({ color: color });
+            const s = 4.0; // Scaled to represent the massive 40-unit block aesthetic
+
+            // Torso (Composed of sub-blocks for detail)
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), mat);
+            torso.position.y = s;
+            ent.add(torso);
+
+            // Head (Chunky Block)
+            const head = new THREE.Mesh(new THREE.BoxGeometry(s * 0.9, s * 0.9, s * 0.9), mat);
+            head.position.y = s * 2;
+            ent.add(head);
+
+            // Left Arm
+            const lArm = new THREE.Mesh(new THREE.BoxGeometry(s * 0.8, s * 0.8, s * 0.8), mat);
+            lArm.position.set(-s, s, 0);
+            ent.add(lArm);
+
+            // Right Arm
+            const rArm = new THREE.Mesh(new THREE.BoxGeometry(s * 0.8, s * 0.8, s * 0.8), mat);
+            rArm.position.set(s, s, 0);
+            ent.add(rArm);
+
+            // Left Leg
+            const lLeg = new THREE.Mesh(new THREE.BoxGeometry(s * 0.7, s * 0.7, s * 0.7), mat);
+            lLeg.position.set(-s/2, 0, 0);
+            ent.add(lLeg);
+
+            // Right Leg
+            const rLeg = new THREE.Mesh(new THREE.BoxGeometry(s * 0.7, s * 0.7, s * 0.7), mat);
+            rLeg.position.set(s/2, 0, 0);
+            ent.add(rLeg);
+
+            // Surgeon specific detail: Glowing Red eyes
+            if (isSurgeon) {
+                const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), eyeMat);
+                eyeL.position.set(-1, s * 2.2, s/2);
+                const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), eyeMat);
+                eyeR.position.set(1, s * 2.2, s/2);
+                ent.add(eyeL, eyeR);
+            }
+
+            return ent;
+        }
+
+        // --- 3. MAZE & WORLD BUILDER ---
+        function constructWorld() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x050508, 0.08);
-            camera = new THREE.PerspectiveCamera(80, window.innerWidth/window.innerHeight, 0.1, 2000);
+            scene.fog = new THREE.FogExp2(0x08080c, 0.07);
+
+            camera = new THREE.PerspectiveCamera(85, window.innerWidth/window.innerHeight, 0.1, 2000);
             clock = new THREE.Clock();
-            renderer = new THREE.WebGLRenderer({ antialias: false });
+
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
             document.body.appendChild(renderer.domElement);
 
-            ambient = new THREE.AmbientLight(0x445588, 0.5);
-            scene.add(ambient);
+            ambLight = new THREE.AmbientLight(0x445588, 0.7); // Enhanced visibility
+            scene.add(ambLight);
 
-            flashlight = new THREE.SpotLight(0xfff5d0, 250, 150, Math.PI/6, 0.5, 2);
-            camera.add(flashlight);
-            flashlight.position.set(0,0,0.1);
-            flashlight.target.position.set(0,0,-5);
-            camera.add(flashlight.target);
+            sky = new THREE.HemisphereLight(0x6688cc, 0x050505, 0.5);
+            scene.add(sky);
+
+            torch = new THREE.SpotLight(0xfffce0, 300);
+            torch.angle = Math.PI/6.5;
+            torch.penumbra = 0.5;
+            torch.decay = 2.0;
+            torch.distance = 130;
+            camera.add(torch);
+            torch.position.set(0,0,0.1);
+            torch.target.position.set(0,0,-5);
+            camera.add(torch.target);
             scene.add(camera);
 
-            buildMaze();
-            spawnEntities();
-            initInput();
-            animate();
+            generateFloors();
+            spawnHorrors();
+            setupInteraction();
+            mainTick();
         }
 
-        function buildMaze() {
-            const wallGeo = new THREE.BoxGeometry(CORE.cellSize, 10, 1);
-            const wallMat = new THREE.MeshLambertMaterial({ color: 0x1a1a20 });
-            const floorMat = new THREE.MeshLambertMaterial({ color: 0x0a0a0a });
+        function generateFloors() {
+            const wallMat = new THREE.MeshLambertMaterial({ color: 0x181a20 });
+            const floorMat = new THREE.MeshLambertMaterial({ color: 0x080808 });
 
-            CORE.mazeData.forEach((floorGrid, fIdx) => {
-                const floorGroup = new THREE.Group();
-                floorGroup.position.y = fIdx * 20; // 20 units per story
+            for (let f = 0; f < 3; f++) {
+                const group = new THREE.Group();
+                group.position.y = f * 25;
 
-                // Floor Plane
-                const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), floorMat);
-                ground.rotation.x = -Math.PI/2;
-                floorGroup.add(ground);
+                // Recursive Backtracker Logic
+                const grid = Array(APP.size).fill().map(() => Array(APP.size).fill(15));
+                const stack = [[0, 0]];
+                const seen = new Set(['0,0']);
+                
+                while (stack.length > 0) {
+                    const [cx, cy] = stack[stack.length - 1];
+                    const possible = [];
+                    [[0,1,1,4],[0,-1,4,1],[1,0,2,8],[-1,0,8,2]].forEach(([dx, dy, w, op]) => {
+                        const nx = cx+dx, ny = cy+dy;
+                        if (nx>=0 && nx<APP.size && ny>=0 && ny<APP.size && !seen.has(`${nx},${ny}`)) {
+                            possible.push([nx, ny, w, op]);
+                        }
+                    });
+                    if (possible.length > 0) {
+                        const [nx, ny, w, op] = possible[Math.floor(Math.random()*possible.length)];
+                        grid[cy][cx] -= w; grid[ny][nx] -= op;
+                        seen.add(`${nx},${ny}`); stack.push([nx, ny]);
+                    } else { stack.pop(); }
+                }
 
-                // Build Walls based on Grid bits
-                for (let y = 0; y < CORE.mazeSize; y++) {
-                    for (let x = 0; x < CORE.mazeSize; x++) {
-                        const val = floorGrid[y][x];
-                        const px = x * CORE.cellSize - (CORE.mazeSize * CORE.cellSize)/2;
-                        const pz = y * CORE.cellSize - (CORE.mazeSize * CORE.cellSize)/2;
+                // Transform grid to mesh
+                for (let y = 0; y < APP.size; y++) {
+                    for (let x = 0; x < APP.size; x++) {
+                        const px = x * APP.dim - (APP.size*APP.dim)/2;
+                        const pz = y * APP.dim - (APP.size*APP.dim)/2;
+                        const v = grid[y][x];
 
-                        if (val & 1) { // North
-                            const w = new THREE.Mesh(wallGeo, wallMat);
-                            w.position.set(px, 5, pz - CORE.cellSize/2);
-                            floorGroup.add(w);
-                        }
-                        if (val & 4) { // South
-                            const w = new THREE.Mesh(wallGeo, wallMat);
-                            w.position.set(px, 5, pz + CORE.cellSize/2);
-                            floorGroup.add(w);
-                        }
-                        if (val & 8) { // West
-                            const w = new THREE.Mesh(wallGeo, wallMat);
-                            w.rotation.y = Math.PI/2;
-                            w.position.set(px - CORE.cellSize/2, 5, pz);
-                            floorGroup.add(w);
-                        }
-                        if (val & 2) { // East
-                            const w = new THREE.Mesh(wallGeo, wallMat);
-                            w.rotation.y = Math.PI/2;
-                            w.position.set(px + CORE.cellSize/2, 5, pz);
-                            floorGroup.add(w);
-                        }
+                        if (v & 1) createWall(px, pz - APP.dim/2, 0, group);
+                        if (v & 4) createWall(px, pz + APP.dim/2, 0, group);
+                        if (v & 8) createWall(px - APP.dim/2, pz, Math.PI/2, group);
+                        if (v & 2) createWall(px + APP.dim/2, pz, Math.PI/2, group);
                     }
                 }
 
-                // Add Stairwell (Exit to next floor)
-                const stair = new THREE.Mesh(new THREE.BoxGeometry(4, 0.5, 4), new THREE.MeshBasicMaterial({color: 0x00ffcc}));
-                stair.position.set(40, 0.1, 40);
-                stair.name = "STAIRS_" + (fIdx + 1);
-                floorGroup.add(stair);
+                // Level Ground
+                const ground = new THREE.Mesh(new THREE.PlaneGeometry(350, 350), floorMat);
+                ground.rotation.x = -Math.PI/2;
+                group.add(ground);
 
-                scene.add(floorGroup);
-            });
-        }
+                // Stairwell Exit (FURTHEST POINT)
+                const exit = new THREE.Mesh(new THREE.BoxGeometry(4, 0.5, 4), new THREE.MeshBasicMaterial({color:0x00f2ff}));
+                exit.position.set((APP.size/2-1)*APP.dim, 0.1, (APP.size/2-1)*APP.dim);
+                exit.name = "EXIT_GATE";
+                group.add(exit);
 
-        // --- 3. 40x40x40 ENTITY LOGIC ---
-        function spawnEntities() {
-            const createHugeEntity = (color) => {
-                const group = new THREE.Group();
-                const mat = new THREE.MeshLambertMaterial({ color: color });
-                const size = 0.4; // Scaled visual so they aren't literal mountains, but relative to player they are 40 "game units" blocky
-                
-                // Torso
-                const torso = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
-                torso.position.y = size;
-                // Head
-                const head = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
-                head.position.y = size * 2.1;
-                // Arms
-                const lArm = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
-                lArm.position.set(-size, size, 0);
-                const rArm = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
-                rArm.position.set(size, size, 0);
-                // Legs
-                const lLeg = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
-                lLeg.position.set(-size/2, 0, 0);
-                const rLeg = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
-                rLeg.position.set(size/2, 0, 0);
-
-                group.add(torso, head, lArm, rArm, lLeg, rLeg);
-                group.scale.set(4, 4, 4); // The "40x40x40" feel
-                return group;
-            };
-
-            // Spawn Surgeon
-            const surgeon = createHugeEntity(0x111111);
-            surgeon.position.set(-30, 0, -30);
-            surgeon.userData = { type: 'surgeon', floor: 1 };
-            scene.add(surgeon);
-            CORE.entities.push(surgeon);
-
-            // Spawn Patients
-            for(let i=0; i<6; i++) {
-                const patient = createHugeEntity(0x440000);
-                patient.position.set(Math.random()*100-50, (i%3)*20, Math.random()*100-50);
-                patient.userData = { type: 'patient', floor: (i % 3) + 1, speed: 0.03 + Math.random()*0.02 };
-                scene.add(patient);
-                CORE.entities.push(patient);
+                scene.add(group);
             }
         }
 
-        // --- 4. INPUT & CONTROLS ---
-        function initInput() {
-            const mPad = document.getElementById('move-pad');
-            const lPad = document.getElementById('look-pad');
-            const knob = document.getElementById('joy-knob');
-            let cx, cy, lx, ly;
+        function createWall(x, z, r, g) {
+            const w = new THREE.Mesh(new THREE.BoxGeometry(APP.dim, 12, 0.7), new THREE.MeshLambertMaterial({color:0x1a1a1e}));
+            w.position.set(x, 6, z); w.rotation.y = r;
+            g.add(w);
+            APP.obstacles.push(w);
+        }
 
-            mPad.addEventListener('touchstart', e => {
-                const t = e.touches[0]; cx = t.clientX; cy = t.clientY;
-            });
-            mPad.addEventListener('touchmove', e => {
+        function spawnHorrors() {
+            // Surgeon (Floor 1 Stalker)
+            const surg = createBlockEntity(0x050505, true);
+            surg.position.set(-50, 0, -50);
+            surg.userData = { floor: 1, speed: 0.07, type: 'STALKER' };
+            scene.add(surg);
+            APP.ents.push(surg);
+
+            // Patients (Randomly Distributed)
+            for(let i=0; i<15; i++) {
+                const fl = (i % 3) + 1;
+                const p = createBlockEntity(0x330000, false);
+                p.position.set(Math.random()*160-80, (fl-1)*25, Math.random()*160-80);
+                p.userData = { floor: fl, speed: 0.04 + Math.random()*0.05, type: 'WANDERER' };
+                scene.add(p);
+                APP.ents.push(p);
+            }
+        }
+
+        // --- 4. NAVIGATION & INPUT ---
+        function setupInteraction() {
+            const lZ = document.getElementById('left-control');
+            const rZ = document.getElementById('right-control');
+            const stick = document.getElementById('joy-stick');
+            let sx, sy, lx, ly;
+
+            lZ.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; });
+            lZ.addEventListener('touchmove', e => {
                 e.preventDefault();
                 const t = e.touches[0];
-                const dx = t.clientX - cx, dy = t.clientY - cy;
-                const d = Math.min(Math.sqrt(dx*dx + dy*dy), 40);
-                const a = Math.atan2(dy, dx);
-                knob.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
-                CORE.input.mVec.set(Math.cos(a)*(d/40), Math.sin(a)*(d/40));
-                CORE.input.active = d > 5;
-            });
-            mPad.addEventListener('touchend', () => {
-                knob.style.transform = `translate(0,0)`;
-                CORE.input.active = false;
-                CORE.input.mVec.set(0,0);
-            });
+                const dx = t.clientX - sx, dy = t.clientY - sy;
+                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 45);
+                const ang = Math.atan2(dy, dx);
+                stick.style.transform = `translate(${Math.cos(ang)*dist}px, ${Math.sin(ang)*dist}px)`;
+                APP.input.mv.set(Math.cos(ang)*(dist/45), Math.sin(ang)*(dist/45));
+                APP.input.active = dist > 5;
+            }, { passive: false });
+            lZ.addEventListener('touchend', () => { stick.style.transform = `translate(0,0)`; APP.input.active = false; APP.input.mv.set(0,0); });
 
-            lPad.addEventListener('touchstart', e => {
-                const t = e.touches[0]; lx = t.clientX; ly = t.clientY;
-            });
-            lPad.addEventListener('touchmove', e => {
+            rZ.addEventListener('touchstart', e => { lx = e.touches[0].clientX; ly = e.touches[0].clientY; });
+            rZ.addEventListener('touchmove', e => {
                 const t = e.touches[0];
-                CORE.input.yaw -= (t.clientX - lx) * CORE.lookSense;
-                CORE.input.pitch -= (t.clientY - ly) * CORE.lookSense;
-                CORE.input.pitch = Math.max(-1.4, Math.min(1.4, CORE.input.pitch));
+                APP.input.yaw -= (t.clientX - lx) * APP.rot;
+                APP.input.pitch -= (t.clientY - ly) * APP.rot;
+                APP.input.pitch = Math.max(-1.4, Math.min(1.4, APP.input.pitch));
                 lx = t.clientX; ly = t.clientY;
             });
         }
 
-        // --- 5. GAME LOOP & AI ---
-        function animate() {
-            requestAnimationFrame(animate);
-            const delta = clock.getDelta();
+        // --- 5. RENDER LOOP & AI BEHAVIOR ---
+        function mainTick() {
+            requestAnimationFrame(mainTick);
+            const dt = clock.getDelta();
 
-            if (CORE.playing) {
-                // Camera Transform
+            if (APP.playing) {
                 camera.rotation.order = "YXZ";
-                camera.rotation.y = CORE.input.yaw;
-                camera.rotation.x = CORE.input.pitch;
+                camera.rotation.y = APP.input.yaw;
+                camera.rotation.x = APP.input.pitch;
 
-                if (CORE.input.active) {
+                if (APP.input.active) {
                     const fwd = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
-                    const sid = new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion);
-                    fwd.y = 0; sid.y = 0; fwd.normalize(); sid.normalize();
-                    camera.position.addScaledVector(fwd, -CORE.input.mVec.y * CORE.speed);
-                    camera.position.addScaledVector(sid, CORE.input.mVec.x * CORE.speed);
+                    const rgt = new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion);
+                    fwd.y = 0; rgt.y = 0; fwd.normalize(); rgt.normalize();
+
+                    const moveDir = new THREE.Vector3().addScaledVector(fwd, -APP.input.mv.y).addScaledVector(rgt, APP.input.mv.x);
                     
-                    // Head bob
-                    camera.position.y = (CORE.currentFloor-1)*20 + 1.6 + Math.sin(Date.now()*0.008)*0.05;
+                    // Simple Wall Raycast
+                    const ray = new THREE.Raycaster(camera.position, moveDir.clone().normalize(), 0, 1.5);
+                    const hits = ray.intersectObjects(APP.obstacles);
+                    
+                    if (hits.length === 0) {
+                        camera.position.addScaledVector(moveDir, APP.speed);
+                        camera.position.y = (APP.floor-1)*25 + APP.height + Math.sin(Date.now()*0.008)*0.05;
+                    }
+                    audio.step.volume = 0.4;
+                } else {
+                    audio.step.volume = 0;
                 }
 
-                // AI Logic
-                CORE.entities.forEach(ent => {
-                    if (ent.userData.floor === CORE.currentFloor) {
+                // AI Processing
+                let nearestDist = 1000;
+                APP.ents.forEach(ent => {
+                    if (ent.userData.floor === APP.floor) {
                         ent.lookAt(camera.position);
                         const dist = ent.position.distanceTo(camera.position);
-                        
-                        // Simple hunt
-                        if (dist < 40) {
-                            const dir = new THREE.Vector3().subVectors(camera.position, ent.position).normalize();
-                            dir.y = 0;
-                            ent.position.addScaledVector(dir, ent.userData.type === 'surgeon' ? 0.05 : ent.userData.speed);
-                        }
+                        if (dist < nearestDist) nearestDist = dist;
 
-                        // Breathing Intensity
-                        if (ent.userData.type === 'surgeon' && dist < 15) {
-                            sfx.breath.volume = Math.max(0, 1 - (dist/15));
+                        if (dist < 60) {
+                            const approach = new THREE.Vector3().subVectors(camera.position, ent.position).normalize();
+                            approach.y = 0;
+                            ent.position.addScaledVector(approach, ent.userData.speed);
+                            
+                            if (dist < 12 && ent.userData.type === 'STALKER') {
+                                audio.breath.volume = 1 - (dist/12);
+                                document.getElementById('threat-lvl').innerText = "CRITICAL";
+                                document.getElementById('threat-lvl').style.color = "#ff3300";
+                            }
                         }
                     }
                 });
 
-                // Floor Check (Stair logic)
-                const distToStair = camera.position.distanceTo(new THREE.Vector3(40, (CORE.currentFloor-1)*20, 40));
-                if (distToStair < 3 && CORE.currentFloor < 3) {
-                    CORE.currentFloor++;
-                    camera.position.y += 20;
-                    camera.position.x = 0; camera.position.z = 0;
-                    announceFloor();
+                if (nearestDist > 40) {
+                    document.getElementById('threat-lvl').innerText = "NONE";
+                    document.getElementById('threat-lvl').style.color = "var(--terminal-cyan)";
                 }
 
-                document.getElementById('floor-val').innerText = CORE.currentFloor;
+                // Heartbeat simulation
+                const bpm = 70 + (nearestDist < 30 ? (30 - nearestDist) * 3 : 0);
+                document.getElementById('pulse-val').innerText = Math.floor(bpm);
+
+                // Level Exit Logic
+                const exitX = (APP.size/2-1)*APP.dim;
+                const exitZ = (APP.size/2-1)*APP.dim;
+                const dToExit = camera.position.distanceTo(new THREE.Vector3(exitX, (APP.floor-1)*25, exitZ));
+                
+                if (dToExit < 4 && APP.floor < 3) {
+                    APP.floor++;
+                    camera.position.y += 25;
+                    camera.position.x = 0; camera.position.z = 0;
+                    document.getElementById('floor-val').innerText = "0" + APP.floor;
+                    document.getElementById('floor-tag').innerText = "WARD_0" + APP.floor;
+                }
+
+                document.getElementById('stair-val').innerText = dToExit < 20 ? "TRUE" : "FALSE";
             }
 
             renderer.render(scene, camera);
         }
 
-        function announceFloor() {
-            const el = document.getElementById('floor-announcer');
-            el.innerText = "FLOOR " + CORE.currentFloor;
-            el.style.opacity = "1";
-            setTimeout(() => el.style.opacity = "0", 2000);
-        }
-
-        // Boot Pipeline
-        let p = 0;
-        const loader = setInterval(() => {
-            p += 2;
-            document.getElementById('bar').style.width = p + "%";
-            if (p >= 100) {
-                clearInterval(loader);
-                CORE.mazeData = generateMazeData();
-                setup3D();
-                CORE.ready = true;
-                document.getElementById('boot-status').innerText = "LINK ESTABLISHED. TAP SCREEN.";
-            }
-        }, 30);
-
-        window.addEventListener('mousedown', () => {
-            if(CORE.ready && !CORE.playing) {
-                CORE.playing = true;
-                document.getElementById('boot').style.opacity = "0";
-                setTimeout(() => document.getElementById('boot').style.display = "none", 1000);
-                document.getElementById('ui').style.display = "block";
-                sfx.amb = document.getElementById('amb');
-                sfx.step = document.getElementById('step');
-                sfx.breath = document.getElementById('breath');
-                [sfx.amb, sfx.step, sfx.breath].forEach(s => { s.volume = 0.2; s.play().catch(()=>{}); });
-                sfx.step.volume = 0; sfx.breath.volume = 0;
-            }
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
     </script>
