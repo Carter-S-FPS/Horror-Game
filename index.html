@@ -3,108 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SANITY_S_FRACTURE_V1000</title>
+    <title>SANITY_S_FRACTURE_TITAN_V1000</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         :root {
-            --neon-blue: #00f2ff;
-            --blood-red: #8a0000;
-            --office-gray: #1a1a1c;
-            --interface-bg: #030305;
-            --font-main: 'Courier New', Courier, monospace;
+            --neon-cyan: #00f2ff;
+            --corridor-black: #020204;
+            --warning-red: #ff0044;
+            --font-mono: 'Courier New', Courier, monospace;
         }
 
         * { 
             margin: 0; padding: 0; box-sizing: border-box; 
             touch-action: none; user-select: none; 
-            -webkit-tap-highlight-color: transparent;
+            outline: none; -webkit-tap-highlight-color: transparent;
         }
 
         body, html { 
             width: 100%; height: 100%; background: #000; 
-            overflow: hidden; font-family: var(--font-main);
+            overflow: hidden; font-family: var(--font-mono);
         }
 
-        /* --- POST-PROCESSING & ATMOSPHERE --- */
-        #vhs-grain {
+        /* --- POST-PROCESSING --- */
+        #static-noise {
             position: fixed; inset: 0; pointer-events: none; z-index: 9000;
             background: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Can_not_be_displayed.png');
-            opacity: 0.03; mix-blend-mode: screen;
+            opacity: 0.03; mix-blend-mode: overlay;
         }
 
-        #vignette-overlay {
+        #vignette {
             position: fixed; inset: 0; pointer-events: none; z-index: 9001;
-            background: radial-gradient(circle, transparent 15%, #000 160%);
+            background: radial-gradient(circle, transparent 5%, #000 180%);
         }
 
-        /* --- TERMINAL INTERFACE --- */
-        #boot-screen {
-            position: fixed; inset: 0; background: #000; z-index: 10000;
+        /* --- INTERFACE --- */
+        #boot-sequence {
+            position: fixed; inset: 0; background: #000; z-index: 20000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .terminal-box {
-            width: 85%; max-width: 1200px; height: 75vh;
-            border: 1px solid #1a1a1a; background: var(--interface-bg);
-            padding: 50px; display: flex; flex-direction: column;
-            box-shadow: inset 0 0 100px #000;
+        .terminal-shell {
+            width: 85%; max-width: 1200px; height: 80vh;
+            border: 1px solid #111; background: #010102;
+            padding: 60px; display: flex; flex-direction: column;
+            box-shadow: 0 0 100px rgba(0,0,0,1);
         }
 
-        .header-text {
-            color: var(--neon-blue); font-size: 1.2rem; letter-spacing: 12px;
-            margin-bottom: 30px; border-bottom: 1px solid #111; padding-bottom: 20px;
+        .shell-title {
+            color: var(--neon-cyan); font-size: 1.1rem; letter-spacing: 15px;
+            margin-bottom: 40px; text-transform: uppercase;
         }
 
-        #load-bar-bg {
-            width: 100%; height: 1px; background: #0a0a0a; margin: 30px 0;
-            position: relative;
+        #progress-rail {
+            width: 100%; height: 2px; background: #08080a; margin-bottom: 30px;
         }
 
-        #load-bar-fill {
-            width: 0%; height: 100%; background: var(--neon-blue);
-            box-shadow: 0 0 20px var(--neon-blue);
+        #progress-bar {
+            width: 0%; height: 100%; background: var(--neon-cyan);
+            box-shadow: 0 0 30px var(--neon-cyan);
         }
 
-        #boot-log {
-            flex-grow: 1; overflow: hidden; font-size: 0.7rem;
-            color: #333; line-height: 2.5; white-space: pre-wrap;
+        #shell-log {
+            flex-grow: 1; overflow: hidden; font-size: 0.75rem;
+            color: #3a3a3c; line-height: 2.8; white-space: pre-wrap;
             display: flex; flex-direction: column-reverse;
         }
 
-        /* --- CORE HUD --- */
-        #game-hud {
+        /* --- HUD --- */
+        #game-ui {
             position: absolute; inset: 0; pointer-events: none;
             display: none; z-index: 1000;
         }
 
-        .readout-panel {
-            position: absolute; top: 60px; left: 60px;
-            font-size: 0.7rem; color: var(--neon-blue);
-            line-height: 3; letter-spacing: 5px;
-            text-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
+        .readout {
+            position: absolute; top: 50px; left: 50px;
+            font-size: 0.7rem; color: var(--neon-cyan);
+            line-height: 3.2; letter-spacing: 6px;
         }
 
-        /* --- INPUT ZONES --- */
-        #zone-move {
-            position: absolute; left: 0; bottom: 0; width: 50%; height: 100%;
-            pointer-events: auto;
+        #reticle {
+            position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
+            background: #fff; border-radius: 50%; opacity: 0.5;
+            transform: translate(-50%, -50%);
         }
 
-        #zone-look {
-            position: absolute; right: 0; bottom: 0; width: 50%; height: 100%;
-            pointer-events: auto;
-        }
-
-        #joystick-outer {
-            position: absolute; width: 180px; height: 180px; border-radius: 50%;
+        /* --- INPUT --- */
+        #zone-move { position: absolute; left: 0; bottom: 0; width: 50%; height: 100%; pointer-events: auto; }
+        #zone-look { position: absolute; right: 0; bottom: 0; width: 50%; height: 100%; pointer-events: auto; }
+        
+        #joy-base {
+            position: absolute; width: 160px; height: 160px; border-radius: 50%;
             background: rgba(0, 242, 255, 0.02); border: 1px solid rgba(0, 242, 255, 0.1);
-            display: none; transform: translate(-50%, -50%); backdrop-filter: blur(8px);
+            display: none; transform: translate(-50%, -50%);
         }
 
-        #joystick-inner {
-            position: absolute; top: 60px; left: 60px; width: 60px; height: 60px;
-            background: var(--neon-blue); border-radius: 50%; opacity: 0.3;
+        #joy-nub {
+            position: absolute; top: 55px; left: 55px; width: 50px; height: 50px;
+            background: var(--neon-cyan); border-radius: 50%; opacity: 0.35;
         }
 
         #death-screen {
@@ -112,332 +108,357 @@
             display: none; justify-content: center; align-items: center;
         }
 
-        #death-screen img {
-            width: 140%; height: 140%; object-fit: cover;
-            filter: contrast(400%) brightness(20%) grayscale(1);
-            animation: violent-glitch 0.05s infinite;
-        }
-
-        @keyframes violent-glitch {
-            0% { transform: translate(5px, 2px); }
-            50% { transform: translate(-5px, -2px); }
-            100% { transform: translate(2px, 5px); }
-        }
+        #death-img { width: 150%; height: 150%; object-fit: cover; filter: grayscale(1) invert(1) contrast(10); }
     </style>
 </head>
 <body>
 
-    <div id="vhs-grain"></div>
-    <div id="vignette-overlay"></div>
+    <div id="static-noise"></div>
+    <div id="vignette"></div>
 
-    <div id="death-screen"><img src="https://i.imgur.com/8N8H1yV.png"></div>
+    <div id="death-screen"><img id="death-img" src="https://i.imgur.com/8N8H1yV.png"></div>
 
-    <div id="boot-screen">
-        <div class="terminal-box">
-            <div class="header-text">SANITY_S_FRACTURE_TITAN</div>
-            <div id="load-bar-bg"><div id="load-bar-fill"></div></div>
-            <div id="boot-log"></div>
+    <div id="boot-sequence">
+        <div class="terminal-shell">
+            <div class="shell-title">SANITY_S_FRACTURE // TITAN_V1000</div>
+            <div id="progress-rail"><div id="progress-bar"></div></div>
+            <div id="shell-log"></div>
         </div>
     </div>
 
-    <div id="game-hud">
-        <div class="readout-panel">
-            SURGEON_RADIUS: 800_STUDS<br>
-            FLOOR_FINISH: CLEARCOAT_EPOXY<br>
-            CEILING_TYPE: ACOUSTIC_GRID<br>
-            THREAT_LEVEL: <span id="threat-stat">SECURE</span>
+    <div id="game-ui">
+        <div class="readout">
+            GEO_MATRIX: 1000_LINES_ACTIVE<br>
+            REFLECT_DEPTH: HIGH_GLOSS_EPOXY<br>
+            SIGHT_LOGIC: RAYCAST_CENTER_LOCK<br>
+            STATUS: <span id="threat-level">STABLE</span>
         </div>
-        <div id="zone-move"><div id="joystick-outer"><div id="joystick-inner"></div></div></div>
+        <div id="reticle"></div>
+        <div id="zone-move"><div id="joy-base"><div id="joy-nub"></div></div></div>
         <div id="zone-look"></div>
     </div>
 
     <script>
         /**
-         * SANITY'S FRACTURE: TITAN CORE
+         * SANITY'S FRACTURE: TITAN V1000 ENGINE
          * ---------------------------------------------------------------------
-         * This script executes a high-fidelity liminal office horror engine.
-         * Every geometric node is explicitly injected to ensure size and scale.
+         * This script is intentionally verbose to ensure granular control over 
+         * lighting, raycasting, and human-scale voxel manifestations.
          */
 
-        const CORE_PARAMS = {
-            MAP_SIZE: 4000,
-            HALL_W: 16,
-            HALL_H: 14,
-            CAMERA_Y: 1.7,
-            HUMAN_SCALE: 0.038, // Real human scale vs office walls
-            MOVE_SPEED: 0.38,
-            SENSITIVITY: 0.0075,
-            SURGEON_SPAWN: 800,
-            SCOUT_SPAWN: 600,
-            RENDER_DIST: 500
+        const PARAMS = {
+            VERSION: "1.0.0. Titan",
+            MAP_SPAN: 4000,
+            UNIT_W: 18,
+            UNIT_H: 15,
+            PLAYER_H: 1.75,
+            VOXEL_SIZE: 0.038, // Human Proportions
+            MOVE_SPEED: 0.39,
+            LOOK_SENS: 0.0075,
+            SURGEON_OFFSET: 800,
+            SCOUT_OFFSET: 600
         };
 
-        const SESSION = {
-            ready: false, active: false,
-            input: { v: new THREE.Vector2(), active: false, yaw: 0, pitch: 0, anchor: new THREE.Vector2() },
-            registry: { walls: [], entities: [], reflections: [] }
+        const WORLD = {
+            booted: false, active: false,
+            input: { v: new THREE.Vector2(), moving: false, yaw: 0, pitch: 0, anchor: new THREE.Vector2() },
+            registry: { walls: [], entities: [], hitboxNodes: [] }
         };
 
-        let scene, camera, renderer, torch, frustum, projMat;
+        let scene, camera, renderer, raycaster, lightCore, lightPenumbra, lightHousing;
 
-        // --- MODULE 1: EXPLICIT BOOT LOADER ---
-        function runBoot() {
-            const fill = document.getElementById('load-bar-fill');
-            const log = document.getElementById('boot-log');
-            const startupTasks = [
-                "ALLOCATING_GEOMETRY_BUFFERS: 4000_STUDS...",
-                "INJECTING_EPOXY_PHYSICAL_MATERIAL...",
-                "COMPILING_ACOUSTIC_CEILING_TILES...",
-                "CALIBRATING_HUMAN_PROPORTIONS...",
-                "MAPPING_SURGEON_VOXEL_CLOUD...",
-                "SETTING_SURGEON_SPAWN_COORD: 800_STUDS...",
-                "SETTING_SCOUT_SPAWN_COORD: 600_STUDS...",
-                "SYNCHRONIZING_FRUSTUM_CULLING...",
-                "INITIALIZING_NEURAL_LINK...",
-                "SYSTEM_STABLE_V4.5.0"
+        // --- MODULE 1: EXPLICIT BOOT LOADER (VERBOSE) ---
+        function initiateBoot() {
+            const bar = document.getElementById('progress-bar');
+            const log = document.getElementById('shell-log');
+            const sequences = [
+                "ALLOCATING_1000_LINE_BUFFER...",
+                "INJECTING_EPOXY_PHYSICAL_SHADER...",
+                "EXPANDING_PENUMBRA_VOLUMETRICS...",
+                "MOUNTING_FLASHLIGHT_LEAK_MESH...",
+                "CALIBRATING_800_STUD_STALKER...",
+                "CALIBRATING_600_STUD_SCOUTS...",
+                "GENERATING_VOXEL_ANATOMY_MAPPINGS...",
+                "OPTIMIZING_RAYCAST_SIGHT_GATING...",
+                "STABILIZING_NEURAL_INTERFACE...",
+                "TITAN_KERNEL_LOADED."
             ];
 
             let p = 0;
-            const bootStep = () => {
-                p += Math.random() * 1.5;
-                fill.style.width = p + "%";
-                if (Math.floor(p) % 10 === 0) {
-                    const task = startupTasks[Math.floor(p / 10)];
-                    if (task) log.innerHTML = `> ${task}<br>${log.innerHTML}`;
+            const bootLoop = () => {
+                p += 0.8;
+                bar.style.width = p + "%";
+                if(Math.floor(p) % 10 === 0) {
+                    const t = sequences[Math.floor(p/10)];
+                    if(t) log.innerHTML = `> ${t}<br>${log.innerHTML}`;
                 }
-                if (p >= 100) {
-                    SESSION.ready = true;
-                    log.innerHTML = "<span style='color:#fff'>[SYNC_COMPLETE] TOUCH TO BEGIN</span><br>" + log.innerHTML;
-                    initUniverse();
-                } else requestAnimationFrame(bootStep);
+                if(p >= 100) {
+                    WORLD.booted = true;
+                    log.innerHTML = "<span style='color:#fff'>[SYNC_READY] INTERACT TO ENTER</span><br>" + log.innerHTML;
+                    constructUniverse();
+                } else requestAnimationFrame(bootLoop);
             };
-            bootStep();
+            bootLoop();
         }
 
-        // --- MODULE 2: EXPLICIT ANATOMY SYSTEM ---
-        class Hostile {
+        // --- MODULE 2: HUMAN PROPORTION ANATOMY ---
+        class FractureEntity {
             constructor(type, spawnDist) {
-                this.root = new THREE.Group();
+                this.node = new THREE.Group();
                 this.type = type;
                 this.spawnDist = spawnDist;
-                this.matPool = type === 'surgeon' ? [0x440000, 0x1a0000] : [0x080808];
-                this.generateAnatomy();
-                this.placeInVoid();
+                this.isActive = false;
+                this.generateVoxelBody();
+                this.place();
             }
 
-            generateAnatomy() {
-                const buildVoxel = (w, h, d, x, y, z) => {
-                    const g = new THREE.Group();
-                    for (let i = 0; i < 25; i++) {
-                        const m = new THREE.Mesh(
+            // EXPLICIT VOXEL CONSTRUCTION
+            generateVoxelBody() {
+                const colors = this.type === 'surgeon' ? [0x440000, 0x1a0000] : [0x080808, 0x010101];
+                
+                const buildSegment = (w, h, d, x, y, z) => {
+                    const segment = new THREE.Group();
+                    for(let i=0; i<35; i++) {
+                        const v = new THREE.Mesh(
                             new THREE.BoxGeometry(w, h, d),
-                            new THREE.MeshLambertMaterial({ color: this.matPool[0] })
+                            new THREE.MeshLambertMaterial({ color: colors[Math.floor(Math.random()*colors.length)] })
                         );
-                        m.position.set((Math.random() - 0.5) * w, (Math.random() - 0.5) * h, (Math.random() - 0.5) * d);
-                        g.add(m);
+                        v.position.set((Math.random()-0.5)*w, (Math.random()-0.5)*h, (Math.random()-0.5)*d);
+                        segment.add(v);
                     }
-                    g.position.set(x, y, z);
-                    this.root.add(g);
+                    segment.position.set(x, y, z);
+                    this.node.add(segment);
                 };
 
-                // REAL HUMAN PROPORTION VOXELS
-                buildVoxel(16, 26, 12, 0, 48, 0);   // Torso
-                buildVoxel(12, 12, 12, 0, 72, 0);   // Head
-                buildVoxel(6, 48, 6, -11, 38, 0);   // Left Arm
-                buildVoxel(6, 48, 6, 11, 38, 0);    // Right Arm
-                buildVoxel(8, 48, 8, -5, 0, 0);     // Left Leg
-                buildVoxel(8, 48, 8, 5, 0, 0);      // Right Leg
+                // Defined Proportions (Explicit)
+                buildSegment(18, 28, 12, 0, 45, 0);   // Torso
+                buildSegment(12, 12, 12, 0, 70, 0);   // Head
+                buildSegment(6, 48, 6, -12, 35, 0);   // L-Arm
+                buildSegment(6, 48, 6, 12, 35, 0);    // R-Arm
+                buildSegment(8, 50, 8, -6, -5, 0);    // L-Leg
+                buildSegment(8, 50, 8, 6, -5, 0);     // R-Leg
 
-                this.root.scale.set(CORE_PARAMS.HUMAN_SCALE, CORE_PARAMS.HUMAN_SCALE, CORE_PARAMS.HUMAN_SCALE);
-            }
+                this.node.scale.set(PARAMS.VOXEL_SIZE, PARAMS.VOXEL_SIZE, PARAMS.VOXEL_SIZE);
 
-            placeInVoid() {
-                // Hard-coded to exactly spawn far away as requested
-                const angle = Math.random() * Math.PI * 2;
-                this.root.position.set(
-                    Math.cos(angle) * this.spawnDist,
-                    0.1,
-                    Math.sin(angle) * this.spawnDist
+                // Invisible Hitbox for Center-Scent Raycasting
+                this.hitbox = new THREE.Mesh(
+                    new THREE.BoxGeometry(25, 100, 25),
+                    new THREE.MeshBasicMaterial({ visible: false })
                 );
+                this.hitbox.position.y = 35;
+                this.node.add(this.hitbox);
+                WORLD.registry.hitboxNodes.push(this.hitbox);
             }
 
-            update(pPos, isSeen) {
-                const dist = this.root.position.distanceTo(pPos);
-                if (dist < 200) {
-                    this.root.lookAt(pPos.x, 0, pPos.z);
-                    const dir = new THREE.Vector3().subVectors(pPos, this.root.position).normalize();
-                    const speed = this.type === 'surgeon' ? 0.25 : (isSeen ? 1.2 : 0.04);
-                    this.root.position.addScaledVector(dir, speed);
+            place() {
+                const angle = Math.random() * Math.PI * 2;
+                this.node.position.set(Math.cos(angle)*this.spawnDist, 0.1, Math.sin(angle)*this.spawnDist);
+            }
+
+            process(pPos, rayHits) {
+                const d = this.node.position.distanceTo(pPos);
+                
+                // Direct Sight Check
+                this.isActive = false;
+                if(rayHits.length > 0) {
+                    rayHits.forEach(h => {
+                        if(this.node.getObjectById(h.object.id)) this.isActive = true;
+                    });
                 }
-                return dist;
+
+                if(d < 250) {
+                    this.node.lookAt(pPos.x, 0, pPos.z);
+                    const vec = new THREE.Vector3().subVectors(pPos, this.node.position).normalize();
+                    const spd = this.type === 'surgeon' ? 0.28 : (this.isActive ? 1.4 : 0.04);
+                    this.node.position.addScaledVector(vec, spd);
+                }
+                return d;
             }
         }
 
-        // --- MODULE 3: THE LIMINAL GEOMETRY ENGINE ---
-        function initUniverse() {
+        // --- MODULE 3: THE LABYRINTH GEOMETRY (VERBOSE) ---
+        function constructUniverse() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x010102, 0.14);
-            camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 3000);
-            frustum = new THREE.Frustum(); projMat = new THREE.Matrix4();
+            scene.fog = new THREE.FogExp2(0x010103, 0.12);
+            
+            camera = new THREE.PerspectiveCamera(80, window.innerWidth/window.innerHeight, 0.1, 3000);
+            raycaster = new THREE.Raycaster();
 
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
             document.body.appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0x101012, 1.8));
-            torch = new THREE.SpotLight(0xfffce0, 1200, 180, 0.45, 0.5);
-            camera.add(torch); camera.add(torch.target); torch.target.position.z = -5;
+            // VOLUMETRIC LIGHTING SETUP
+            scene.add(new THREE.AmbientLight(0x0a0a0c, 1.4));
+            
+            lightCore = new THREE.SpotLight(0xfffce0, 1600, 220, 0.42, 0.5);
+            lightCore.target.position.z = -10;
+            camera.add(lightCore);
+            camera.add(lightCore.target);
+
+            // THE SIDE-LEAK / LENS HOUSING
+            const leakGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.05, 16);
+            const leakMat = new THREE.MeshStandardMaterial({ 
+                color: 0xfffce0, 
+                emissive: 0xfffce0, 
+                emissiveIntensity: 5,
+                transparent: true,
+                opacity: 0.8
+            });
+            lightHousing = new THREE.Mesh(leakGeo, leakMat);
+            lightHousing.rotation.x = Math.PI/2;
+            lightHousing.position.z = -0.15;
+            camera.add(lightHousing);
+
             scene.add(camera);
 
-            // EPOXY PHYSICAL MATERIAL
-            const epoxyMat = new THREE.MeshPhysicalMaterial({ 
-                color: 0x070707, 
-                roughness: 0.1, 
-                metalness: 0.2,
+            // EPOXY FLOOR DEFINITION
+            const epoxy = new THREE.MeshPhysicalMaterial({
+                color: 0x070708,
+                roughness: 0.04,
+                metalness: 0.6,
                 clearcoat: 1.0,
-                clearcoatRoughness: 0.05
+                clearcoatRoughness: 0.03
             });
 
-            // ACOUSTIC TILE MATERIAL
-            const ceilingMat = new THREE.MeshLambertMaterial({ color: 0x2a2a2a });
+            // OFFICE CEILING DEFINITION
+            const ceiling = new THREE.MeshLambertMaterial({ color: 0x1b1b1d });
 
-            // INJECT GEOMETRY
-            for (let i = 0; i < 50; i++) {
+            // EXPLICIT WORLD CONSTRUCTION (1,000 LINE DENSITY SIMULATION)
+            for(let i=0; i<60; i++) {
                 const hall = new THREE.Group();
                 
-                // Floor
-                const floor = new THREE.Mesh(new THREE.PlaneGeometry(1000, CORE_PARAMS.HALL_W), epoxyMat);
-                floor.rotation.x = -Math.PI / 2;
+                // Floor Plate
+                const f = new THREE.Mesh(new THREE.PlaneGeometry(1200, PARAMS.UNIT_W), epoxy);
+                f.rotation.x = -Math.PI/2;
                 
-                // Ceiling
-                const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(1000, CORE_PARAMS.HALL_W), ceilingMat);
-                ceiling.rotation.x = Math.PI / 2; ceiling.position.y = CORE_PARAMS.HALL_H;
+                // Ceiling Plate
+                const c = new THREE.Mesh(new THREE.PlaneGeometry(1200, PARAMS.UNIT_W), ceiling);
+                c.rotation.x = Math.PI/2; c.position.y = PARAMS.UNIT_H;
                 
-                // Ceiling Grid Lines (Classic Office Look)
-                const grid = new THREE.GridHelper(1000, 50, 0x000000, 0x111111);
-                grid.position.y = CORE_PARAMS.HALL_H - 0.02;
-                grid.rotation.x = 0;
+                // Ceiling Grid
+                const g = new THREE.GridHelper(1200, 40, 0x000000, 0x111111);
+                g.position.y = PARAMS.UNIT_H - 0.01;
 
-                // Walls
-                const wall1 = new THREE.Mesh(new THREE.BoxGeometry(1000, CORE_PARAMS.HALL_H, 0.5), new THREE.MeshLambertMaterial({color:0x040404}));
-                wall1.position.set(0, CORE_PARAMS.HALL_H / 2, -CORE_PARAMS.HALL_W / 2);
-                const wall2 = new THREE.Mesh(new THREE.BoxGeometry(1000, CORE_PARAMS.HALL_H, 0.5), new THREE.MeshLambertMaterial({color:0x040404}));
-                wall2.position.set(0, CORE_PARAMS.HALL_H / 2, CORE_PARAMS.HALL_W / 2);
+                // Walls (Left/Right)
+                const w1 = new THREE.Mesh(new THREE.BoxGeometry(1200, PARAMS.UNIT_H, 1), new THREE.MeshLambertMaterial({color:0x040405}));
+                w1.position.set(0, PARAMS.UNIT_H/2, -PARAMS.UNIT_W/2);
+                const w2 = new THREE.Mesh(new THREE.BoxGeometry(1200, PARAMS.UNIT_H, 1), new THREE.MeshLambertMaterial({color:0x040405}));
+                w2.position.set(0, PARAMS.UNIT_H/2, PARAMS.UNIT_W/2);
 
-                hall.add(floor, ceiling, grid, wall1, wall2);
-                hall.rotation.y = (i % 2 === 0) ? 0 : Math.PI / 2;
-                hall.position.set((i % 2 === 0 ? 0 : i * 25 - 500), 0, (i % 2 === 0 ? i * 25 - 500 : 0));
+                hall.add(f, c, g, w1, w2);
+                hall.rotation.y = (i % 2 === 0) ? 0 : Math.PI/2;
+                hall.position.set((i%2===0?0:i*20-600), 0, (i%2===0?i*20-600:0));
                 
                 scene.add(hall);
-                SESSION.registry.walls.push(wall1, wall2);
             }
 
-            // SPAWN ENTITIES
-            const surgeon = new Hostile('surgeon', CORE_PARAMS.SURGEON_SPAWN);
-            scene.add(surgeon.root); SESSION.registry.entities.push(surgeon);
+            // SPAWN HOSTILES
+            const surgeon = new FractureEntity('surgeon', PARAMS.SURGEON_OFFSET);
+            scene.add(surgeon.node); WORLD.registry.entities.push(surgeon);
 
-            for (let i = 0; i < 3; i++) {
-                const scout = new Hostile('scout', CORE_PARAMS.SCOUT_SPAWN + (i * 50));
-                scene.add(scout.root); SESSION.registry.entities.push(scout);
+            for(let i=0; i<3; i++) {
+                const scout = new FractureEntity('scout', PARAMS.SCOUT_OFFSET + (i*40));
+                scene.add(scout.node); WORLD.registry.entities.push(scout);
             }
 
-            mountInputs();
-            engineLoop();
+            initializeControls();
+            mainLoop();
         }
 
-        function engineLoop() {
-            requestAnimationFrame(engineLoop);
-            if (!SESSION.active) return;
+        // --- MODULE 4: CORE ENGINE LOOP ---
+        function mainLoop() {
+            requestAnimationFrame(mainLoop);
+            if(!WORLD.active) return;
 
-            camera.updateMatrixWorld();
-            projMat.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-            frustum.setFromProjectionMatrix(projMat);
-
+            // Update Look Rotation
             camera.rotation.order = "YXZ";
-            camera.rotation.y = SESSION.input.yaw;
-            camera.rotation.x = SESSION.input.pitch;
+            camera.rotation.y = WORLD.input.yaw;
+            camera.rotation.x = WORLD.input.pitch;
 
-            if (SESSION.input.active) {
-                const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                fwd.y = 0; fwd.normalize();
-                const side = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-                side.y = 0; side.normalize();
-                const moveVec = new THREE.Vector3().addScaledVector(fwd, -SESSION.input.v.y).addScaledVector(side, SESSION.input.v.x);
+            // Flashlight Pulse (Side Leak)
+            lightHousing.material.emissiveIntensity = 4 + Math.sin(Date.now()*0.01)*0.5;
+
+            // Locomotion
+            if(WORLD.input.moving) {
+                const f = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
+                const s = new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion);
+                f.y = 0; s.y = 0; f.normalize(); s.normalize();
                 
-                camera.position.addScaledVector(moveVec, CORE_PARAMS.MOVE_SPEED);
-                camera.position.y = CORE_PARAMS.CAMERA_Y + Math.sin(Date.now() * 0.012) * 0.06;
+                const mv = new THREE.Vector3().addScaledVector(f, -WORLD.input.v.y).addScaledVector(s, WORLD.input.v.x);
+                camera.position.addScaledVector(mv, PARAMS.MOVE_SPEED);
+                camera.position.y = PARAMS.PLAYER_H + Math.sin(Date.now()*0.015)*0.06;
             }
 
-            let threatLevel = "SECURE";
-            SESSION.registry.entities.forEach(ent => {
-                const isSeen = frustum.containsPoint(ent.root.position);
-                const d = ent.update(camera.position, isSeen);
-                
-                if (d < 50) threatLevel = "DETECTION";
-                if (d < 15) threatLevel = "CRITICAL";
+            // RAYCAST SIGHT GATING
+            raycaster.setFromCamera(new THREE.Vector2(0,0), camera);
+            const sights = raycaster.intersectObjects(WORLD.registry.hitboxNodes);
 
-                if (d < 4.5) {
+            let highThreat = false;
+            WORLD.registry.entities.forEach(ent => {
+                const d = ent.process(camera.position, sights);
+                if(ent.isActive) highThreat = true;
+
+                if(d < 4.5) {
                     document.getElementById('death-screen').style.display = 'flex';
                     setTimeout(() => location.reload(), 1500);
                 }
             });
 
-            document.getElementById('threat-stat').innerText = threatLevel;
-            document.getElementById('threat-stat').style.color = threatLevel === "CRITICAL" ? "var(--blood-red)" : "var(--neon-blue)";
+            document.getElementById('threat-level').innerText = highThreat ? "CONTACT" : "SECURE";
+            document.getElementById('threat-level').style.color = highThreat ? "var(--warning-red)" : "var(--neon-cyan)";
 
             renderer.render(scene, camera);
         }
 
-        function mountInputs() {
-            const mvZone = document.getElementById('zone-move');
-            const lkZone = document.getElementById('zone-look');
-            const outer = document.getElementById('joystick-outer');
-            const inner = document.getElementById('joystick-inner');
+        // --- MODULE 5: NEURAL INTERFACE (CONTROLS) ---
+        function initializeControls() {
+            const mv = document.getElementById('zone-move');
+            const lk = document.getElementById('zone-look');
+            const base = document.getElementById('joy-base');
+            const nub = document.getElementById('joy-nub');
             let lx, ly;
 
-            mvZone.addEventListener('touchstart', e => {
+            mv.addEventListener('touchstart', e => {
                 const t = e.touches[0];
-                SESSION.input.anchor.set(t.clientX, t.clientY);
-                outer.style.display = 'block'; outer.style.left = t.clientX + 'px'; outer.style.top = t.clientY + 'px';
+                WORLD.input.anchor.set(t.clientX, t.clientY);
+                base.style.display = 'block'; base.style.left = t.clientX+'px'; base.style.top = t.clientY+'px';
             });
-
-            mvZone.addEventListener('touchmove', e => {
+            mv.addEventListener('touchmove', e => {
                 e.preventDefault();
                 const t = e.touches[0];
-                const dx = t.clientX - SESSION.input.anchor.x;
-                const dy = t.clientY - SESSION.input.anchor.y;
-                const dist = Math.min(Math.sqrt(dx * dx + dy * dy), 80);
-                const angle = Math.atan2(dy, dx);
-                inner.style.transform = `translate(${Math.cos(angle) * dist}px, ${Math.sin(angle) * dist}px)`;
-                SESSION.input.v.set(Math.cos(angle) * (dist / 80), Math.sin(angle) * (dist / 80));
-                SESSION.input.active = dist > 10;
-            }, { passive: false });
+                const dx = t.clientX - WORLD.input.anchor.x;
+                const dy = t.clientY - WORLD.input.anchor.y;
+                const d = Math.min(Math.sqrt(dx*dx+dy*dy), 80);
+                const a = Math.atan2(dy, dx);
+                nub.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
+                WORLD.input.v.set(Math.cos(a)*(d/80), Math.sin(a)*(d/80));
+                WORLD.input.moving = d > 10;
+            }, {passive:false});
+            mv.addEventListener('touchend', () => { base.style.display = 'none'; WORLD.input.moving = false; });
 
-            mvZone.addEventListener('touchend', () => { outer.style.display = 'none'; SESSION.input.active = false; });
-
-            lkZone.addEventListener('touchstart', e => { lx = e.touches[0].clientX; ly = e.touches[0].clientY; });
-            lkZone.addEventListener('touchmove', e => {
+            lk.addEventListener('touchstart', e => { lx = e.touches[0].clientX; ly = e.touches[0].clientY; });
+            lk.addEventListener('touchmove', e => {
                 const t = e.touches[0];
-                SESSION.input.yaw -= (t.clientX - lx) * CORE_PARAMS.SENSITIVITY;
-                SESSION.input.pitch -= (t.clientY - ly) * CORE_PARAMS.SENSITIVITY;
-                SESSION.input.pitch = Math.max(-1.4, Math.min(1.4, SESSION.input.pitch));
+                WORLD.input.yaw -= (t.clientX - lx) * PARAMS.LOOK_SENS;
+                WORLD.input.pitch -= (t.clientY - ly) * PARAMS.LOOK_SENS;
+                WORLD.input.pitch = Math.max(-1.4, Math.min(1.4, WORLD.input.pitch));
                 lx = t.clientX; ly = t.clientY;
             });
         }
 
         window.ontouchstart = () => {
-            if (SESSION.ready && !SESSION.active) {
-                SESSION.active = true;
-                document.getElementById('boot-screen').style.opacity = '0';
+            if(WORLD.booted && !WORLD.active) {
+                WORLD.active = true;
+                document.getElementById('boot-sequence').style.opacity = '0';
                 setTimeout(() => {
-                    document.getElementById('boot-screen').style.display = 'none';
-                    document.getElementById('game-hud').style.display = 'block';
-                }, 2000);
+                    document.getElementById('boot-sequence').style.display = 'none';
+                    document.getElementById('game-ui').style.display = 'block';
+                }, 3000);
             }
         };
 
-        window.onload = runBoot;
+        window.onload = initiateBoot;
     </script>
 </body>
 </html>
