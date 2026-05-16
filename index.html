@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASYLUM_COLLISION_V47</title>
+    <title>ASYLUM_CLEAN_BUILD_V48</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
         #boot { 
-            position: fixed; inset: 0; z-index: 100; background: #0a0a0a; 
+            position: fixed; inset: 0; z-index: 100; background: #050505; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             color: #dbd2ae; font-family: serif;
         }
-        .btn { border: 1px solid #dbd2ae; padding: 12px 35px; cursor: pointer; display: none; color: #dbd2ae; margin-top: 20px; }
+        .btn { border: 1px solid #444; padding: 15px 40px; cursor: pointer; display: none; color: #dbd2ae; margin-top: 20px; text-transform: uppercase; letter-spacing: 2px; }
     </style>
 </head>
 <body>
     <div id="boot">
-        <div id="status">Locking Doors...</div>
-        <div id="btn" class="btn">WAKE UP</div>
+        <div id="status">ALIGNED_WALL_SEGMENTS...</div>
+        <div id="btn" class="btn">Enter Ward</div>
     </div>
 
     <script>
@@ -26,48 +26,68 @@
         let mv = { f: 0, s: 0, active: false, id: null };
         let rot = { x: 0, y: 0, lx: 0, ly: 0, id: null };
         
-        const walls = []; // Collision array
-        const PLAYER_RADIUS = 0.6;
+        const walls = []; 
+        const PLAYER_RADIUS = 0.5;
 
         function init() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.Fog(0x000000, 0.5, 12);
+            scene.fog = new THREE.Fog(0x000000, 0, 15);
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100);
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 100);
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
             document.body.appendChild(renderer.domElement);
 
-            // 3D LIGHT EFFECT (The actual flashlight)
-            flashlight = new THREE.SpotLight(0xfff5d4, 40, 20, Math.PI/6, 0.5, 2);
+            // VOLUMETRIC LIGHT
+            flashlight = new THREE.SpotLight(0xfff5d4, 60, 20, Math.PI/7, 0.6, 2);
             scene.add(flashlight);
             scene.add(flashlight.target);
 
-            // Textures
-            const wallTex = createWallTex();
-            const ceilTex = createOfficeCeiling();
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0xdbd2ae, roughness: 1 });
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.2, metalness: 0.1 }); 
+            const ceilMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 1 });
 
-            const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 1 });
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1c1a, roughness: 0.1, metalness: 0.3 }); 
-            const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, color: 0x777777 });
+            const h = 3.2; 
+            const hallWidth = 4;
+            const fullSize = 40; 
+            const innerBound = (fullSize/2) - hallWidth;
 
-            const h = 3.0; 
-            const size = 40; 
-            const hw = 4.0; // Hallway width
-
-            const addWall = (w, d, x, z) => {
-                const box = new THREE.BoxGeometry(w, h, d);
-                const m = new THREE.Mesh(box, wallMat);
-                m.position.set(x, h/2, z);
-                scene.add(m);
-                // Create a bounding box for collision
-                walls.push(new THREE.Box3().setFromObject(m));
+            // Modular Wall Function (No intersections)
+            const buildWall = (x1, z1, x2, z2) => {
+                const dx = Math.abs(x2 - x1) || 0.4;
+                const dz = Math.abs(z2 - z1) || 0.4;
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(dx, h, dz), wallMat);
+                mesh.position.set((x1 + x2)/2, h/2, (z1 + z2)/2);
+                scene.add(mesh);
+                walls.push(new THREE.Box3().setFromObject(mesh));
             };
 
+            // 1. OUTER PERIMETER (The absolute boundary)
+            buildWall(-20, 20, 20, 20); // North
+            buildWall(-20, -20, 20, -20); // South
+            buildWall(20, -20, 20, 20); // East
+            buildWall(-20, -20, -20, 20); // West
+
+            // 2. THE INNER "SQUARE" (Creates the circular hallway)
+            // North-East Block
+            buildWall(2, 2, innerBound, innerBound);
+            // North-West Block
+            buildWall(-2, 2, -innerBound, innerBound);
+            // South-East Block
+            buildWall(2, -2, innerBound, -innerBound);
+            // South-West Block
+            buildWall(-2, -2, -innerBound, -innerBound);
+
+            // 3. CROSS CONNECTORS (Creating the 4 corridors connecting hub to perimeter)
+            // These are exact lengths so they don't block the perimeter hall
+            buildWall(2, 16, 2, 2); buildWall(-2, 16, -2, 2); // North Wing
+            buildWall(2, -16, 2, -2); buildWall(-2, -16, -2, -2); // South Wing
+            buildWall(2, 2, 16, 2); buildWall(2, -2, 16, -2); // East Wing
+            buildWall(-2, 2, -16, 2); buildWall(-2, -2, -16, -2); // West Wing
+
             // Floor & Ceiling
-            const planeGeo = new THREE.PlaneGeometry(size + 10, size + 10);
+            const planeGeo = new THREE.PlaneGeometry(50, 50);
             const floor = new THREE.Mesh(planeGeo, floorMat);
             floor.rotation.x = -Math.PI/2;
             scene.add(floor);
@@ -77,34 +97,10 @@
             ceiling.position.y = h;
             scene.add(ceiling);
 
-            // ASYLUM GEOMETRY
-            // Outer boundaries
-            addWall(size, 1, 0, size/2);  
-            addWall(size, 1, 0, -size/2); 
-            addWall(1, size, size/2, 0);  
-            addWall(1, size, -size/2, 0); 
+            // Spawn in the Center Hub
+            camera.position.set(0, 1.7, 0);
 
-            // Inner square for the perimeter hallway
-            const inner = size/2 - hw;
-            addWall(inner, 1, (inner/2) + hw/2, inner); 
-            addWall(inner, 1, -(inner/2) - hw/2, inner);
-            addWall(inner, 1, (inner/2) + hw/2, -inner);
-            addWall(inner, 1, -(inner/2) - hw/2, -inner);
-            addWall(1, inner, inner, (inner/2) + hw/2);
-            addWall(1, inner, inner, -(inner/2) - hw/2);
-            addWall(1, inner, -inner, (inner/2) + hw/2);
-            addWall(1, inner, -inner, -(inner/2) - hw/2);
-
-            // Inner Cross
-            addWall(0.5, inner*2, 2, 0);
-            addWall(0.5, inner*2, -2, 0);
-            addWall(inner*2, 0.5, 0, 2);
-            addWall(inner*2, 0.5, 0, -2);
-
-            // Start player in the hallway
-            camera.position.set(inner + 2, 1.6, inner + 2);
-
-            // Touch logic
+            // Input
             window.addEventListener('touchstart', (e) => {
                 for(let t of e.changedTouches) {
                     if(t.clientX < window.innerWidth/2) {
@@ -126,7 +122,7 @@
                     } else if(t.identifier === rot.id) {
                         rot.x -= (t.clientX - rot.lx) * 0.006;
                         rot.y -= (t.clientY - rot.ly) * 0.006;
-                        rot.y = Math.max(-1.1, Math.min(1.1, rot.y));
+                        rot.y = Math.max(-1.2, Math.min(1.2, rot.y));
                         rot.lx = t.clientX; rot.ly = t.clientY;
                     }
                 }
@@ -153,44 +149,17 @@
             return false;
         }
 
-        function createWallTex() {
-            const canv = document.createElement('canvas');
-            canv.width = 512; canv.height = 512;
-            const ctx = canv.getContext('2d');
-            ctx.fillStyle = '#dbd2ae'; ctx.fillRect(0,0,512,512);
-            for(let i=0; i<400; i++) {
-                ctx.fillStyle = `rgba(60,50,30,${Math.random()*0.15})`;
-                ctx.fillRect(Math.random()*512, Math.random()*512, 2, 40);
-            }
-            const t = new THREE.CanvasTexture(canv);
-            t.wrapS = t.wrapT = THREE.RepeatWrapping;
-            t.repeat.set(2, 1);
-            return t;
-        }
-
-        function createOfficeCeiling() {
-            const canv = document.createElement('canvas');
-            canv.width = 256; canv.height = 256;
-            const ctx = canv.getContext('2d');
-            ctx.fillStyle = '#ccc'; ctx.fillRect(0,0,256,256);
-            ctx.strokeStyle = '#999'; ctx.lineWidth = 2;
-            ctx.strokeRect(0,0,256,256);
-            const t = new THREE.CanvasTexture(canv);
-            t.wrapS = t.wrapT = THREE.RepeatWrapping;
-            t.repeat.set(10, 10);
-            return t;
-        }
-
         function loop() {
             requestAnimationFrame(loop);
             if(!active) return;
 
             camera.rotation.set(rot.y, rot.x, 0, 'YXZ');
             
-            // Flashlight logic - pinned to camera but with a slight delay/smoothness
+            // FLASHLIGHT LEAN/SWAY EFFECT
             flashlight.position.copy(camera.position);
             const targetPos = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
-            flashlight.target.position.lerp(targetPos, 0.2);
+            // 0.1 Lerp creates the "heavy" flashlight feel
+            flashlight.target.position.lerp(targetPos, 0.1);
 
             if(mv.active) {
                 const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
@@ -199,8 +168,8 @@
                 side.y = 0; side.normalize();
 
                 const nextPos = camera.position.clone();
-                nextPos.addScaledVector(dir, -mv.f * 0.1);
-                nextPos.addScaledVector(side, mv.s * 0.1);
+                nextPos.addScaledVector(dir, -mv.f * 0.11);
+                nextPos.addScaledVector(side, mv.s * 0.11);
 
                 if(!checkCollision(nextPos)) {
                     camera.position.copy(nextPos);
@@ -212,7 +181,7 @@
         setTimeout(() => {
             document.getElementById('btn').style.display = "block";
             init();
-        }, 800);
+        }, 500);
 
         document.getElementById('btn').onclick = () => {
             active = true;
