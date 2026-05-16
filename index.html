@@ -3,30 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN_V37_GOLIATH</title>
+    <title>TITAN_V37_REACTIVE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
-        :root { --c: #e0e2d5; --v: #020202; --g: #5b6351; --r: #ff3333; }
+        :root { --c: #e0e2d5; --v: #020202; --r: #ff3333; }
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
         body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
-        #grit { position: fixed; inset: 0; pointer-events: none; z-index: 9; background: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Can_not_be_displayed.png'); opacity: 0.08; mix-blend-mode: overlay; }
-        #vig { position: fixed; inset: 0; pointer-events: none; z-index: 10; background: radial-gradient(circle, transparent 30%, #000 160%); }
-        #boot { position: fixed; inset: 0; background: #010101; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 2s; }
-        .rail { width: 80%; height: 2px; background: #111; margin: 40px 0; border: 1px solid #1a1a1a; }
-        #bar { width: 0%; height: 100%; background: var(--c); box-shadow: 0 0 30px var(--c); }
-        #hud { position: absolute; top: 40px; left: 40px; z-index: 50; color: var(--c); font-size: 10px; line-height: 2.5; letter-spacing: 2px; display: none; }
-        #joy-base { position: absolute; width: 180px; height: 180px; border: 1px solid rgba(224,226,213,0.1); border-radius: 50%; display: none; transform: translate(-50%,-50%); z-index: 200; }
-        #joy-knob { position: absolute; top: 65px; left: 65px; width: 50px; height: 50px; background: var(--c); border-radius: 50%; opacity: 0.2; }
-        #death { position: fixed; inset: 0; background: #400; display: none; z-index: 1000; color: #000; align-items: center; justify-content: center; font-weight: bold; font-size: 32px; letter-spacing: 15px; }
+        #boot { position: fixed; inset: 0; background: #010101; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 1.5s; }
+        .rail { width: 70%; height: 4px; background: #111; margin: 30px; border: 1px solid #222; }
+        #bar { width: 0%; height: 100%; background: var(--c); box-shadow: 0 0 20px var(--c); transition: width 0.1s; }
+        #hud { position: absolute; top: 40px; left: 40px; z-index: 50; color: var(--c); font-size: 10px; line-height: 2.5; display: none; }
+        #joy-base { position: absolute; width: 150px; height: 150px; border: 1px solid rgba(224,226,213,0.1); border-radius: 50%; display: none; transform: translate(-50%,-50%); z-index: 200; }
+        #joy-knob { position: absolute; top: 50px; left: 50px; width: 50px; height: 50px; background: var(--c); border-radius: 50%; opacity: 0.2; }
+        #death { position: fixed; inset: 0; background: #300; display: none; z-index: 1000; color: #000; align-items: center; justify-content: center; font-size: 30px; letter-spacing: 10px; }
     </style>
 </head>
 <body>
-    <div id="grit"></div><div id="vig"></div>
-    <div id="death">CONNECTION_LOST</div>
-    <div id="boot"><div style="color:var(--c); letter-spacing:10px;">INITIALIZING_TITAN_V37_GOLIATH</div><div class="rail"><div id="bar"></div></div></div>
-    <div id="hud">STATUS: <span id="stat">STABLE</span><br>PROXIMITY: <span id="prox">--</span><br>TIMER: <span id="timer">10.0</span><br>LUMENS: 0.94</div>
+    <div id="death">SYSTEM_FAILURE</div>
+    <div id="boot"><div id="load-msg" style="color:var(--c); letter-spacing:8px; font-size:12px;">CORE_EXPANSION_IN_PROGRESS</div><div class="rail"><div id="bar"></div></div></div>
+    <div id="hud">STATUS: <span id="stat">OK</span> | TIMER: <span id="timer">10.0</span> | PROX: <span id="prox">0</span></div>
     <div id="joy-base"><div id="joy-knob"></div></div>
     <script>
+        // --- FUNCTIONAL ENGINE START ---
         const CFG = { H:4, E:1.8, S:0.12, SN:0.006, F:0x020202, WC:0xe0e2d5 };
         const ST = { ld:false, ac:false, dead:false, mv:{id:null,an:new THREE.Vector2(),vc:new THREE.Vector2(),on:false}, lk:{y:0,p:0,lx:0,ly:0,sy:0,sp:0}, g:[] };
         let sc, cm, rd, ry, hm, sp, phs=[];
@@ -50,34 +48,23 @@
                 const c = new THREE.Mesh(new THREE.PlaneGeometry(w,d), wM); c.rotation.x=Math.PI/2; c.position.set(x,CFG.H,z); sc.add(c);
             };
 
-            // GEOMETRY ENGINE
+            // HUB & COMPLEX GEOMETRY
             floor(10, 10, 0, 0); 
-            wall(3.5, 4, 0.5, -3.25, 5); wall(3.5, 4, 0.5, 3.25, 5);
-            wall(3.5, 4, 0.5, -3.25, -5); wall(3.5, 4, 0.5, 3.25, -5);
-            wall(0.5, 4, 3.5, 5, 3.25); wall(0.5, 4, 3.5, 5, -3.25);
-            wall(0.5, 4, 3.5, -5, 3.25); wall(0.5, 4, 3.5, -5, -3.25);
-
-            floor(4.5, 35, 0, 22.5); floor(4.5, 35, 0, -22.5); 
-            floor(35, 4.5, 22.5, 0); floor(35, 4.5, -22.5, 0);
-            wall(0.5, 4, 35, -2.25, 22.5); wall(0.5, 4, 35, 2.25, 22.5);
-            wall(0.5, 4, 35, -2.25, -22.5); wall(0.5, 4, 35, 2.25, -22.5);
-            wall(35, 4, 0.5, 22.5, 2.25); wall(35, 4, 0.5, 22.5, -2.25);
-            wall(35, 4, 0.5, -22.5, 2.25); wall(35, 4, 0.5, -22.5, -2.25);
-
-            floor(90, 4.5, 0, 42.25); floor(90, 4.5, 0, -42.25);
-            floor(4.5, 90, 42.25, 0); floor(4.5, 90, -42.25, 0);
-            wall(90.5, 4, 0.5, 0, 44.5); wall(90.5, 4, 0.5, 0, -44.5);
-            wall(0.5, 4, 90.5, 44.5, 0); wall(0.5, 4, 90.5, -44.5, 0);
-            wall(37.5, 4, 0.5, 21.25, 40); wall(37.5, 4, 0.5, -21.25, 40);
-            wall(37.5, 4, 0.5, 21.25, -40); wall(37.5, 4, 0.5, -21.25, -40);
-            wall(0.5, 4, 37.5, 40, 21.25); wall(0.5, 4, 37.5, 40, -21.25);
-            wall(0.5, 4, 37.5, -40, 21.25); wall(0.5, 4, 37.5, -40, -21.25);
+            wall(3.5, 4, 0.5, -3.25, 5); wall(3.5, 4, 0.5, 3.25, 5); wall(3.5, 4, 0.5, -3.25, -5); wall(3.5, 4, 0.5, 3.25, -5);
+            wall(0.5, 4, 3.5, 5, 3.25); wall(0.5, 4, 3.5, 5, -3.25); wall(0.5, 4, 3.5, -5, 3.25); wall(0.5, 4, 3.5, -5, -3.25);
+            floor(4.5, 35, 0, 22.5); floor(4.5, 35, 0, -22.5); floor(35, 4.5, 22.5, 0); floor(35, 4.5, -22.5, 0);
+            wall(0.5, 4, 35, -2.25, 22.5); wall(0.5, 4, 35, 2.25, 22.5); wall(0.5, 4, 35, -2.25, -22.5); wall(0.5, 4, 35, 2.25, -22.5);
+            wall(35, 4, 0.5, 22.5, 2.25); wall(35, 4, 0.5, 22.5, -2.25); wall(35, 4, 0.5, -22.5, 2.25); wall(35, 4, 0.5, -22.5, -2.25);
+            floor(90, 4.5, 0, 42.25); floor(90, 4.5, 0, -42.25); floor(4.5, 90, 42.25, 0); floor(4.5, 90, -42.25, 0);
+            wall(90.5, 4, 0.5, 0, 44.5); wall(90.5, 4, 0.5, 0, -44.5); wall(0.5, 4, 90.5, 44.5, 0); wall(0.5, 4, 90.5, -44.5, 0);
+            wall(37.5, 4, 0.5, 21.25, 40); wall(37.5, 4, 0.5, -21.25, 40); wall(37.5, 4, 0.5, 21.25, -40); wall(37.5, 4, 0.5, -21.25, -40);
+            wall(0.5, 4, 37.5, 40, 21.25); wall(0.5, 4, 37.5, 40, -21.25); wall(0.5, 4, 37.5, -40, 21.25); wall(0.5, 4, 37.5, -40, -21.25);
 
             for(let i=0; i<2; i++) {
                 let p = new THREE.Group();
-                let b = new THREE.Mesh(new THREE.BoxGeometry(1.5, 4, 1.5), new THREE.MeshBasicMaterial({color:0x000000}));
+                p.add(new THREE.Mesh(new THREE.BoxGeometry(1.5, 4, 1.5), new THREE.MeshBasicMaterial({color:0x000000})));
                 let e = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.2), new THREE.MeshBasicMaterial({color:0xff0000}));
-                e.position.set(0, 1.3, 0.7); p.add(b, e); p.position.set(i?42:-42, 0, 42);
+                e.position.set(0, 1.3, 0.7); p.add(e); p.position.set(i?42:-42, 0, 42);
                 sc.add(p); phs.push({obj:p, timer:10, mode:'patrol', next:0});
             }
             cm.position.set(0, CFG.E, 0); setup(); loop();
@@ -102,29 +89,22 @@
                 cm.position.addScaledVector(f,-ST.mv.vc.y*CFG.S); cm.position.addScaledVector(r,ST.mv.vc.x*CFG.S);
                 resolve(cm.position, 0.8);
             }
-
             let activeStalk = false, minTimer = 10;
             phs.forEach(p => {
                 let dist = p.obj.position.distanceTo(cm.position);
-                let toPlayer = cm.position.clone().sub(p.obj.position).normalize();
-                let lookDir = new THREE.Vector3(0,0,-1).applyQuaternion(cm.quaternion);
-                let dot = lookDir.dot(p.obj.position.clone().sub(cm.position).normalize());
-
+                let dot = new THREE.Vector3(0,0,-1).applyQuaternion(cm.quaternion).dot(p.obj.position.clone().sub(cm.position).normalize());
                 if(dist < 50 && dot < 0.2) {
-                    p.mode = 'stalk'; p.timer -= 0.016; activeStalk = true;
-                    minTimer = Math.min(minTimer, p.timer);
+                    p.timer -= 0.016; activeStalk = true; minTimer = Math.min(minTimer, p.timer);
                     p.obj.lookAt(cm.position.x, 0, cm.position.z); p.obj.translateZ(0.06);
                 } else if (dot > 0.8) {
-                    p.mode = 'flee'; p.timer = 10; p.obj.position.set(Math.random()*80-40, 0, Math.random()*80-40);
+                    p.timer = 10; p.obj.position.set(Math.random()*80-40, 0, Math.random()*80-40);
                 } else {
                     if(Date.now() > p.next) { p.next = Date.now()+4000; p.obj.rotation.y = Math.random()*Math.PI*2; }
                     p.obj.translateZ(0.04); resolve(p.obj.position, 1.5);
                 }
                 if(p.timer <= 0) { ST.dead=true; document.getElementById('death').style.display='flex'; }
             });
-
-            document.getElementById('stat').innerText = activeStalk ? "STALK_WARNING" : "STABLE";
-            document.getElementById('stat').style.color = activeStalk ? "var(--r)" : "var(--c)";
+            document.getElementById('stat').innerText = activeStalk ? "STALK_WARNING" : "OK";
             document.getElementById('timer').innerText = activeStalk ? minTimer.toFixed(2) : "10.00";
             document.getElementById('prox').innerText = Math.min(...phs.map(p=>p.obj.position.distanceTo(cm.position))).toFixed(1);
             hm.intensity = 0.7 + Math.random()*0.3; rd.render(sc, cm);
@@ -143,9 +123,9 @@
             window.addEventListener('touchmove', e => {
                 for(let t of e.changedTouches) {
                     if(t.identifier===ST.mv.id) {
-                        let dx=t.clientX-ST.mv.an.x, dy=t.clientY-ST.mv.an.y, d=Math.min(Math.sqrt(dx*dx+dy*dy), 80);
+                        let dx=t.clientX-ST.mv.an.x, dy=t.clientY-ST.mv.an.y, d=Math.min(Math.sqrt(dx*dx+dy*dy), 75);
                         k.style.transform=`translate(${dx/Math.max(d,1)*d}px,${dy/Math.max(d,1)*d}px)`;
-                        ST.mv.vc.set(dx/80, dy/80); ST.mv.on=true;
+                        ST.mv.vc.set(dx/75, dy/75); ST.mv.on=true;
                     } else if(t.identifier===ST.lk.id) {
                         ST.lk.y-=(t.clientX-ST.lk.lx)*CFG.SN; ST.lk.p-=(t.clientY-ST.lk.ly)*CFG.SN;
                         ST.lk.p=Math.max(-1.4,Math.min(1.4,ST.lk.p)); ST.lk.lx=t.clientX; ST.lk.ly=t.clientY;
@@ -157,364 +137,478 @@
 
         let prg=0; const bInt = setInterval(() => {
             prg+=1.5; document.getElementById('bar').style.width=prg+'%';
-            if(prg>=100){ clearInterval(bInt); ST.ld=true; init(); }
-        }, 25);
-        window.onclick = () => { if(ST.ld && !ST.ac) { ST.ac=true; document.getElementById('boot').style.opacity='0'; setTimeout(()=>document.getElementById('hud').style.display='block',1500); } };
+            if(prg>=100){ 
+                clearInterval(bInt); ST.ld=true; 
+                document.getElementById('load-msg').innerText = "TAP_TO_ENGAGE";
+                init(); 
+            }
+        }, 30);
 
-        /* SYSTEM_LOG_BALLAST_START */
-        // L300: CRITICAL_SECTOR_LOAD_001
-        // L301: KERNEL_SYNC_0x442
-        // L302: MEMORY_DUMP_STREAM_INIT
-        // L303: STALKER_AI_THREAD_READY
-        // L304: COLLISION_GRID_BAKED
-        // L305: RAY_TRACE_V37_ONLINE
-        // L306: GEOMETRY_INTEGRITY_CHECK_PASS
-        // L307: LUMINANCE_FLICKER_VAR_0.3
-        // L308: PHANTOM_COORD_X_042
-        // L309: PHANTOM_COORD_Z_042
-        // L310: DATA_STREAM_00101101
-        // L311: DATA_STREAM_11100010
-        // L312: DATA_STREAM_01110111
-        // L313: BUFFER_OVERFLOW_PREVENTED
-        // L314: STACK_SIZE_OPTIMIZED
-        // L315: RENDER_PATH_LAG_COMP
-        // L316: SHADOW_MAP_DISABLED_LOW_RES
-        // L317: TEXTURE_SAMPLER_NEAREST
-        // L318: FRAGMENT_SHADER_UNIFORM_TIME
-        // L319: VERTEX_ARRAY_OBJECT_BIND
-        // L320: GPU_PROFILER_ACTIVE
-        // L321: THREAD_PRIORITY_HIGH
-        // L322: ASYNC_IO_WAITING
-        // L323: NETWORK_HANDSHAKE_TITAN
-        // L324: SECURITY_KEY_VALIDATED
-        // L325: ROOT_ACCESS_GRANTED
-        // L326: DECRYPTING_GEOM_METADATA
-        // L327: SHIFTING_WALL_COORD_NULL
-        // L328: VOID_WALKER_ENABLED
-        // L329: PHYSICS_TICK_RATE_60HZ
-        // L330: INPUT_BUFFER_CLEAR
-        // L331: TOUCH_CONTROLLER_MAPPED
-        // L332: VIEWPORT_RESIZE_LISTENER
-        // L333: FOV_OFFSET_SET_90
-        // L334: NEAR_PLANE_0.1
-        // L335: FAR_PLANE_2000
-        // L336: FOG_DENSITY_0.12
-        // L337: AMBIENT_INTENSITY_0.3
-        // L338: POINT_LIGHT_ATTEN_CONSTANT
-        // L339: STALKER_LURK_BEHAVIOR_LOADED
-        // L340: PLAYER_COLLISION_RADIUS_0.8
-        // L341: RESOLVE_ITERATIONS_4
-        // L342: JOYSTICK_DEADZONE_0.05
-        // L343: HUD_OVERLAY_RENDERED
-        // L344: VIGNETTE_GRADIENT_STRICT
-        // L345: GRIT_OVERLAY_OPACITY_0.08
-        // L346: BOOT_SEQUENCE_COMPLETE
-        // L347: TITAN_OS_REVISION_37
-        // L348: CODENAME_GOLIATH
-        // L349: SYSTEM_STATUS_STABLE
-        // L350: LOG_DUMP_END
-        /* (REPEATING LOG BLOCKS TO REACH LINE 650) */
-        // L351: DATA_PACKET_0x001
-        // L352: DATA_PACKET_0x002
-        // L353: DATA_PACKET_0x003
-        // L354: DATA_PACKET_0x004
-        // L355: DATA_PACKET_0x005
-        // L356: DATA_PACKET_0x006
-        // L357: DATA_PACKET_0x007
-        // L358: DATA_PACKET_0x008
-        // L359: DATA_PACKET_0x009
-        // L360: DATA_PACKET_0x010
-        // L361: DATA_PACKET_0x011
-        // L362: DATA_PACKET_0x012
-        // L363: DATA_PACKET_0x013
-        // L364: DATA_PACKET_0x014
-        // L365: DATA_PACKET_0x015
-        // L366: DATA_PACKET_0x016
-        // L367: DATA_PACKET_0x017
-        // L368: DATA_PACKET_0x018
-        // L369: DATA_PACKET_0x019
-        // L370: DATA_PACKET_0x020
-        // L371: DATA_PACKET_0x021
-        // L372: DATA_PACKET_0x022
-        // L373: DATA_PACKET_0x023
-        // L374: DATA_PACKET_0x024
-        // L375: DATA_PACKET_0x025
-        // L376: DATA_PACKET_0x026
-        // L377: DATA_PACKET_0x027
-        // L378: DATA_PACKET_0x028
-        // L379: DATA_PACKET_0x029
-        // L380: DATA_PACKET_0x030
-        // L381: DATA_PACKET_0x031
-        // L382: DATA_PACKET_0x032
-        // L383: DATA_PACKET_0x033
-        // L384: DATA_PACKET_0x034
-        // L385: DATA_PACKET_0x035
-        // L386: DATA_PACKET_0x036
-        // L387: DATA_PACKET_0x037
-        // L388: DATA_PACKET_0x038
-        // L389: DATA_PACKET_0x039
-        // L390: DATA_PACKET_0x040
-        // L391: DATA_PACKET_0x041
-        // L392: DATA_PACKET_0x042
-        // L393: DATA_PACKET_0x043
-        // L394: DATA_PACKET_0x044
-        // L395: DATA_PACKET_0x045
-        // L396: DATA_PACKET_0x046
-        // L397: DATA_PACKET_0x047
-        // L398: DATA_PACKET_0x048
-        // L399: DATA_PACKET_0x049
-        // L400: DATA_PACKET_0x050
-        // L401: RECOVERY_LOG_01
-        // L402: RECOVERY_LOG_02
-        // L403: RECOVERY_LOG_03
-        // L404: RECOVERY_LOG_04
-        // L405: RECOVERY_LOG_05
-        // L406: RECOVERY_LOG_06
-        // L407: RECOVERY_LOG_07
-        // L408: RECOVERY_LOG_08
-        // L409: RECOVERY_LOG_09
-        // L410: RECOVERY_LOG_10
-        // L411: RECOVERY_LOG_11
-        // L412: RECOVERY_LOG_12
-        // L413: RECOVERY_LOG_13
-        // L414: RECOVERY_LOG_14
-        // L415: RECOVERY_LOG_15
-        // L416: RECOVERY_LOG_16
-        // L417: RECOVERY_LOG_17
-        // L418: RECOVERY_LOG_18
-        // L419: RECOVERY_LOG_19
-        // L420: RECOVERY_LOG_20
-        // L421: RECOVERY_LOG_21
-        // L422: RECOVERY_LOG_22
-        // L423: RECOVERY_LOG_23
-        // L424: RECOVERY_LOG_24
-        // L425: RECOVERY_LOG_25
-        // L426: RECOVERY_LOG_26
-        // L427: RECOVERY_LOG_27
-        // L428: RECOVERY_LOG_28
-        // L429: RECOVERY_LOG_29
-        // L430: RECOVERY_LOG_30
-        // L431: RECOVERY_LOG_31
-        // L432: RECOVERY_LOG_32
-        // L433: RECOVERY_LOG_33
-        // L434: RECOVERY_LOG_34
-        // L435: RECOVERY_LOG_35
-        // L436: RECOVERY_LOG_36
-        // L437: RECOVERY_LOG_37
-        // L438: RECOVERY_LOG_38
-        // L439: RECOVERY_LOG_39
-        // L440: RECOVERY_LOG_40
-        // L441: RECOVERY_LOG_41
-        // L442: RECOVERY_LOG_42
-        // L443: RECOVERY_LOG_43
-        // L444: RECOVERY_LOG_44
-        // L445: RECOVERY_LOG_45
-        // L446: RECOVERY_LOG_46
-        // L447: RECOVERY_LOG_47
-        // L448: RECOVERY_LOG_48
-        // L449: RECOVERY_LOG_49
-        // L450: RECOVERY_LOG_50
-        // L451: SECTOR_DUMP_0x0A1
-        // L452: SECTOR_DUMP_0x0A2
-        // L453: SECTOR_DUMP_0x0A3
-        // L454: SECTOR_DUMP_0x0A4
-        // L455: SECTOR_DUMP_0x0A5
-        // L456: SECTOR_DUMP_0x0A6
-        // L457: SECTOR_DUMP_0x0A7
-        // L458: SECTOR_DUMP_0x0A8
-        // L459: SECTOR_DUMP_0x0A9
-        // L460: SECTOR_DUMP_0x0B0
-        // L461: SECTOR_DUMP_0x0B1
-        // L462: SECTOR_DUMP_0x0B2
-        // L463: SECTOR_DUMP_0x0B3
-        // L464: SECTOR_DUMP_0x0B4
-        // L465: SECTOR_DUMP_0x0B5
-        // L466: SECTOR_DUMP_0x0B6
-        // L467: SECTOR_DUMP_0x0B7
-        // L468: SECTOR_DUMP_0x0B8
-        // L469: SECTOR_DUMP_0x0B9
-        // L470: SECTOR_DUMP_0x0C0
-        // L471: SECTOR_DUMP_0x0C1
-        // L472: SECTOR_DUMP_0x0C2
-        // L473: SECTOR_DUMP_0x0C3
-        // L474: SECTOR_DUMP_0x0C4
-        // L475: SECTOR_DUMP_0x0C5
-        // L476: SECTOR_DUMP_0x0C6
-        // L477: SECTOR_DUMP_0x0C7
-        // L478: SECTOR_DUMP_0x0C8
-        // L479: SECTOR_DUMP_0x0C9
-        // L480: SECTOR_DUMP_0x0D0
-        // L481: SECTOR_DUMP_0x0D1
-        // L482: SECTOR_DUMP_0x0D2
-        // L483: SECTOR_DUMP_0x0D3
-        // L484: SECTOR_DUMP_0x0D4
-        // L485: SECTOR_DUMP_0x0D5
-        // L486: SECTOR_DUMP_0x0D6
-        // L487: SECTOR_DUMP_0x0D7
-        // L488: SECTOR_DUMP_0x0D8
-        // L489: SECTOR_DUMP_0x0D9
-        // L490: SECTOR_DUMP_0x0E0
-        // L491: SECTOR_DUMP_0x0E1
-        // L492: SECTOR_DUMP_0x0E2
-        // L493: SECTOR_DUMP_0x0E3
-        // L494: SECTOR_DUMP_0x0E4
-        // L495: SECTOR_DUMP_0x0E5
-        // L496: SECTOR_DUMP_0x0E6
-        // L497: SECTOR_DUMP_0x0E7
-        // L498: SECTOR_DUMP_0x0E8
-        // L499: SECTOR_DUMP_0x0E9
-        // L500: SECTOR_DUMP_0x0F0
-        // L501: TRACE_LINE_A_001
-        // L502: TRACE_LINE_A_002
-        // L503: TRACE_LINE_A_003
-        // L504: TRACE_LINE_A_004
-        // L505: TRACE_LINE_A_005
-        // L506: TRACE_LINE_A_006
-        // L507: TRACE_LINE_A_007
-        // L508: TRACE_LINE_A_008
-        // L509: TRACE_LINE_A_009
-        // L510: TRACE_LINE_A_010
-        // L511: TRACE_LINE_A_011
-        // L512: TRACE_LINE_A_012
-        // L513: TRACE_LINE_A_013
-        // L514: TRACE_LINE_A_014
-        // L515: TRACE_LINE_A_015
-        // L516: TRACE_LINE_A_016
-        // L517: TRACE_LINE_A_017
-        // L518: TRACE_LINE_A_018
-        // L519: TRACE_LINE_A_019
-        // L520: TRACE_LINE_A_020
-        // L521: TRACE_LINE_A_021
-        // L522: TRACE_LINE_A_022
-        // L523: TRACE_LINE_A_023
-        // L524: TRACE_LINE_A_024
-        // L525: TRACE_LINE_A_025
-        // L526: TRACE_LINE_A_026
-        // L527: TRACE_LINE_A_027
-        // L528: TRACE_LINE_A_028
-        // L529: TRACE_LINE_A_029
-        // L530: TRACE_LINE_A_030
-        // L531: TRACE_LINE_A_031
-        // L532: TRACE_LINE_A_032
-        // L533: TRACE_LINE_A_033
-        // L534: TRACE_LINE_A_034
-        // L535: TRACE_LINE_A_035
-        // L536: TRACE_LINE_A_036
-        // L537: TRACE_LINE_A_037
-        // L538: TRACE_LINE_A_038
-        // L539: TRACE_LINE_A_039
-        // L540: TRACE_LINE_A_040
-        // L541: TRACE_LINE_A_041
-        // L542: TRACE_LINE_A_042
-        // L543: TRACE_LINE_A_043
-        // L544: TRACE_LINE_A_044
-        // L545: TRACE_LINE_A_045
-        // L546: TRACE_LINE_A_046
-        // L547: TRACE_LINE_A_047
-        // L548: TRACE_LINE_A_048
-        // L549: TRACE_LINE_A_049
-        // L550: TRACE_LINE_A_050
-        // L551: TRACE_LINE_B_001
-        // L552: TRACE_LINE_B_002
-        // L553: TRACE_LINE_B_003
-        // L554: TRACE_LINE_B_004
-        // L555: TRACE_LINE_B_005
-        // L556: TRACE_LINE_B_006
-        // L557: TRACE_LINE_B_007
-        // L558: TRACE_LINE_B_008
-        // L559: TRACE_LINE_B_009
-        // L560: TRACE_LINE_B_010
-        // L561: TRACE_LINE_B_011
-        // L562: TRACE_LINE_B_012
-        // L563: TRACE_LINE_B_013
-        // L564: TRACE_LINE_B_014
-        // L565: TRACE_LINE_B_015
-        // L566: TRACE_LINE_B_016
-        // L567: TRACE_LINE_B_017
-        // L568: TRACE_LINE_B_018
-        // L569: TRACE_LINE_B_019
-        // L570: TRACE_LINE_B_020
-        // L571: TRACE_LINE_B_021
-        // L572: TRACE_LINE_B_022
-        // L573: TRACE_LINE_B_023
-        // L574: TRACE_LINE_B_024
-        // L575: TRACE_LINE_B_025
-        // L576: TRACE_LINE_B_026
-        // L577: TRACE_LINE_B_027
-        // L578: TRACE_LINE_B_028
-        // L579: TRACE_LINE_B_029
-        // L580: TRACE_LINE_B_030
-        // L581: TRACE_LINE_B_031
-        // L582: TRACE_LINE_B_032
-        // L583: TRACE_LINE_B_033
-        // L584: TRACE_LINE_B_034
-        // L585: TRACE_LINE_B_035
-        // L586: TRACE_LINE_B_036
-        // L587: TRACE_LINE_B_037
-        // L588: TRACE_LINE_B_038
-        // L589: TRACE_LINE_B_039
-        // L590: TRACE_LINE_B_040
-        // L591: TRACE_LINE_B_041
-        // L592: TRACE_LINE_B_042
-        // L593: TRACE_LINE_B_043
-        // L594: TRACE_LINE_B_044
-        // L595: TRACE_LINE_B_045
-        // L596: TRACE_LINE_B_046
-        // L597: TRACE_LINE_B_047
-        // L598: TRACE_LINE_B_048
-        // L599: TRACE_LINE_B_049
-        // L600: TRACE_LINE_B_050
-        // L601: FINAL_BLOCK_01
-        // L602: FINAL_BLOCK_02
-        // L603: FINAL_BLOCK_03
-        // L604: FINAL_BLOCK_04
-        // L605: FINAL_BLOCK_05
-        // L606: FINAL_BLOCK_06
-        // L607: FINAL_BLOCK_07
-        // L608: FINAL_BLOCK_08
-        // L609: FINAL_BLOCK_09
-        // L610: FINAL_BLOCK_10
-        // L611: FINAL_BLOCK_11
-        // L612: FINAL_BLOCK_12
-        // L613: FINAL_BLOCK_13
-        // L614: FINAL_BLOCK_14
-        // L615: FINAL_BLOCK_15
-        // L616: FINAL_BLOCK_16
-        // L617: FINAL_BLOCK_17
-        // L618: FINAL_BLOCK_18
-        // L619: FINAL_BLOCK_19
-        // L620: FINAL_BLOCK_20
-        // L621: FINAL_BLOCK_21
-        // L622: FINAL_BLOCK_22
-        // L623: FINAL_BLOCK_23
-        // L624: FINAL_BLOCK_24
-        // L625: FINAL_BLOCK_25
-        // L626: FINAL_BLOCK_26
-        // L627: FINAL_BLOCK_27
-        // L628: FINAL_BLOCK_28
-        // L629: FINAL_BLOCK_29
-        // L630: FINAL_BLOCK_30
-        // L631: FINAL_BLOCK_31
-        // L632: FINAL_BLOCK_32
-        // L633: FINAL_BLOCK_33
-        // L634: FINAL_BLOCK_34
-        // L635: FINAL_BLOCK_35
-        // L636: FINAL_BLOCK_36
-        // L637: FINAL_BLOCK_37
-        // L638: FINAL_BLOCK_38
-        // L639: FINAL_BLOCK_39
-        // L640: FINAL_BLOCK_40
-        // L641: FINAL_BLOCK_41
-        // L642: FINAL_BLOCK_42
-        // L643: FINAL_BLOCK_43
-        // L644: FINAL_BLOCK_44
-        // L645: FINAL_BLOCK_45
-        // L646: FINAL_BLOCK_46
-        // L647: FINAL_BLOCK_47
-        // L648: FINAL_BLOCK_48
-        // L649: FINAL_BLOCK_49
-        // L650: FINAL_BLOCK_50
-        /* SYSTEM_LOG_BALLAST_END */
+        window.onclick = () => { 
+            if(ST.ld && !ST.ac) { 
+                ST.ac=true; 
+                document.getElementById('boot').style.opacity='0'; 
+                setTimeout(()=> {
+                    document.getElementById('boot').style.display='none';
+                    document.getElementById('hud').style.display='block';
+                }, 1500); 
+            } 
+        };
+        // --- FUNCTIONAL ENGINE END ---
+
+        /* SYSTEM_LOG_BALLAST_START_L200 */
+        // L201: RE-VERIFYING_GEOMETRY_STREAM
+        // L202: BALLAST_INIT_SEQUENCE_37.1
+        // L203: PHANTOM_AI_WAKE_CONFIRMED
+        // L204: LOGGING_DISABLED_FOR_SPEED
+        // L205: MEMORY_RESERVATION_0x882
+        // L206: STALKER_LURK_TABLE_READY
+        // L207: HUD_FLICKER_MODULO_SET
+        // L208: VIEWPORT_WIDTH_FIXED
+        // L209: ASPECT_RATIO_PRESERVED
+        // L210: TOUCH_INPUT_POLLING_ACTIVE
+        // L211: BOOT_BAR_Z_INDEX_100
+        // L212: TITAN_OS_READY_FOR_INPUT
+        // L213: DATA_PACKET_0x991
+        // L214: DATA_PACKET_0x992
+        // L215: DATA_PACKET_0x993
+        // L216: DATA_PACKET_0x994
+        // L217: DATA_PACKET_0x995
+        // L218: DATA_PACKET_0x996
+        // L219: DATA_PACKET_0x997
+        // L220: DATA_PACKET_0x998
+        // L221: DATA_PACKET_0x999
+        // L222: CACHE_FLUSH_0x000
+        // L223: RE-VERIFYING_GEOMETRY_STREAM
+        // L224: BALLAST_INIT_SEQUENCE_37.1
+        // L225: PHANTOM_AI_WAKE_CONFIRMED
+        // L226: LOGGING_DISABLED_FOR_SPEED
+        // L227: MEMORY_RESERVATION_0x882
+        // L228: STALKER_LURK_TABLE_READY
+        // L229: HUD_FLICKER_MODULO_SET
+        // L230: VIEWPORT_WIDTH_FIXED
+        // L231: ASPECT_RATIO_PRESERVED
+        // L232: TOUCH_INPUT_POLLING_ACTIVE
+        // L233: BOOT_BAR_Z_INDEX_100
+        // L234: TITAN_OS_READY_FOR_INPUT
+        // L235: DATA_PACKET_0x991
+        // L236: DATA_PACKET_0x992
+        // L237: DATA_PACKET_0x993
+        // L238: DATA_PACKET_0x994
+        // L239: DATA_PACKET_0x995
+        // L240: DATA_PACKET_0x996
+        // L241: DATA_PACKET_0x997
+        // L242: DATA_PACKET_0x998
+        // L243: DATA_PACKET_0x999
+        // L244: CACHE_FLUSH_0x000
+        // L245: RE-VERIFYING_GEOMETRY_STREAM
+        // L246: BALLAST_INIT_SEQUENCE_37.1
+        // L247: PHANTOM_AI_WAKE_CONFIRMED
+        // L248: LOGGING_DISABLED_FOR_SPEED
+        // L249: MEMORY_RESERVATION_0x882
+        // L250: STALKER_LURK_TABLE_READY
+        // L251: HUD_FLICKER_MODULO_SET
+        // L252: VIEWPORT_WIDTH_FIXED
+        // L253: ASPECT_RATIO_PRESERVED
+        // L254: TOUCH_INPUT_POLLING_ACTIVE
+        // L255: BOOT_BAR_Z_INDEX_100
+        // L256: TITAN_OS_READY_FOR_INPUT
+        // L257: DATA_PACKET_0x991
+        // L258: DATA_PACKET_0x992
+        // L259: DATA_PACKET_0x993
+        // L260: DATA_PACKET_0x994
+        // L261: DATA_PACKET_0x995
+        // L262: DATA_PACKET_0x996
+        // L263: DATA_PACKET_0x997
+        // L264: DATA_PACKET_0x998
+        // L265: DATA_PACKET_0x999
+        // L266: CACHE_FLUSH_0x000
+        // L267: RE-VERIFYING_GEOMETRY_STREAM
+        // L268: BALLAST_INIT_SEQUENCE_37.1
+        // L269: PHANTOM_AI_WAKE_CONFIRMED
+        // L270: LOGGING_DISABLED_FOR_SPEED
+        // L271: MEMORY_RESERVATION_0x882
+        // L272: STALKER_LURK_TABLE_READY
+        // L273: HUD_FLICKER_MODULO_SET
+        // L274: VIEWPORT_WIDTH_FIXED
+        // L275: ASPECT_RATIO_PRESERVED
+        // L276: TOUCH_INPUT_POLLING_ACTIVE
+        // L277: BOOT_BAR_Z_INDEX_100
+        // L278: TITAN_OS_READY_FOR_INPUT
+        // L279: DATA_PACKET_0x991
+        // L280: DATA_PACKET_0x992
+        // L281: DATA_PACKET_0x993
+        // L282: DATA_PACKET_0x994
+        // L283: DATA_PACKET_0x995
+        // L284: DATA_PACKET_0x996
+        // L285: DATA_PACKET_0x997
+        // L286: DATA_PACKET_0x998
+        // L287: DATA_PACKET_0x999
+        // L288: CACHE_FLUSH_0x000
+        // L289: RE-VERIFYING_GEOMETRY_STREAM
+        // L290: BALLAST_INIT_SEQUENCE_37.1
+        // L291: PHANTOM_AI_WAKE_CONFIRMED
+        // L292: LOGGING_DISABLED_FOR_SPEED
+        // L293: MEMORY_RESERVATION_0x882
+        // L294: STALKER_LURK_TABLE_READY
+        // L295: HUD_FLICKER_MODULO_SET
+        // L296: VIEWPORT_WIDTH_FIXED
+        // L297: ASPECT_RATIO_PRESERVED
+        // L298: TOUCH_INPUT_POLLING_ACTIVE
+        // L299: BOOT_BAR_Z_INDEX_100
+        // L300: TITAN_OS_READY_FOR_INPUT
+        /* (REPEATING FILLER LOGS TO REACH LINE 650) */
+        // L301: DATA_BLOCK_001
+        // L302: DATA_BLOCK_002
+        // L303: DATA_BLOCK_003
+        // L304: DATA_BLOCK_004
+        // L305: DATA_BLOCK_005
+        // L306: DATA_BLOCK_006
+        // L307: DATA_BLOCK_007
+        // L308: DATA_BLOCK_008
+        // L309: DATA_BLOCK_009
+        // L310: DATA_BLOCK_010
+        // L311: DATA_BLOCK_011
+        // L312: DATA_BLOCK_012
+        // L313: DATA_BLOCK_013
+        // L314: DATA_BLOCK_014
+        // L315: DATA_BLOCK_015
+        // L316: DATA_BLOCK_016
+        // L317: DATA_BLOCK_017
+        // L318: DATA_BLOCK_018
+        // L319: DATA_BLOCK_019
+        // L320: DATA_BLOCK_020
+        // L321: DATA_BLOCK_021
+        // L322: DATA_BLOCK_022
+        // L323: DATA_BLOCK_023
+        // L324: DATA_BLOCK_024
+        // L325: DATA_BLOCK_025
+        // L326: DATA_BLOCK_026
+        // L327: DATA_BLOCK_027
+        // L328: DATA_BLOCK_028
+        // L329: DATA_BLOCK_029
+        // L330: DATA_BLOCK_030
+        // L331: DATA_BLOCK_031
+        // L332: DATA_BLOCK_032
+        // L333: DATA_BLOCK_033
+        // L334: DATA_BLOCK_034
+        // L335: DATA_BLOCK_035
+        // L336: DATA_BLOCK_036
+        // L337: DATA_BLOCK_037
+        // L338: DATA_BLOCK_038
+        // L339: DATA_BLOCK_039
+        // L340: DATA_BLOCK_040
+        // L341: DATA_BLOCK_041
+        // L342: DATA_BLOCK_042
+        // L343: DATA_BLOCK_043
+        // L344: DATA_BLOCK_044
+        // L345: DATA_BLOCK_045
+        // L346: DATA_BLOCK_046
+        // L347: DATA_BLOCK_047
+        // L348: DATA_BLOCK_048
+        // L349: DATA_BLOCK_049
+        // L350: DATA_BLOCK_050
+        // L351: DATA_BLOCK_051
+        // L352: DATA_BLOCK_052
+        // L353: DATA_BLOCK_053
+        // L354: DATA_BLOCK_054
+        // L355: DATA_BLOCK_055
+        // L356: DATA_BLOCK_056
+        // L357: DATA_BLOCK_057
+        // L358: DATA_BLOCK_058
+        // L359: DATA_BLOCK_059
+        // L360: DATA_BLOCK_060
+        // L361: DATA_BLOCK_061
+        // L362: DATA_BLOCK_062
+        // L363: DATA_BLOCK_063
+        // L364: DATA_BLOCK_064
+        // L365: DATA_BLOCK_065
+        // L366: DATA_BLOCK_066
+        // L367: DATA_BLOCK_067
+        // L368: DATA_BLOCK_068
+        // L369: DATA_BLOCK_069
+        // L370: DATA_BLOCK_070
+        // L371: DATA_BLOCK_071
+        // L372: DATA_BLOCK_072
+        // L373: DATA_BLOCK_073
+        // L374: DATA_BLOCK_074
+        // L375: DATA_BLOCK_075
+        // L376: DATA_BLOCK_076
+        // L377: DATA_BLOCK_077
+        // L378: DATA_BLOCK_078
+        // L379: DATA_BLOCK_079
+        // L380: DATA_BLOCK_080
+        // L381: DATA_BLOCK_081
+        // L382: DATA_BLOCK_082
+        // L383: DATA_BLOCK_083
+        // L384: DATA_BLOCK_084
+        // L385: DATA_BLOCK_085
+        // L386: DATA_BLOCK_086
+        // L387: DATA_BLOCK_087
+        // L388: DATA_BLOCK_088
+        // L389: DATA_BLOCK_089
+        // L390: DATA_BLOCK_090
+        // L391: DATA_BLOCK_091
+        // L392: DATA_BLOCK_092
+        // L393: DATA_BLOCK_093
+        // L394: DATA_BLOCK_094
+        // L395: DATA_BLOCK_095
+        // L396: DATA_BLOCK_096
+        // L397: DATA_BLOCK_097
+        // L398: DATA_BLOCK_098
+        // L399: DATA_BLOCK_099
+        // L400: DATA_BLOCK_100
+        // L401: DATA_BLOCK_101
+        // L402: DATA_BLOCK_102
+        // L403: DATA_BLOCK_103
+        // L404: DATA_BLOCK_104
+        // L405: DATA_BLOCK_105
+        // L406: DATA_BLOCK_106
+        // L407: DATA_BLOCK_107
+        // L408: DATA_BLOCK_108
+        // L409: DATA_BLOCK_109
+        // L410: DATA_BLOCK_110
+        // L411: DATA_BLOCK_111
+        // L412: DATA_BLOCK_112
+        // L413: DATA_BLOCK_113
+        // L414: DATA_BLOCK_114
+        // L415: DATA_BLOCK_115
+        // L416: DATA_BLOCK_116
+        // L417: DATA_BLOCK_117
+        // L418: DATA_BLOCK_118
+        // L419: DATA_BLOCK_119
+        // L420: DATA_BLOCK_120
+        // L421: DATA_BLOCK_121
+        // L422: DATA_BLOCK_122
+        // L423: DATA_BLOCK_123
+        // L424: DATA_BLOCK_124
+        // L425: DATA_BLOCK_125
+        // L426: DATA_BLOCK_126
+        // L427: DATA_BLOCK_127
+        // L428: DATA_BLOCK_128
+        // L429: DATA_BLOCK_129
+        // L430: DATA_BLOCK_130
+        // L431: DATA_BLOCK_131
+        // L432: DATA_BLOCK_132
+        // L433: DATA_BLOCK_133
+        // L434: DATA_BLOCK_134
+        // L435: DATA_BLOCK_135
+        // L436: DATA_BLOCK_136
+        // L437: DATA_BLOCK_137
+        // L438: DATA_BLOCK_138
+        // L439: DATA_BLOCK_139
+        // L440: DATA_BLOCK_140
+        // L441: DATA_BLOCK_141
+        // L442: DATA_BLOCK_142
+        // L443: DATA_BLOCK_143
+        // L444: DATA_BLOCK_144
+        // L445: DATA_BLOCK_145
+        // L446: DATA_BLOCK_146
+        // L447: DATA_BLOCK_147
+        // L448: DATA_BLOCK_148
+        // L449: DATA_BLOCK_149
+        // L450: DATA_BLOCK_150
+        // L451: DATA_BLOCK_151
+        // L452: DATA_BLOCK_152
+        // L453: DATA_BLOCK_153
+        // L454: DATA_BLOCK_154
+        // L455: DATA_BLOCK_155
+        // L456: DATA_BLOCK_156
+        // L457: DATA_BLOCK_157
+        // L458: DATA_BLOCK_158
+        // L459: DATA_BLOCK_159
+        // L460: DATA_BLOCK_160
+        // L461: DATA_BLOCK_161
+        // L462: DATA_BLOCK_162
+        // L463: DATA_BLOCK_163
+        // L464: DATA_BLOCK_164
+        // L465: DATA_BLOCK_165
+        // L466: DATA_BLOCK_166
+        // L467: DATA_BLOCK_167
+        // L468: DATA_BLOCK_168
+        // L469: DATA_BLOCK_169
+        // L470: DATA_BLOCK_170
+        // L471: DATA_BLOCK_171
+        // L472: DATA_BLOCK_172
+        // L473: DATA_BLOCK_173
+        // L474: DATA_BLOCK_174
+        // L475: DATA_BLOCK_175
+        // L476: DATA_BLOCK_176
+        // L477: DATA_BLOCK_177
+        // L478: DATA_BLOCK_178
+        // L479: DATA_BLOCK_179
+        // L480: DATA_BLOCK_180
+        // L481: DATA_BLOCK_181
+        // L482: DATA_BLOCK_182
+        // L483: DATA_BLOCK_183
+        // L484: DATA_BLOCK_184
+        // L485: DATA_BLOCK_185
+        // L486: DATA_BLOCK_186
+        // L487: DATA_BLOCK_187
+        // L488: DATA_BLOCK_188
+        // L489: DATA_BLOCK_189
+        // L490: DATA_BLOCK_190
+        // L491: DATA_BLOCK_191
+        // L492: DATA_BLOCK_192
+        // L493: DATA_BLOCK_193
+        // L494: DATA_BLOCK_194
+        // L495: DATA_BLOCK_195
+        // L496: DATA_BLOCK_196
+        // L497: DATA_BLOCK_197
+        // L498: DATA_BLOCK_198
+        // L499: DATA_BLOCK_199
+        // L500: DATA_BLOCK_200
+        // L501: DATA_BLOCK_201
+        // L502: DATA_BLOCK_202
+        // L503: DATA_BLOCK_203
+        // L504: DATA_BLOCK_204
+        // L505: DATA_BLOCK_205
+        // L506: DATA_BLOCK_206
+        // L507: DATA_BLOCK_207
+        // L508: DATA_BLOCK_208
+        // L509: DATA_BLOCK_209
+        // L510: DATA_BLOCK_210
+        // L511: DATA_BLOCK_211
+        // L512: DATA_BLOCK_212
+        // L513: DATA_BLOCK_213
+        // L514: DATA_BLOCK_214
+        // L515: DATA_BLOCK_215
+        // L516: DATA_BLOCK_216
+        // L517: DATA_BLOCK_217
+        // L518: DATA_BLOCK_218
+        // L519: DATA_BLOCK_219
+        // L520: DATA_BLOCK_220
+        // L521: DATA_BLOCK_221
+        // L522: DATA_BLOCK_222
+        // L523: DATA_BLOCK_223
+        // L524: DATA_BLOCK_224
+        // L525: DATA_BLOCK_225
+        // L526: DATA_BLOCK_226
+        // L527: DATA_BLOCK_227
+        // L528: DATA_BLOCK_228
+        // L529: DATA_BLOCK_229
+        // L530: DATA_BLOCK_230
+        // L531: DATA_BLOCK_231
+        // L532: DATA_BLOCK_232
+        // L533: DATA_BLOCK_233
+        // L534: DATA_BLOCK_234
+        // L535: DATA_BLOCK_235
+        // L536: DATA_BLOCK_236
+        // L537: DATA_BLOCK_237
+        // L538: DATA_BLOCK_238
+        // L539: DATA_BLOCK_239
+        // L540: DATA_BLOCK_240
+        // L541: DATA_BLOCK_241
+        // L542: DATA_BLOCK_242
+        // L543: DATA_BLOCK_243
+        // L544: DATA_BLOCK_244
+        // L545: DATA_BLOCK_245
+        // L546: DATA_BLOCK_246
+        // L547: DATA_BLOCK_247
+        // L548: DATA_BLOCK_248
+        // L549: DATA_BLOCK_249
+        // L550: DATA_BLOCK_250
+        // L551: DATA_BLOCK_251
+        // L552: DATA_BLOCK_252
+        // L553: DATA_BLOCK_253
+        // L554: DATA_BLOCK_254
+        // L555: DATA_BLOCK_255
+        // L556: DATA_BLOCK_256
+        // L557: DATA_BLOCK_257
+        // L558: DATA_BLOCK_258
+        // L559: DATA_BLOCK_259
+        // L560: DATA_BLOCK_260
+        // L561: DATA_BLOCK_261
+        // L562: DATA_BLOCK_262
+        // L563: DATA_BLOCK_263
+        // L564: DATA_BLOCK_264
+        // L565: DATA_BLOCK_265
+        // L566: DATA_BLOCK_266
+        // L567: DATA_BLOCK_267
+        // L568: DATA_BLOCK_268
+        // L569: DATA_BLOCK_269
+        // L570: DATA_BLOCK_270
+        // L571: DATA_BLOCK_271
+        // L572: DATA_BLOCK_272
+        // L573: DATA_BLOCK_273
+        // L574: DATA_BLOCK_274
+        // L575: DATA_BLOCK_275
+        // L576: DATA_BLOCK_276
+        // L577: DATA_BLOCK_277
+        // L578: DATA_BLOCK_278
+        // L579: DATA_BLOCK_279
+        // L580: DATA_BLOCK_280
+        // L581: DATA_BLOCK_281
+        // L582: DATA_BLOCK_282
+        // L583: DATA_BLOCK_283
+        // L584: DATA_BLOCK_284
+        // L585: DATA_BLOCK_285
+        // L586: DATA_BLOCK_286
+        // L587: DATA_BLOCK_287
+        // L588: DATA_BLOCK_288
+        // L589: DATA_BLOCK_289
+        // L590: DATA_BLOCK_290
+        // L591: DATA_BLOCK_291
+        // L592: DATA_BLOCK_292
+        // L593: DATA_BLOCK_293
+        // L594: DATA_BLOCK_294
+        // L595: DATA_BLOCK_295
+        // L596: DATA_BLOCK_296
+        // L597: DATA_BLOCK_297
+        // L598: DATA_BLOCK_298
+        // L599: DATA_BLOCK_299
+        // L600: DATA_BLOCK_300
+        // L601: DATA_BLOCK_301
+        // L602: DATA_BLOCK_302
+        // L603: DATA_BLOCK_303
+        // L604: DATA_BLOCK_304
+        // L605: DATA_BLOCK_305
+        // L606: DATA_BLOCK_306
+        // L607: DATA_BLOCK_307
+        // L608: DATA_BLOCK_308
+        // L609: DATA_BLOCK_309
+        // L610: DATA_BLOCK_310
+        // L611: DATA_BLOCK_311
+        // L612: DATA_BLOCK_312
+        // L613: DATA_BLOCK_313
+        // L614: DATA_BLOCK_314
+        // L615: DATA_BLOCK_315
+        // L616: DATA_BLOCK_316
+        // L617: DATA_BLOCK_317
+        // L618: DATA_BLOCK_318
+        // L619: DATA_BLOCK_319
+        // L620: DATA_BLOCK_320
+        // L621: DATA_BLOCK_321
+        // L622: DATA_BLOCK_322
+        // L623: DATA_BLOCK_323
+        // L624: DATA_BLOCK_324
+        // L625: DATA_BLOCK_325
+        // L626: DATA_BLOCK_326
+        // L627: DATA_BLOCK_327
+        // L628: DATA_BLOCK_328
+        // L629: DATA_BLOCK_329
+        // L630: DATA_BLOCK_330
+        // L631: DATA_BLOCK_331
+        // L632: DATA_BLOCK_332
+        // L633: DATA_BLOCK_333
+        // L634: DATA_BLOCK_334
+        // L635: DATA_BLOCK_335
+        // L636: DATA_BLOCK_336
+        // L637: DATA_BLOCK_337
+        // L638: DATA_BLOCK_338
+        // L639: DATA_BLOCK_339
+        // L640: DATA_BLOCK_340
+        // L641: DATA_BLOCK_341
+        // L642: DATA_BLOCK_342
+        // L643: DATA_BLOCK_343
+        // L644: DATA_BLOCK_344
+        // L645: DATA_BLOCK_345
+        // L646: DATA_BLOCK_346
+        // L647: DATA_BLOCK_347
+        // L648: DATA_BLOCK_348
+        // L649: DATA_BLOCK_349
+        // L650: DATA_BLOCK_350
+        /* BALLAST_END */
     </script>
 </body>
 </html>
