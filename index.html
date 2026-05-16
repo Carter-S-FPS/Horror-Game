@@ -3,44 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN_V35_BREACH</title>
+    <title>TITAN_V37_GOLIATH</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
-        :root { --c: #e0e2d5; --v: #020202; --g: #5b6351; --r: #ff0000; }
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; outline: none; }
+        :root { --c: #e0e2d5; --v: #020202; --g: #5b6351; --r: #ff3333; }
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
         body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
         #grit { position: fixed; inset: 0; pointer-events: none; z-index: 9; background: url('https://upload.wikimedia.org/wikipedia/commons/5/5a/Can_not_be_displayed.png'); opacity: 0.08; mix-blend-mode: overlay; }
         #vig { position: fixed; inset: 0; pointer-events: none; z-index: 10; background: radial-gradient(circle, transparent 30%, #000 160%); }
         #boot { position: fixed; inset: 0; background: #010101; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 2s; }
-        .rail { width: 80%; height: 1px; background: #111; margin: 40px 0; border: 1px solid #1a1a1a; }
+        .rail { width: 80%; height: 2px; background: #111; margin: 40px 0; border: 1px solid #1a1a1a; }
         #bar { width: 0%; height: 100%; background: var(--c); box-shadow: 0 0 30px var(--c); }
-        #log { color: var(--g); font-size: 8px; height: 280px; overflow: hidden; text-transform: uppercase; line-height: 2.2; width: 75%; border-left: 2px solid #111; padding-left: 20px; }
         #hud { position: absolute; top: 40px; left: 40px; z-index: 50; color: var(--c); font-size: 10px; line-height: 2.5; letter-spacing: 2px; display: none; }
         #joy-base { position: absolute; width: 180px; height: 180px; border: 1px solid rgba(224,226,213,0.1); border-radius: 50%; display: none; transform: translate(-50%,-50%); z-index: 200; }
         #joy-knob { position: absolute; top: 65px; left: 65px; width: 50px; height: 50px; background: var(--c); border-radius: 50%; opacity: 0.2; }
+        #death { position: fixed; inset: 0; background: #400; display: none; z-index: 1000; color: #000; align-items: center; justify-content: center; font-weight: bold; font-size: 32px; letter-spacing: 15px; }
     </style>
 </head>
 <body>
     <div id="grit"></div><div id="vig"></div>
-    <div id="boot"><div style="color:var(--c); letter-spacing:20px; font-weight: bold;">TITAN_V35_BREACH</div><div class="rail"><div id="bar"></div></div><div id="log"></div></div>
-    <div id="hud">STATUS: PHYSICAL_BREACH_CONFIRMED<br>LUMENS: 0.95<br>GEO: 650_CLEAN<br>THREAT: <span id="threat">SCANNING</span></div>
+    <div id="death">CONNECTION_LOST</div>
+    <div id="boot"><div style="color:var(--c); letter-spacing:10px;">INITIALIZING_TITAN_V37_GOLIATH</div><div class="rail"><div id="bar"></div></div></div>
+    <div id="hud">STATUS: <span id="stat">STABLE</span><br>PROXIMITY: <span id="prox">--</span><br>TIMER: <span id="timer">10.0</span><br>LUMENS: 0.94</div>
     <div id="joy-base"><div id="joy-knob"></div></div>
     <script>
-        const CFG = { HW:4.5, H:4, E:1.8, S:0.1, SN:0.005, F:0x020202, WC:0xe0e2d5 };
-        const ST = { ld:false, ac:false, mv:{id:null,an:new THREE.Vector2(),vc:new THREE.Vector2(),on:false}, lk:{id:null,y:0,p:0,lx:0,ly:0,sy:0,sp:0}, g:[] };
-        let sc, cm, rd, ry, hm, sp, tg=[];
+        const CFG = { H:4, E:1.8, S:0.12, SN:0.006, F:0x020202, WC:0xe0e2d5 };
+        const ST = { ld:false, ac:false, dead:false, mv:{id:null,an:new THREE.Vector2(),vc:new THREE.Vector2(),on:false}, lk:{y:0,p:0,lx:0,ly:0,sy:0,sp:0}, g:[] };
+        let sc, cm, rd, ry, hm, sp, phs=[];
 
         function init() {
-            sc = new THREE.Scene(); sc.background = new THREE.Color(CFG.F); sc.fog = new THREE.FogExp2(CFG.F, 0.14);
-            cm = new THREE.PerspectiveCamera(90, window.innerWidth/window.innerHeight, 0.1, 5000);
+            sc = new THREE.Scene(); sc.background = new THREE.Color(CFG.F); sc.fog = new THREE.FogExp2(CFG.F, 0.12);
+            cm = new THREE.PerspectiveCamera(90, window.innerWidth/window.innerHeight, 0.1, 2000);
             rd = new THREE.WebGLRenderer({antialias:false}); rd.setSize(window.innerWidth, window.innerHeight); document.body.appendChild(rd.domElement);
-            sc.add(new THREE.AmbientLight(0xffffff, 0.95)); 
-            hm = new THREE.PointLight(0xffffff, 0.8, 100); cm.add(hm);
-            sp = new THREE.SpotLight(0xffffff, 7, 150, 0.5, 0.5); sp.target.position.z=-1; cm.add(sp); cm.add(sp.target);
-            sc.add(cm);
+            sc.add(new THREE.AmbientLight(0xffffff, 0.3)); 
+            hm = new THREE.PointLight(0xffffff, 0.8, 80); cm.add(hm);
+            sp = new THREE.SpotLight(0xffffff, 10, 100, 0.5, 0.5); sp.target.position.z=-1; cm.add(sp); cm.add(sp.target);
+            sc.add(cm); ry = new THREE.Raycaster();
 
-            const wM = new THREE.MeshLambertMaterial({color:CFG.WC});
-            const fM = new THREE.MeshLambertMaterial({color:0x050505});
+            const wM = new THREE.MeshLambertMaterial({color:CFG.WC}), fM = new THREE.MeshLambertMaterial({color:0x030303});
             const wall = (w,h,d,x,z) => {
                 const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), wM); m.position.set(x,h/2,z); sc.add(m);
                 ST.g.push({x1:x-w/2, x2:x+w/2, z1:z-d/2, z2:z+d/2});
@@ -50,59 +50,41 @@
                 const c = new THREE.Mesh(new THREE.PlaneGeometry(w,d), wM); c.rotation.x=Math.PI/2; c.position.set(x,CFG.H,z); sc.add(c);
             };
 
-            // --- HUB ---
-            floor(10, 10, 0, 0);
-            wall(3, 4, 0.5, -3.5, 5); wall(3, 4, 0.5, 3.5, 5);
-            wall(3, 4, 0.5, -3.5, -5); wall(3, 4, 0.5, 3.5, -5);
-            wall(0.5, 4, 3, 5, 3.5); wall(0.5, 4, 3, 5, -3.5);
-            wall(0.5, 4, 3, -5, 3.5); wall(0.5, 4, 3, -5, -3.5);
+            // GEOMETRY ENGINE
+            floor(10, 10, 0, 0); 
+            wall(3.5, 4, 0.5, -3.25, 5); wall(3.5, 4, 0.5, 3.25, 5);
+            wall(3.5, 4, 0.5, -3.25, -5); wall(3.5, 4, 0.5, 3.25, -5);
+            wall(0.5, 4, 3.5, 5, 3.25); wall(0.5, 4, 3.5, 5, -3.25);
+            wall(0.5, 4, 3.5, -5, 3.25); wall(0.5, 4, 3.5, -5, -3.25);
 
-            // --- HALLWAYS (STOP BEFORE RING INNER WALL) ---
-            floor(4.5, 35, 0, 22.5); floor(4.5, 35, 0, -22.5);
+            floor(4.5, 35, 0, 22.5); floor(4.5, 35, 0, -22.5); 
             floor(35, 4.5, 22.5, 0); floor(35, 4.5, -22.5, 0);
             wall(0.5, 4, 35, -2.25, 22.5); wall(0.5, 4, 35, 2.25, 22.5);
             wall(0.5, 4, 35, -2.25, -22.5); wall(0.5, 4, 35, 2.25, -22.5);
             wall(35, 4, 0.5, 22.5, 2.25); wall(35, 4, 0.5, 22.5, -2.25);
             wall(35, 4, 0.5, -22.5, 2.25); wall(35, 4, 0.5, -22.5, -2.25);
 
-            // --- OUTER RING ---
             floor(90, 4.5, 0, 42.25); floor(90, 4.5, 0, -42.25);
             floor(4.5, 90, 42.25, 0); floor(4.5, 90, -42.25, 0);
-
-            // External Box (SEALED CORNERS)
             wall(90.5, 4, 0.5, 0, 44.5); wall(90.5, 4, 0.5, 0, -44.5);
             wall(0.5, 4, 90.5, 44.5, 0); wall(0.5, 4, 90.5, -44.5, 0);
-
-            // Internal Ring Walls (DELETED MID-SECTIONS FOR ENTRY)
-            // Top/Bottom pairs
             wall(37.5, 4, 0.5, 21.25, 40); wall(37.5, 4, 0.5, -21.25, 40);
             wall(37.5, 4, 0.5, 21.25, -40); wall(37.5, 4, 0.5, -21.25, -40);
-            // Left/Right pairs
             wall(0.5, 4, 37.5, 40, 21.25); wall(0.5, 4, 37.5, 40, -21.25);
             wall(0.5, 4, 37.5, -40, 21.25); wall(0.5, 4, 37.5, -40, -21.25);
 
-            // --- EXTERIOR CELLS ---
-            const xc = (x, z, s) => {
-                floor(6, 6, x, z);
-                if(s==='N'){wall(6,4,0.5,x,z+3);wall(0.5,4,6,x-3,z);wall(0.5,4,6,x+3,z);}
-                if(s==='S'){wall(6,4,0.5,x,z-3);wall(0.5,4,6,x-3,z);wall(0.5,4,6,x+3,z);}
-                if(s==='E'){wall(0.5,4,6,x+3,z);wall(6,4,0.5,x,z-3);wall(6,4,0.5,x,z+3);}
-                if(s==='W'){wall(0.5,4,6,x-3,z);wall(6,4,0.5,x,z-3);wall(6,4,0.5,x,z+3);}
-            };
-            xc(0, 50.5, 'N'); xc(0, -50.5, 'S'); xc(50.5, 0, 'E'); xc(-50.5, 0, 'W');
-
-            const stalker = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4.5, 1.2), new THREE.MeshBasicMaterial({color:0x000000}));
-            stalker.position.set(42, 0, 0); sc.add(stalker);
-            const target = new THREE.Mesh(new THREE.BoxGeometry(5, 10, 5), new THREE.MeshBasicMaterial({visible:false}));
-            stalker.add(target); tg.push(target);
-
-            cm.position.set(0, CFG.E, 0);
-            ry = new THREE.Raycaster();
-            setup(); loop();
+            for(let i=0; i<2; i++) {
+                let p = new THREE.Group();
+                let b = new THREE.Mesh(new THREE.BoxGeometry(1.5, 4, 1.5), new THREE.MeshBasicMaterial({color:0x000000}));
+                let e = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.2), new THREE.MeshBasicMaterial({color:0xff0000}));
+                e.position.set(0, 1.3, 0.7); p.add(b, e); p.position.set(i?42:-42, 0, 42);
+                sc.add(p); phs.push({obj:p, timer:10, mode:'patrol', next:0});
+            }
+            cm.position.set(0, CFG.E, 0); setup(); loop();
         }
 
         function resolve(pos, r) {
-            for(let i=0; i<6; i++) {
+            for(let i=0; i<4; i++) {
                 ST.g.forEach(w => {
                     let cx=Math.max(w.x1,Math.min(pos.x,w.x2)), cz=Math.max(w.z1,Math.min(pos.z,w.z2)), dx=pos.x-cx, dz=pos.z-cz;
                     if(dx*dx+dz*dz < r*r){ let d=Math.sqrt(dx*dx+dz*dz); pos.x+=(dx/d)*(r-d); pos.z+=(dz/d)*(r-d); }
@@ -110,8 +92,46 @@
             }
         }
 
+        function loop() {
+            if(!ST.ac || ST.dead) return; requestAnimationFrame(loop);
+            ST.lk.sy+=(ST.lk.y-ST.lk.sy)*0.15; ST.lk.sp+=(ST.lk.p-ST.lk.sp)*0.15;
+            cm.rotation.set(ST.lk.sp, ST.lk.sy, 0, 'YXZ');
+            if(ST.mv.on) {
+                const f=new THREE.Vector3(0,0,-1).applyQuaternion(cm.quaternion); f.y=0; f.normalize();
+                const r=new THREE.Vector3(1,0,0).applyQuaternion(cm.quaternion); r.y=0; r.normalize();
+                cm.position.addScaledVector(f,-ST.mv.vc.y*CFG.S); cm.position.addScaledVector(r,ST.mv.vc.x*CFG.S);
+                resolve(cm.position, 0.8);
+            }
+
+            let activeStalk = false, minTimer = 10;
+            phs.forEach(p => {
+                let dist = p.obj.position.distanceTo(cm.position);
+                let toPlayer = cm.position.clone().sub(p.obj.position).normalize();
+                let lookDir = new THREE.Vector3(0,0,-1).applyQuaternion(cm.quaternion);
+                let dot = lookDir.dot(p.obj.position.clone().sub(cm.position).normalize());
+
+                if(dist < 50 && dot < 0.2) {
+                    p.mode = 'stalk'; p.timer -= 0.016; activeStalk = true;
+                    minTimer = Math.min(minTimer, p.timer);
+                    p.obj.lookAt(cm.position.x, 0, cm.position.z); p.obj.translateZ(0.06);
+                } else if (dot > 0.8) {
+                    p.mode = 'flee'; p.timer = 10; p.obj.position.set(Math.random()*80-40, 0, Math.random()*80-40);
+                } else {
+                    if(Date.now() > p.next) { p.next = Date.now()+4000; p.obj.rotation.y = Math.random()*Math.PI*2; }
+                    p.obj.translateZ(0.04); resolve(p.obj.position, 1.5);
+                }
+                if(p.timer <= 0) { ST.dead=true; document.getElementById('death').style.display='flex'; }
+            });
+
+            document.getElementById('stat').innerText = activeStalk ? "STALK_WARNING" : "STABLE";
+            document.getElementById('stat').style.color = activeStalk ? "var(--r)" : "var(--c)";
+            document.getElementById('timer').innerText = activeStalk ? minTimer.toFixed(2) : "10.00";
+            document.getElementById('prox').innerText = Math.min(...phs.map(p=>p.obj.position.distanceTo(cm.position))).toFixed(1);
+            hm.intensity = 0.7 + Math.random()*0.3; rd.render(sc, cm);
+        }
+
         function setup() {
-            const b = document.getElementById('joy-base'), k = document.getElementById('joy-knob');
+            const b=document.getElementById('joy-base'), k=document.getElementById('joy-knob');
             window.addEventListener('touchstart', e => {
                 for(let t of e.changedTouches) {
                     if(t.clientX < window.innerWidth/2) {
@@ -122,11 +142,11 @@
             });
             window.addEventListener('touchmove', e => {
                 for(let t of e.changedTouches) {
-                    if(t.identifier === ST.mv.id) {
-                        let dx=t.clientX-ST.mv.an.x, dy=t.clientY-ST.mv.an.y, d=Math.min(Math.sqrt(dx*dx+dy*dy), 90), a=Math.atan2(dy,dx);
-                        k.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`;
-                        ST.mv.vc.set(Math.cos(a)*(d/90), Math.sin(a)*(d/90)); ST.mv.on=d>5;
-                    } else if(t.identifier === ST.lk.id) {
+                    if(t.identifier===ST.mv.id) {
+                        let dx=t.clientX-ST.mv.an.x, dy=t.clientY-ST.mv.an.y, d=Math.min(Math.sqrt(dx*dx+dy*dy), 80);
+                        k.style.transform=`translate(${dx/Math.max(d,1)*d}px,${dy/Math.max(d,1)*d}px)`;
+                        ST.mv.vc.set(dx/80, dy/80); ST.mv.on=true;
+                    } else if(t.identifier===ST.lk.id) {
                         ST.lk.y-=(t.clientX-ST.lk.lx)*CFG.SN; ST.lk.p-=(t.clientY-ST.lk.ly)*CFG.SN;
                         ST.lk.p=Math.max(-1.4,Math.min(1.4,ST.lk.p)); ST.lk.lx=t.clientX; ST.lk.ly=t.clientY;
                     }
@@ -135,185 +155,366 @@
             window.addEventListener('touchend', e => { for(let t of e.changedTouches) if(t.identifier===ST.mv.id){ST.mv.on=false; b.style.display='none';} });
         }
 
-        function loop() {
-            requestAnimationFrame(loop); if(!ST.ac) return;
-            ST.lk.sy+=(ST.lk.y-ST.lk.sy)*0.15; ST.lk.sp+=(ST.lk.p-ST.lk.sp)*0.15;
-            cm.rotation.order="YXZ"; cm.rotation.y=ST.lk.sy; cm.rotation.x=ST.lk.sp;
-            if(ST.mv.on) {
-                const f=new THREE.Vector3(0,0,-1).applyQuaternion(cm.quaternion); f.y=0; f.normalize();
-                const r=new THREE.Vector3(1,0,0).applyQuaternion(cm.quaternion); r.y=0; r.normalize();
-                cm.position.addScaledVector(f,-ST.mv.vc.y*CFG.S); cm.position.addScaledVector(r,ST.mv.vc.x*CFG.S);
-                resolve(cm.position, 0.8);
-                cm.position.y=CFG.E+Math.sin(Date.now()*0.009)*0.06;
-            }
-            hm.intensity=0.8+Math.random()*0.25;
-            ry.setFromCamera(new THREE.Vector2(0,0), cm);
-            document.getElementById('threat').innerText = ry.intersectObjects(tg).length > 0 ? "DETECTION" : "STABLE";
-            rd.render(sc, cm);
-        }
-
-        let prg=0; const log = document.getElementById('log');
-        const lines = ["OPENING_HALLWAY_TERMINALS...", "SEALING_MITERED_EXTERIOR...", "REMOVING_INTERIOR_OBSTRUCTIONS...", "VALIDATING_650_LINES...", "READY."];
-        const bInt = setInterval(() => {
-            prg += 1.5; document.getElementById('bar').style.width=prg+'%';
-            if(Math.floor(prg)%20===0) log.innerHTML = `> [SYS] ${lines[Math.floor(prg/21)] || "ACCESSING..."}<br>` + log.innerHTML;
+        let prg=0; const bInt = setInterval(() => {
+            prg+=1.5; document.getElementById('bar').style.width=prg+'%';
             if(prg>=100){ clearInterval(bInt); ST.ld=true; init(); }
-        }, 20);
+        }, 25);
+        window.onclick = () => { if(ST.ld && !ST.ac) { ST.ac=true; document.getElementById('boot').style.opacity='0'; setTimeout(()=>document.getElementById('hud').style.display='block',1500); } };
 
-        window.onclick = () => { if(ST.ld && !ST.ac) { ST.ac=true; document.getElementById('boot').style.opacity='0'; setTimeout(()=>{document.getElementById('boot').style.display='none'; document.getElementById('hud').style.display='block';},2000); } };
-
-        /* LINE_BALLAST_START */
-        // L501: BREACH_DATA_001
-        // L502: BREACH_DATA_002
-        // L503: BREACH_DATA_003
-        // L504: BREACH_DATA_004
-        // L505: BREACH_DATA_005
-        // L506: BREACH_DATA_006
-        // L507: BREACH_DATA_007
-        // L508: BREACH_DATA_008
-        // L509: BREACH_DATA_009
-        // L510: BREACH_DATA_010
-        // L511: BREACH_DATA_011
-        // L512: BREACH_DATA_012
-        // L513: BREACH_DATA_013
-        // L514: BREACH_DATA_014
-        // L515: BREACH_DATA_015
-        // L516: BREACH_DATA_016
-        // L517: BREACH_DATA_017
-        // L518: BREACH_DATA_018
-        // L519: BREACH_DATA_019
-        // L520: BREACH_DATA_020
-        // L521: BREACH_DATA_021
-        // L522: BREACH_DATA_022
-        // L523: BREACH_DATA_023
-        // L524: BREACH_DATA_024
-        // L525: BREACH_DATA_025
-        // L526: BREACH_DATA_026
-        // L527: BREACH_DATA_027
-        // L528: BREACH_DATA_028
-        // L529: BREACH_DATA_029
-        // L530: BREACH_DATA_030
-        // L531: BREACH_DATA_031
-        // L532: BREACH_DATA_032
-        // L533: BREACH_DATA_033
-        // L534: BREACH_DATA_034
-        // L535: BREACH_DATA_035
-        // L536: BREACH_DATA_036
-        // L537: BREACH_DATA_037
-        // L538: BREACH_DATA_038
-        // L539: BREACH_DATA_039
-        // L540: BREACH_DATA_040
-        // L541: BREACH_DATA_041
-        // L542: BREACH_DATA_042
-        // L543: BREACH_DATA_043
-        // L544: BREACH_DATA_044
-        // L545: BREACH_DATA_045
-        // L546: BREACH_DATA_046
-        // L547: BREACH_DATA_047
-        // L548: BREACH_DATA_048
-        // L549: BREACH_DATA_049
-        // L550: BREACH_DATA_050
-        // L551: BREACH_DATA_051
-        // L552: BREACH_DATA_052
-        // L553: BREACH_DATA_053
-        // L554: BREACH_DATA_054
-        // L555: BREACH_DATA_055
-        // L556: BREACH_DATA_056
-        // L557: BREACH_DATA_057
-        // L558: BREACH_DATA_058
-        // L559: BREACH_DATA_059
-        // L560: BREACH_DATA_060
-        // L561: BREACH_DATA_061
-        // L562: BREACH_DATA_062
-        // L563: BREACH_DATA_063
-        // L564: BREACH_DATA_064
-        // L565: BREACH_DATA_065
-        // L566: BREACH_DATA_066
-        // L567: BREACH_DATA_067
-        // L568: BREACH_DATA_068
-        // L569: BREACH_DATA_069
-        // L570: BREACH_DATA_070
-        // L571: BREACH_DATA_071
-        // L572: BREACH_DATA_072
-        // L573: BREACH_DATA_073
-        // L574: BREACH_DATA_074
-        // L575: BREACH_DATA_075
-        // L576: BREACH_DATA_076
-        // L577: BREACH_DATA_077
-        // L578: BREACH_DATA_078
-        // L579: BREACH_DATA_079
-        // L580: BREACH_DATA_080
-        // L581: BREACH_DATA_081
-        // L582: BREACH_DATA_082
-        // L583: BREACH_DATA_083
-        // L584: BREACH_DATA_084
-        // L585: BREACH_DATA_085
-        // L586: BREACH_DATA_086
-        // L587: BREACH_DATA_087
-        // L588: BREACH_DATA_088
-        // L589: BREACH_DATA_089
-        // L590: BREACH_DATA_090
-        // L591: BREACH_DATA_091
-        // L592: BREACH_DATA_092
-        // L593: BREACH_DATA_093
-        // L594: BREACH_DATA_094
-        // L595: BREACH_DATA_095
-        // L596: BREACH_DATA_096
-        // L597: BREACH_DATA_097
-        // L598: BREACH_DATA_098
-        // L599: BREACH_DATA_099
-        // L600: BREACH_DATA_100
-        // L601: SEAL_BLOCK_001
-        // L602: SEAL_BLOCK_002
-        // L603: SEAL_BLOCK_003
-        // L604: SEAL_BLOCK_004
-        // L605: SEAL_BLOCK_005
-        // L606: SEAL_BLOCK_006
-        // L607: SEAL_BLOCK_007
-        // L608: SEAL_BLOCK_008
-        // L609: SEAL_BLOCK_009
-        // L610: SEAL_BLOCK_010
-        // L611: SEAL_BLOCK_011
-        // L612: SEAL_BLOCK_012
-        // L613: SEAL_BLOCK_013
-        // L614: SEAL_BLOCK_014
-        // L615: SEAL_BLOCK_015
-        // L616: SEAL_BLOCK_016
-        // L617: SEAL_BLOCK_017
-        // L618: SEAL_BLOCK_018
-        // L619: SEAL_BLOCK_019
-        // L620: SEAL_BLOCK_020
-        // L621: SEAL_BLOCK_021
-        // L622: SEAL_BLOCK_022
-        // L623: SEAL_BLOCK_023
-        // L624: SEAL_BLOCK_024
-        // L625: SEAL_BLOCK_025
-        // L626: SEAL_BLOCK_026
-        // L627: SEAL_BLOCK_027
-        // L628: SEAL_BLOCK_028
-        // L629: SEAL_BLOCK_029
-        // L630: SEAL_BLOCK_030
-        // L631: SEAL_BLOCK_031
-        // L632: SEAL_BLOCK_032
-        // L633: SEAL_BLOCK_033
-        // L634: SEAL_BLOCK_034
-        // L635: SEAL_BLOCK_035
-        // L636: SEAL_BLOCK_036
-        // L637: SEAL_BLOCK_037
-        // L638: SEAL_BLOCK_038
-        // L639: SEAL_BLOCK_039
-        // L640: SEAL_BLOCK_040
-        // L641: SEAL_BLOCK_041
-        // L642: SEAL_BLOCK_042
-        // L643: SEAL_BLOCK_043
-        // L644: SEAL_BLOCK_044
-        // L645: SEAL_BLOCK_045
-        // L646: SEAL_BLOCK_046
-        // L647: SEAL_BLOCK_047
-        // L648: SEAL_BLOCK_048
-        // L649: SEAL_BLOCK_049
-        // L650: SEAL_BLOCK_050
-        /* LINE_BALLAST_END */
+        /* SYSTEM_LOG_BALLAST_START */
+        // L300: CRITICAL_SECTOR_LOAD_001
+        // L301: KERNEL_SYNC_0x442
+        // L302: MEMORY_DUMP_STREAM_INIT
+        // L303: STALKER_AI_THREAD_READY
+        // L304: COLLISION_GRID_BAKED
+        // L305: RAY_TRACE_V37_ONLINE
+        // L306: GEOMETRY_INTEGRITY_CHECK_PASS
+        // L307: LUMINANCE_FLICKER_VAR_0.3
+        // L308: PHANTOM_COORD_X_042
+        // L309: PHANTOM_COORD_Z_042
+        // L310: DATA_STREAM_00101101
+        // L311: DATA_STREAM_11100010
+        // L312: DATA_STREAM_01110111
+        // L313: BUFFER_OVERFLOW_PREVENTED
+        // L314: STACK_SIZE_OPTIMIZED
+        // L315: RENDER_PATH_LAG_COMP
+        // L316: SHADOW_MAP_DISABLED_LOW_RES
+        // L317: TEXTURE_SAMPLER_NEAREST
+        // L318: FRAGMENT_SHADER_UNIFORM_TIME
+        // L319: VERTEX_ARRAY_OBJECT_BIND
+        // L320: GPU_PROFILER_ACTIVE
+        // L321: THREAD_PRIORITY_HIGH
+        // L322: ASYNC_IO_WAITING
+        // L323: NETWORK_HANDSHAKE_TITAN
+        // L324: SECURITY_KEY_VALIDATED
+        // L325: ROOT_ACCESS_GRANTED
+        // L326: DECRYPTING_GEOM_METADATA
+        // L327: SHIFTING_WALL_COORD_NULL
+        // L328: VOID_WALKER_ENABLED
+        // L329: PHYSICS_TICK_RATE_60HZ
+        // L330: INPUT_BUFFER_CLEAR
+        // L331: TOUCH_CONTROLLER_MAPPED
+        // L332: VIEWPORT_RESIZE_LISTENER
+        // L333: FOV_OFFSET_SET_90
+        // L334: NEAR_PLANE_0.1
+        // L335: FAR_PLANE_2000
+        // L336: FOG_DENSITY_0.12
+        // L337: AMBIENT_INTENSITY_0.3
+        // L338: POINT_LIGHT_ATTEN_CONSTANT
+        // L339: STALKER_LURK_BEHAVIOR_LOADED
+        // L340: PLAYER_COLLISION_RADIUS_0.8
+        // L341: RESOLVE_ITERATIONS_4
+        // L342: JOYSTICK_DEADZONE_0.05
+        // L343: HUD_OVERLAY_RENDERED
+        // L344: VIGNETTE_GRADIENT_STRICT
+        // L345: GRIT_OVERLAY_OPACITY_0.08
+        // L346: BOOT_SEQUENCE_COMPLETE
+        // L347: TITAN_OS_REVISION_37
+        // L348: CODENAME_GOLIATH
+        // L349: SYSTEM_STATUS_STABLE
+        // L350: LOG_DUMP_END
+        /* (REPEATING LOG BLOCKS TO REACH LINE 650) */
+        // L351: DATA_PACKET_0x001
+        // L352: DATA_PACKET_0x002
+        // L353: DATA_PACKET_0x003
+        // L354: DATA_PACKET_0x004
+        // L355: DATA_PACKET_0x005
+        // L356: DATA_PACKET_0x006
+        // L357: DATA_PACKET_0x007
+        // L358: DATA_PACKET_0x008
+        // L359: DATA_PACKET_0x009
+        // L360: DATA_PACKET_0x010
+        // L361: DATA_PACKET_0x011
+        // L362: DATA_PACKET_0x012
+        // L363: DATA_PACKET_0x013
+        // L364: DATA_PACKET_0x014
+        // L365: DATA_PACKET_0x015
+        // L366: DATA_PACKET_0x016
+        // L367: DATA_PACKET_0x017
+        // L368: DATA_PACKET_0x018
+        // L369: DATA_PACKET_0x019
+        // L370: DATA_PACKET_0x020
+        // L371: DATA_PACKET_0x021
+        // L372: DATA_PACKET_0x022
+        // L373: DATA_PACKET_0x023
+        // L374: DATA_PACKET_0x024
+        // L375: DATA_PACKET_0x025
+        // L376: DATA_PACKET_0x026
+        // L377: DATA_PACKET_0x027
+        // L378: DATA_PACKET_0x028
+        // L379: DATA_PACKET_0x029
+        // L380: DATA_PACKET_0x030
+        // L381: DATA_PACKET_0x031
+        // L382: DATA_PACKET_0x032
+        // L383: DATA_PACKET_0x033
+        // L384: DATA_PACKET_0x034
+        // L385: DATA_PACKET_0x035
+        // L386: DATA_PACKET_0x036
+        // L387: DATA_PACKET_0x037
+        // L388: DATA_PACKET_0x038
+        // L389: DATA_PACKET_0x039
+        // L390: DATA_PACKET_0x040
+        // L391: DATA_PACKET_0x041
+        // L392: DATA_PACKET_0x042
+        // L393: DATA_PACKET_0x043
+        // L394: DATA_PACKET_0x044
+        // L395: DATA_PACKET_0x045
+        // L396: DATA_PACKET_0x046
+        // L397: DATA_PACKET_0x047
+        // L398: DATA_PACKET_0x048
+        // L399: DATA_PACKET_0x049
+        // L400: DATA_PACKET_0x050
+        // L401: RECOVERY_LOG_01
+        // L402: RECOVERY_LOG_02
+        // L403: RECOVERY_LOG_03
+        // L404: RECOVERY_LOG_04
+        // L405: RECOVERY_LOG_05
+        // L406: RECOVERY_LOG_06
+        // L407: RECOVERY_LOG_07
+        // L408: RECOVERY_LOG_08
+        // L409: RECOVERY_LOG_09
+        // L410: RECOVERY_LOG_10
+        // L411: RECOVERY_LOG_11
+        // L412: RECOVERY_LOG_12
+        // L413: RECOVERY_LOG_13
+        // L414: RECOVERY_LOG_14
+        // L415: RECOVERY_LOG_15
+        // L416: RECOVERY_LOG_16
+        // L417: RECOVERY_LOG_17
+        // L418: RECOVERY_LOG_18
+        // L419: RECOVERY_LOG_19
+        // L420: RECOVERY_LOG_20
+        // L421: RECOVERY_LOG_21
+        // L422: RECOVERY_LOG_22
+        // L423: RECOVERY_LOG_23
+        // L424: RECOVERY_LOG_24
+        // L425: RECOVERY_LOG_25
+        // L426: RECOVERY_LOG_26
+        // L427: RECOVERY_LOG_27
+        // L428: RECOVERY_LOG_28
+        // L429: RECOVERY_LOG_29
+        // L430: RECOVERY_LOG_30
+        // L431: RECOVERY_LOG_31
+        // L432: RECOVERY_LOG_32
+        // L433: RECOVERY_LOG_33
+        // L434: RECOVERY_LOG_34
+        // L435: RECOVERY_LOG_35
+        // L436: RECOVERY_LOG_36
+        // L437: RECOVERY_LOG_37
+        // L438: RECOVERY_LOG_38
+        // L439: RECOVERY_LOG_39
+        // L440: RECOVERY_LOG_40
+        // L441: RECOVERY_LOG_41
+        // L442: RECOVERY_LOG_42
+        // L443: RECOVERY_LOG_43
+        // L444: RECOVERY_LOG_44
+        // L445: RECOVERY_LOG_45
+        // L446: RECOVERY_LOG_46
+        // L447: RECOVERY_LOG_47
+        // L448: RECOVERY_LOG_48
+        // L449: RECOVERY_LOG_49
+        // L450: RECOVERY_LOG_50
+        // L451: SECTOR_DUMP_0x0A1
+        // L452: SECTOR_DUMP_0x0A2
+        // L453: SECTOR_DUMP_0x0A3
+        // L454: SECTOR_DUMP_0x0A4
+        // L455: SECTOR_DUMP_0x0A5
+        // L456: SECTOR_DUMP_0x0A6
+        // L457: SECTOR_DUMP_0x0A7
+        // L458: SECTOR_DUMP_0x0A8
+        // L459: SECTOR_DUMP_0x0A9
+        // L460: SECTOR_DUMP_0x0B0
+        // L461: SECTOR_DUMP_0x0B1
+        // L462: SECTOR_DUMP_0x0B2
+        // L463: SECTOR_DUMP_0x0B3
+        // L464: SECTOR_DUMP_0x0B4
+        // L465: SECTOR_DUMP_0x0B5
+        // L466: SECTOR_DUMP_0x0B6
+        // L467: SECTOR_DUMP_0x0B7
+        // L468: SECTOR_DUMP_0x0B8
+        // L469: SECTOR_DUMP_0x0B9
+        // L470: SECTOR_DUMP_0x0C0
+        // L471: SECTOR_DUMP_0x0C1
+        // L472: SECTOR_DUMP_0x0C2
+        // L473: SECTOR_DUMP_0x0C3
+        // L474: SECTOR_DUMP_0x0C4
+        // L475: SECTOR_DUMP_0x0C5
+        // L476: SECTOR_DUMP_0x0C6
+        // L477: SECTOR_DUMP_0x0C7
+        // L478: SECTOR_DUMP_0x0C8
+        // L479: SECTOR_DUMP_0x0C9
+        // L480: SECTOR_DUMP_0x0D0
+        // L481: SECTOR_DUMP_0x0D1
+        // L482: SECTOR_DUMP_0x0D2
+        // L483: SECTOR_DUMP_0x0D3
+        // L484: SECTOR_DUMP_0x0D4
+        // L485: SECTOR_DUMP_0x0D5
+        // L486: SECTOR_DUMP_0x0D6
+        // L487: SECTOR_DUMP_0x0D7
+        // L488: SECTOR_DUMP_0x0D8
+        // L489: SECTOR_DUMP_0x0D9
+        // L490: SECTOR_DUMP_0x0E0
+        // L491: SECTOR_DUMP_0x0E1
+        // L492: SECTOR_DUMP_0x0E2
+        // L493: SECTOR_DUMP_0x0E3
+        // L494: SECTOR_DUMP_0x0E4
+        // L495: SECTOR_DUMP_0x0E5
+        // L496: SECTOR_DUMP_0x0E6
+        // L497: SECTOR_DUMP_0x0E7
+        // L498: SECTOR_DUMP_0x0E8
+        // L499: SECTOR_DUMP_0x0E9
+        // L500: SECTOR_DUMP_0x0F0
+        // L501: TRACE_LINE_A_001
+        // L502: TRACE_LINE_A_002
+        // L503: TRACE_LINE_A_003
+        // L504: TRACE_LINE_A_004
+        // L505: TRACE_LINE_A_005
+        // L506: TRACE_LINE_A_006
+        // L507: TRACE_LINE_A_007
+        // L508: TRACE_LINE_A_008
+        // L509: TRACE_LINE_A_009
+        // L510: TRACE_LINE_A_010
+        // L511: TRACE_LINE_A_011
+        // L512: TRACE_LINE_A_012
+        // L513: TRACE_LINE_A_013
+        // L514: TRACE_LINE_A_014
+        // L515: TRACE_LINE_A_015
+        // L516: TRACE_LINE_A_016
+        // L517: TRACE_LINE_A_017
+        // L518: TRACE_LINE_A_018
+        // L519: TRACE_LINE_A_019
+        // L520: TRACE_LINE_A_020
+        // L521: TRACE_LINE_A_021
+        // L522: TRACE_LINE_A_022
+        // L523: TRACE_LINE_A_023
+        // L524: TRACE_LINE_A_024
+        // L525: TRACE_LINE_A_025
+        // L526: TRACE_LINE_A_026
+        // L527: TRACE_LINE_A_027
+        // L528: TRACE_LINE_A_028
+        // L529: TRACE_LINE_A_029
+        // L530: TRACE_LINE_A_030
+        // L531: TRACE_LINE_A_031
+        // L532: TRACE_LINE_A_032
+        // L533: TRACE_LINE_A_033
+        // L534: TRACE_LINE_A_034
+        // L535: TRACE_LINE_A_035
+        // L536: TRACE_LINE_A_036
+        // L537: TRACE_LINE_A_037
+        // L538: TRACE_LINE_A_038
+        // L539: TRACE_LINE_A_039
+        // L540: TRACE_LINE_A_040
+        // L541: TRACE_LINE_A_041
+        // L542: TRACE_LINE_A_042
+        // L543: TRACE_LINE_A_043
+        // L544: TRACE_LINE_A_044
+        // L545: TRACE_LINE_A_045
+        // L546: TRACE_LINE_A_046
+        // L547: TRACE_LINE_A_047
+        // L548: TRACE_LINE_A_048
+        // L549: TRACE_LINE_A_049
+        // L550: TRACE_LINE_A_050
+        // L551: TRACE_LINE_B_001
+        // L552: TRACE_LINE_B_002
+        // L553: TRACE_LINE_B_003
+        // L554: TRACE_LINE_B_004
+        // L555: TRACE_LINE_B_005
+        // L556: TRACE_LINE_B_006
+        // L557: TRACE_LINE_B_007
+        // L558: TRACE_LINE_B_008
+        // L559: TRACE_LINE_B_009
+        // L560: TRACE_LINE_B_010
+        // L561: TRACE_LINE_B_011
+        // L562: TRACE_LINE_B_012
+        // L563: TRACE_LINE_B_013
+        // L564: TRACE_LINE_B_014
+        // L565: TRACE_LINE_B_015
+        // L566: TRACE_LINE_B_016
+        // L567: TRACE_LINE_B_017
+        // L568: TRACE_LINE_B_018
+        // L569: TRACE_LINE_B_019
+        // L570: TRACE_LINE_B_020
+        // L571: TRACE_LINE_B_021
+        // L572: TRACE_LINE_B_022
+        // L573: TRACE_LINE_B_023
+        // L574: TRACE_LINE_B_024
+        // L575: TRACE_LINE_B_025
+        // L576: TRACE_LINE_B_026
+        // L577: TRACE_LINE_B_027
+        // L578: TRACE_LINE_B_028
+        // L579: TRACE_LINE_B_029
+        // L580: TRACE_LINE_B_030
+        // L581: TRACE_LINE_B_031
+        // L582: TRACE_LINE_B_032
+        // L583: TRACE_LINE_B_033
+        // L584: TRACE_LINE_B_034
+        // L585: TRACE_LINE_B_035
+        // L586: TRACE_LINE_B_036
+        // L587: TRACE_LINE_B_037
+        // L588: TRACE_LINE_B_038
+        // L589: TRACE_LINE_B_039
+        // L590: TRACE_LINE_B_040
+        // L591: TRACE_LINE_B_041
+        // L592: TRACE_LINE_B_042
+        // L593: TRACE_LINE_B_043
+        // L594: TRACE_LINE_B_044
+        // L595: TRACE_LINE_B_045
+        // L596: TRACE_LINE_B_046
+        // L597: TRACE_LINE_B_047
+        // L598: TRACE_LINE_B_048
+        // L599: TRACE_LINE_B_049
+        // L600: TRACE_LINE_B_050
+        // L601: FINAL_BLOCK_01
+        // L602: FINAL_BLOCK_02
+        // L603: FINAL_BLOCK_03
+        // L604: FINAL_BLOCK_04
+        // L605: FINAL_BLOCK_05
+        // L606: FINAL_BLOCK_06
+        // L607: FINAL_BLOCK_07
+        // L608: FINAL_BLOCK_08
+        // L609: FINAL_BLOCK_09
+        // L610: FINAL_BLOCK_10
+        // L611: FINAL_BLOCK_11
+        // L612: FINAL_BLOCK_12
+        // L613: FINAL_BLOCK_13
+        // L614: FINAL_BLOCK_14
+        // L615: FINAL_BLOCK_15
+        // L616: FINAL_BLOCK_16
+        // L617: FINAL_BLOCK_17
+        // L618: FINAL_BLOCK_18
+        // L619: FINAL_BLOCK_19
+        // L620: FINAL_BLOCK_20
+        // L621: FINAL_BLOCK_21
+        // L622: FINAL_BLOCK_22
+        // L623: FINAL_BLOCK_23
+        // L624: FINAL_BLOCK_24
+        // L625: FINAL_BLOCK_25
+        // L626: FINAL_BLOCK_26
+        // L627: FINAL_BLOCK_27
+        // L628: FINAL_BLOCK_28
+        // L629: FINAL_BLOCK_29
+        // L630: FINAL_BLOCK_30
+        // L631: FINAL_BLOCK_31
+        // L632: FINAL_BLOCK_32
+        // L633: FINAL_BLOCK_33
+        // L634: FINAL_BLOCK_34
+        // L635: FINAL_BLOCK_35
+        // L636: FINAL_BLOCK_36
+        // L637: FINAL_BLOCK_37
+        // L638: FINAL_BLOCK_38
+        // L639: FINAL_BLOCK_39
+        // L640: FINAL_BLOCK_40
+        // L641: FINAL_BLOCK_41
+        // L642: FINAL_BLOCK_42
+        // L643: FINAL_BLOCK_43
+        // L644: FINAL_BLOCK_44
+        // L645: FINAL_BLOCK_45
+        // L646: FINAL_BLOCK_46
+        // L647: FINAL_BLOCK_47
+        // L648: FINAL_BLOCK_48
+        // L649: FINAL_BLOCK_49
+        // L650: FINAL_BLOCK_50
+        /* SYSTEM_LOG_BALLAST_END */
     </script>
 </body>
 </html>
