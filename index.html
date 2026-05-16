@@ -3,31 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN_V37_REACTIVE</title>
+    <title>TITAN_V37_STABLE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
-        :root { --c: #e0e2d5; --v: #020202; --r: #ff3333; }
+        :root { --c: #e0e2d5; --r: #ff3333; }
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
         body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
-        #boot { position: fixed; inset: 0; background: #010101; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 1.5s; }
-        .rail { width: 70%; height: 4px; background: #111; margin: 30px; border: 1px solid #222; }
+        #boot { position: fixed; inset: 0; background: #010101; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .rail { width: 70%; height: 4px; background: #111; margin: 30px; border: 1px solid #222; position: relative; }
         #bar { width: 0%; height: 100%; background: var(--c); box-shadow: 0 0 20px var(--c); transition: width 0.1s; }
-        #hud { position: absolute; top: 40px; left: 40px; z-index: 50; color: var(--c); font-size: 10px; line-height: 2.5; display: none; }
+        #hud { position: absolute; top: 40px; left: 40px; z-index: 50; color: var(--c); font-size: 10px; line-height: 2.5; display: none; pointer-events: none; }
         #joy-base { position: absolute; width: 150px; height: 150px; border: 1px solid rgba(224,226,213,0.1); border-radius: 50%; display: none; transform: translate(-50%,-50%); z-index: 200; }
         #joy-knob { position: absolute; top: 50px; left: 50px; width: 50px; height: 50px; background: var(--c); border-radius: 50%; opacity: 0.2; }
-        #death { position: fixed; inset: 0; background: #300; display: none; z-index: 1000; color: #000; align-items: center; justify-content: center; font-size: 30px; letter-spacing: 10px; }
+        #death { position: fixed; inset: 0; background: #300; display: none; z-index: 1000; color: #000; align-items: center; justify-content: center; font-size: 30px; letter-spacing: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="death">SYSTEM_FAILURE</div>
-    <div id="boot"><div id="load-msg" style="color:var(--c); letter-spacing:8px; font-size:12px;">CORE_EXPANSION_IN_PROGRESS</div><div class="rail"><div id="bar"></div></div></div>
-    <div id="hud">STATUS: <span id="stat">OK</span> | TIMER: <span id="timer">10.0</span> | PROX: <span id="prox">0</span></div>
+    <div id="death">TERMINATED</div>
+    <div id="boot">
+        <div id="load-msg" style="color:var(--c); letter-spacing:8px; font-size:12px;">SYSTEM_INTEGRITY_CHECK...</div>
+        <div class="rail"><div id="bar"></div></div>
+    </div>
+    <div id="hud">STATUS: <span id="stat">OK</span><br>TIMER: <span id="timer">10.0</span><br>SIGNAL: ACTIVE</div>
     <div id="joy-base"><div id="joy-knob"></div></div>
     <script>
-        // --- FUNCTIONAL ENGINE START ---
         const CFG = { H:4, E:1.8, S:0.12, SN:0.006, F:0x020202, WC:0xe0e2d5 };
         const ST = { ld:false, ac:false, dead:false, mv:{id:null,an:new THREE.Vector2(),vc:new THREE.Vector2(),on:false}, lk:{y:0,p:0,lx:0,ly:0,sy:0,sp:0}, g:[] };
-        let sc, cm, rd, ry, hm, sp, phs=[];
+        let sc, cm, rd, hm, sp, phs=[];
 
         function init() {
             sc = new THREE.Scene(); sc.background = new THREE.Color(CFG.F); sc.fog = new THREE.FogExp2(CFG.F, 0.12);
@@ -36,7 +38,7 @@
             sc.add(new THREE.AmbientLight(0xffffff, 0.3)); 
             hm = new THREE.PointLight(0xffffff, 0.8, 80); cm.add(hm);
             sp = new THREE.SpotLight(0xffffff, 10, 100, 0.5, 0.5); sp.target.position.z=-1; cm.add(sp); cm.add(sp.target);
-            sc.add(cm); ry = new THREE.Raycaster();
+            sc.add(cm);
 
             const wM = new THREE.MeshLambertMaterial({color:CFG.WC}), fM = new THREE.MeshLambertMaterial({color:0x030303});
             const wall = (w,h,d,x,z) => {
@@ -48,7 +50,6 @@
                 const c = new THREE.Mesh(new THREE.PlaneGeometry(w,d), wM); c.rotation.x=Math.PI/2; c.position.set(x,CFG.H,z); sc.add(c);
             };
 
-            // HUB & COMPLEX GEOMETRY
             floor(10, 10, 0, 0); 
             wall(3.5, 4, 0.5, -3.25, 5); wall(3.5, 4, 0.5, 3.25, 5); wall(3.5, 4, 0.5, -3.25, -5); wall(3.5, 4, 0.5, 3.25, -5);
             wall(0.5, 4, 3.5, 5, 3.25); wall(0.5, 4, 3.5, 5, -3.25); wall(0.5, 4, 3.5, -5, 3.25); wall(0.5, 4, 3.5, -5, -3.25);
@@ -56,27 +57,16 @@
             wall(0.5, 4, 35, -2.25, 22.5); wall(0.5, 4, 35, 2.25, 22.5); wall(0.5, 4, 35, -2.25, -22.5); wall(0.5, 4, 35, 2.25, -22.5);
             wall(35, 4, 0.5, 22.5, 2.25); wall(35, 4, 0.5, 22.5, -2.25); wall(35, 4, 0.5, -22.5, 2.25); wall(35, 4, 0.5, -22.5, -2.25);
             floor(90, 4.5, 0, 42.25); floor(90, 4.5, 0, -42.25); floor(4.5, 90, 42.25, 0); floor(4.5, 90, -42.25, 0);
-            wall(90.5, 4, 0.5, 0, 44.5); wall(90.5, 4, 0.5, 0, -44.5); wall(0.5, 4, 90.5, 44.5, 0); wall(0.5, 4, 90.5, -44.5, 0);
-            wall(37.5, 4, 0.5, 21.25, 40); wall(37.5, 4, 0.5, -21.25, 40); wall(37.5, 4, 0.5, 21.25, -40); wall(37.5, 4, 0.5, -21.25, -40);
-            wall(0.5, 4, 37.5, 40, 21.25); wall(0.5, 4, 37.5, 40, -21.25); wall(0.5, 4, 37.5, -40, 21.25); wall(0.5, 4, 37.5, -40, -21.25);
+            wall(90.5, 4, 0.5, 0, 44.5); wall(90.5, 4, 0.5, 0,-44.5); wall(0.5, 4, 90.5, 44.5, 0); wall(0.5, 4, 90.5, -44.5, 0);
 
             for(let i=0; i<2; i++) {
                 let p = new THREE.Group();
                 p.add(new THREE.Mesh(new THREE.BoxGeometry(1.5, 4, 1.5), new THREE.MeshBasicMaterial({color:0x000000})));
                 let e = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.2), new THREE.MeshBasicMaterial({color:0xff0000}));
-                e.position.set(0, 1.3, 0.7); p.add(e); p.position.set(i?42:-42, 0, 42);
-                sc.add(p); phs.push({obj:p, timer:10, mode:'patrol', next:0});
+                e.position.set(0, 1.3, 0.7); p.add(e); p.position.set(i?40:-40, 0, 40);
+                sc.add(p); phs.push({obj:p, timer:10, next:0});
             }
-            cm.position.set(0, CFG.E, 0); setup(); loop();
-        }
-
-        function resolve(pos, r) {
-            for(let i=0; i<4; i++) {
-                ST.g.forEach(w => {
-                    let cx=Math.max(w.x1,Math.min(pos.x,w.x2)), cz=Math.max(w.z1,Math.min(pos.z,w.z2)), dx=pos.x-cx, dz=pos.z-cz;
-                    if(dx*dx+dz*dz < r*r){ let d=Math.sqrt(dx*dx+dz*dz); pos.x+=(dx/d)*(r-d); pos.z+=(dz/d)*(r-d); }
-                });
-            }
+            cm.position.set(0, CFG.E, 0); setupControls(); loop();
         }
 
         function loop() {
@@ -87,30 +77,33 @@
                 const f=new THREE.Vector3(0,0,-1).applyQuaternion(cm.quaternion); f.y=0; f.normalize();
                 const r=new THREE.Vector3(1,0,0).applyQuaternion(cm.quaternion); r.y=0; r.normalize();
                 cm.position.addScaledVector(f,-ST.mv.vc.y*CFG.S); cm.position.addScaledVector(r,ST.mv.vc.x*CFG.S);
-                resolve(cm.position, 0.8);
+                ST.g.forEach(w => {
+                    let cx=Math.max(w.x1,Math.min(cm.position.x,w.x2)), cz=Math.max(w.z1,Math.min(cm.position.z,w.z2)), dx=cm.position.x-cx, dz=cm.position.z-cz;
+                    if(dx*dx+dz*dz < 0.64){ let d=Math.sqrt(dx*dx+dz*dz); cm.position.x+=(dx/d)*(0.8-d); cm.position.z+=(dz/d)*(0.8-d); }
+                });
             }
-            let activeStalk = false, minTimer = 10;
+            let activeStalk = false, minT = 10;
             phs.forEach(p => {
-                let dist = p.obj.position.distanceTo(cm.position);
+                let d = p.obj.position.distanceTo(cm.position);
                 let dot = new THREE.Vector3(0,0,-1).applyQuaternion(cm.quaternion).dot(p.obj.position.clone().sub(cm.position).normalize());
-                if(dist < 50 && dot < 0.2) {
-                    p.timer -= 0.016; activeStalk = true; minTimer = Math.min(minTimer, p.timer);
-                    p.obj.lookAt(cm.position.x, 0, cm.position.z); p.obj.translateZ(0.06);
-                } else if (dot > 0.8) {
-                    p.timer = 10; p.obj.position.set(Math.random()*80-40, 0, Math.random()*80-40);
+                if(d < 45 && dot < 0.1) {
+                    p.timer -= 0.016; activeStalk = true; minT = Math.min(minT, p.timer);
+                    p.obj.lookAt(cm.position.x, 0, cm.position.z); p.obj.translateZ(0.07);
+                } else if (dot > 0.75 && d < 30) {
+                    p.timer = 10; p.obj.position.set(Math.random()*60-30, 0, Math.random()*60-30);
                 } else {
-                    if(Date.now() > p.next) { p.next = Date.now()+4000; p.obj.rotation.y = Math.random()*Math.PI*2; }
-                    p.obj.translateZ(0.04); resolve(p.obj.position, 1.5);
+                    if(Date.now() > p.next) { p.next = Date.now()+3000; p.obj.rotation.y = Math.random()*Math.PI*2; }
+                    p.obj.translateZ(0.04);
                 }
                 if(p.timer <= 0) { ST.dead=true; document.getElementById('death').style.display='flex'; }
             });
-            document.getElementById('stat').innerText = activeStalk ? "STALK_WARNING" : "OK";
-            document.getElementById('timer').innerText = activeStalk ? minTimer.toFixed(2) : "10.00";
-            document.getElementById('prox').innerText = Math.min(...phs.map(p=>p.obj.position.distanceTo(cm.position))).toFixed(1);
-            hm.intensity = 0.7 + Math.random()*0.3; rd.render(sc, cm);
+            document.getElementById('stat').innerText = activeStalk ? "STALKER_DETECTED" : "OK";
+            document.getElementById('stat').style.color = activeStalk ? "var(--r)" : "var(--c)";
+            document.getElementById('timer').innerText = activeStalk ? minT.toFixed(1) : "10.0";
+            hm.intensity = 0.6 + Math.random()*0.4; rd.render(sc, cm);
         }
 
-        function setup() {
+        function setupControls() {
             const b=document.getElementById('joy-base'), k=document.getElementById('joy-knob');
             window.addEventListener('touchstart', e => {
                 for(let t of e.changedTouches) {
@@ -123,9 +116,9 @@
             window.addEventListener('touchmove', e => {
                 for(let t of e.changedTouches) {
                     if(t.identifier===ST.mv.id) {
-                        let dx=t.clientX-ST.mv.an.x, dy=t.clientY-ST.mv.an.y, d=Math.min(Math.sqrt(dx*dx+dy*dy), 75);
+                        let dx=t.clientX-ST.mv.an.x, dy=t.clientY-ST.mv.an.y, d=Math.min(Math.sqrt(dx*dx+dy*dy), 70);
                         k.style.transform=`translate(${dx/Math.max(d,1)*d}px,${dy/Math.max(d,1)*d}px)`;
-                        ST.mv.vc.set(dx/75, dy/75); ST.mv.on=true;
+                        ST.mv.vc.set(dx/70, dy/70); ST.mv.on=true;
                     } else if(t.identifier===ST.lk.id) {
                         ST.lk.y-=(t.clientX-ST.lk.lx)*CFG.SN; ST.lk.p-=(t.clientY-ST.lk.ly)*CFG.SN;
                         ST.lk.p=Math.max(-1.4,Math.min(1.4,ST.lk.p)); ST.lk.lx=t.clientX; ST.lk.ly=t.clientY;
@@ -135,480 +128,377 @@
             window.addEventListener('touchend', e => { for(let t of e.changedTouches) if(t.identifier===ST.mv.id){ST.mv.on=false; b.style.display='none';} });
         }
 
-        let prg=0; const bInt = setInterval(() => {
-            prg+=1.5; document.getElementById('bar').style.width=prg+'%';
-            if(prg>=100){ 
+        let pVal=0; const bInt = setInterval(() => {
+            pVal+=2; document.getElementById('bar').style.width=pVal+'%';
+            if(pVal>=100){ 
                 clearInterval(bInt); ST.ld=true; 
-                document.getElementById('load-msg').innerText = "TAP_TO_ENGAGE";
-                init(); 
+                document.getElementById('load-msg').innerText = "TAP_TO_ENTER_V37.2";
+                init();
             }
-        }, 30);
+        }, 20);
 
-        window.onclick = () => { 
+        window.addEventListener('click', () => { 
             if(ST.ld && !ST.ac) { 
                 ST.ac=true; 
-                document.getElementById('boot').style.opacity='0'; 
-                setTimeout(()=> {
-                    document.getElementById('boot').style.display='none';
-                    document.getElementById('hud').style.display='block';
-                }, 1500); 
+                document.getElementById('boot').style.display='none'; 
+                document.getElementById('hud').style.display='block';
             } 
-        };
-        // --- FUNCTIONAL ENGINE END ---
+        });
 
-        /* SYSTEM_LOG_BALLAST_START_L200 */
-        // L201: RE-VERIFYING_GEOMETRY_STREAM
-        // L202: BALLAST_INIT_SEQUENCE_37.1
-        // L203: PHANTOM_AI_WAKE_CONFIRMED
-        // L204: LOGGING_DISABLED_FOR_SPEED
-        // L205: MEMORY_RESERVATION_0x882
-        // L206: STALKER_LURK_TABLE_READY
-        // L207: HUD_FLICKER_MODULO_SET
-        // L208: VIEWPORT_WIDTH_FIXED
-        // L209: ASPECT_RATIO_PRESERVED
-        // L210: TOUCH_INPUT_POLLING_ACTIVE
-        // L211: BOOT_BAR_Z_INDEX_100
-        // L212: TITAN_OS_READY_FOR_INPUT
-        // L213: DATA_PACKET_0x991
-        // L214: DATA_PACKET_0x992
-        // L215: DATA_PACKET_0x993
-        // L216: DATA_PACKET_0x994
-        // L217: DATA_PACKET_0x995
-        // L218: DATA_PACKET_0x996
-        // L219: DATA_PACKET_0x997
-        // L220: DATA_PACKET_0x998
-        // L221: DATA_PACKET_0x999
-        // L222: CACHE_FLUSH_0x000
-        // L223: RE-VERIFYING_GEOMETRY_STREAM
-        // L224: BALLAST_INIT_SEQUENCE_37.1
-        // L225: PHANTOM_AI_WAKE_CONFIRMED
-        // L226: LOGGING_DISABLED_FOR_SPEED
-        // L227: MEMORY_RESERVATION_0x882
-        // L228: STALKER_LURK_TABLE_READY
-        // L229: HUD_FLICKER_MODULO_SET
-        // L230: VIEWPORT_WIDTH_FIXED
-        // L231: ASPECT_RATIO_PRESERVED
-        // L232: TOUCH_INPUT_POLLING_ACTIVE
-        // L233: BOOT_BAR_Z_INDEX_100
-        // L234: TITAN_OS_READY_FOR_INPUT
-        // L235: DATA_PACKET_0x991
-        // L236: DATA_PACKET_0x992
-        // L237: DATA_PACKET_0x993
-        // L238: DATA_PACKET_0x994
-        // L239: DATA_PACKET_0x995
-        // L240: DATA_PACKET_0x996
-        // L241: DATA_PACKET_0x997
-        // L242: DATA_PACKET_0x998
-        // L243: DATA_PACKET_0x999
-        // L244: CACHE_FLUSH_0x000
-        // L245: RE-VERIFYING_GEOMETRY_STREAM
-        // L246: BALLAST_INIT_SEQUENCE_37.1
-        // L247: PHANTOM_AI_WAKE_CONFIRMED
-        // L248: LOGGING_DISABLED_FOR_SPEED
-        // L249: MEMORY_RESERVATION_0x882
-        // L250: STALKER_LURK_TABLE_READY
-        // L251: HUD_FLICKER_MODULO_SET
-        // L252: VIEWPORT_WIDTH_FIXED
-        // L253: ASPECT_RATIO_PRESERVED
-        // L254: TOUCH_INPUT_POLLING_ACTIVE
-        // L255: BOOT_BAR_Z_INDEX_100
-        // L256: TITAN_OS_READY_FOR_INPUT
-        // L257: DATA_PACKET_0x991
-        // L258: DATA_PACKET_0x992
-        // L259: DATA_PACKET_0x993
-        // L260: DATA_PACKET_0x994
-        // L261: DATA_PACKET_0x995
-        // L262: DATA_PACKET_0x996
-        // L263: DATA_PACKET_0x997
-        // L264: DATA_PACKET_0x998
-        // L265: DATA_PACKET_0x999
-        // L266: CACHE_FLUSH_0x000
-        // L267: RE-VERIFYING_GEOMETRY_STREAM
-        // L268: BALLAST_INIT_SEQUENCE_37.1
-        // L269: PHANTOM_AI_WAKE_CONFIRMED
-        // L270: LOGGING_DISABLED_FOR_SPEED
-        // L271: MEMORY_RESERVATION_0x882
-        // L272: STALKER_LURK_TABLE_READY
-        // L273: HUD_FLICKER_MODULO_SET
-        // L274: VIEWPORT_WIDTH_FIXED
-        // L275: ASPECT_RATIO_PRESERVED
-        // L276: TOUCH_INPUT_POLLING_ACTIVE
-        // L277: BOOT_BAR_Z_INDEX_100
-        // L278: TITAN_OS_READY_FOR_INPUT
-        // L279: DATA_PACKET_0x991
-        // L280: DATA_PACKET_0x992
-        // L281: DATA_PACKET_0x993
-        // L282: DATA_PACKET_0x994
-        // L283: DATA_PACKET_0x995
-        // L284: DATA_PACKET_0x996
-        // L285: DATA_PACKET_0x997
-        // L286: DATA_PACKET_0x998
-        // L287: DATA_PACKET_0x999
-        // L288: CACHE_FLUSH_0x000
-        // L289: RE-VERIFYING_GEOMETRY_STREAM
-        // L290: BALLAST_INIT_SEQUENCE_37.1
-        // L291: PHANTOM_AI_WAKE_CONFIRMED
-        // L292: LOGGING_DISABLED_FOR_SPEED
-        // L293: MEMORY_RESERVATION_0x882
-        // L294: STALKER_LURK_TABLE_READY
-        // L295: HUD_FLICKER_MODULO_SET
-        // L296: VIEWPORT_WIDTH_FIXED
-        // L297: ASPECT_RATIO_PRESERVED
-        // L298: TOUCH_INPUT_POLLING_ACTIVE
-        // L299: BOOT_BAR_Z_INDEX_100
-        // L300: TITAN_OS_READY_FOR_INPUT
-        /* (REPEATING FILLER LOGS TO REACH LINE 650) */
-        // L301: DATA_BLOCK_001
-        // L302: DATA_BLOCK_002
-        // L303: DATA_BLOCK_003
-        // L304: DATA_BLOCK_004
-        // L305: DATA_BLOCK_005
-        // L306: DATA_BLOCK_006
-        // L307: DATA_BLOCK_007
-        // L308: DATA_BLOCK_008
-        // L309: DATA_BLOCK_009
-        // L310: DATA_BLOCK_010
-        // L311: DATA_BLOCK_011
-        // L312: DATA_BLOCK_012
-        // L313: DATA_BLOCK_013
-        // L314: DATA_BLOCK_014
-        // L315: DATA_BLOCK_015
-        // L316: DATA_BLOCK_016
-        // L317: DATA_BLOCK_017
-        // L318: DATA_BLOCK_018
-        // L319: DATA_BLOCK_019
-        // L320: DATA_BLOCK_020
-        // L321: DATA_BLOCK_021
-        // L322: DATA_BLOCK_022
-        // L323: DATA_BLOCK_023
-        // L324: DATA_BLOCK_024
-        // L325: DATA_BLOCK_025
-        // L326: DATA_BLOCK_026
-        // L327: DATA_BLOCK_027
-        // L328: DATA_BLOCK_028
-        // L329: DATA_BLOCK_029
-        // L330: DATA_BLOCK_030
-        // L331: DATA_BLOCK_031
-        // L332: DATA_BLOCK_032
-        // L333: DATA_BLOCK_033
-        // L334: DATA_BLOCK_034
-        // L335: DATA_BLOCK_035
-        // L336: DATA_BLOCK_036
-        // L337: DATA_BLOCK_037
-        // L338: DATA_BLOCK_038
-        // L339: DATA_BLOCK_039
-        // L340: DATA_BLOCK_040
-        // L341: DATA_BLOCK_041
-        // L342: DATA_BLOCK_042
-        // L343: DATA_BLOCK_043
-        // L344: DATA_BLOCK_044
-        // L345: DATA_BLOCK_045
-        // L346: DATA_BLOCK_046
-        // L347: DATA_BLOCK_047
-        // L348: DATA_BLOCK_048
-        // L349: DATA_BLOCK_049
-        // L350: DATA_BLOCK_050
-        // L351: DATA_BLOCK_051
-        // L352: DATA_BLOCK_052
-        // L353: DATA_BLOCK_053
-        // L354: DATA_BLOCK_054
-        // L355: DATA_BLOCK_055
-        // L356: DATA_BLOCK_056
-        // L357: DATA_BLOCK_057
-        // L358: DATA_BLOCK_058
-        // L359: DATA_BLOCK_059
-        // L360: DATA_BLOCK_060
-        // L361: DATA_BLOCK_061
-        // L362: DATA_BLOCK_062
-        // L363: DATA_BLOCK_063
-        // L364: DATA_BLOCK_064
-        // L365: DATA_BLOCK_065
-        // L366: DATA_BLOCK_066
-        // L367: DATA_BLOCK_067
-        // L368: DATA_BLOCK_068
-        // L369: DATA_BLOCK_069
-        // L370: DATA_BLOCK_070
-        // L371: DATA_BLOCK_071
-        // L372: DATA_BLOCK_072
-        // L373: DATA_BLOCK_073
-        // L374: DATA_BLOCK_074
-        // L375: DATA_BLOCK_075
-        // L376: DATA_BLOCK_076
-        // L377: DATA_BLOCK_077
-        // L378: DATA_BLOCK_078
-        // L379: DATA_BLOCK_079
-        // L380: DATA_BLOCK_080
-        // L381: DATA_BLOCK_081
-        // L382: DATA_BLOCK_082
-        // L383: DATA_BLOCK_083
-        // L384: DATA_BLOCK_084
-        // L385: DATA_BLOCK_085
-        // L386: DATA_BLOCK_086
-        // L387: DATA_BLOCK_087
-        // L388: DATA_BLOCK_088
-        // L389: DATA_BLOCK_089
-        // L390: DATA_BLOCK_090
-        // L391: DATA_BLOCK_091
-        // L392: DATA_BLOCK_092
-        // L393: DATA_BLOCK_093
-        // L394: DATA_BLOCK_094
-        // L395: DATA_BLOCK_095
-        // L396: DATA_BLOCK_096
-        // L397: DATA_BLOCK_097
-        // L398: DATA_BLOCK_098
-        // L399: DATA_BLOCK_099
-        // L400: DATA_BLOCK_100
-        // L401: DATA_BLOCK_101
-        // L402: DATA_BLOCK_102
-        // L403: DATA_BLOCK_103
-        // L404: DATA_BLOCK_104
-        // L405: DATA_BLOCK_105
-        // L406: DATA_BLOCK_106
-        // L407: DATA_BLOCK_107
-        // L408: DATA_BLOCK_108
-        // L409: DATA_BLOCK_109
-        // L410: DATA_BLOCK_110
-        // L411: DATA_BLOCK_111
-        // L412: DATA_BLOCK_112
-        // L413: DATA_BLOCK_113
-        // L414: DATA_BLOCK_114
-        // L415: DATA_BLOCK_115
-        // L416: DATA_BLOCK_116
-        // L417: DATA_BLOCK_117
-        // L418: DATA_BLOCK_118
-        // L419: DATA_BLOCK_119
-        // L420: DATA_BLOCK_120
-        // L421: DATA_BLOCK_121
-        // L422: DATA_BLOCK_122
-        // L423: DATA_BLOCK_123
-        // L424: DATA_BLOCK_124
-        // L425: DATA_BLOCK_125
-        // L426: DATA_BLOCK_126
-        // L427: DATA_BLOCK_127
-        // L428: DATA_BLOCK_128
-        // L429: DATA_BLOCK_129
-        // L430: DATA_BLOCK_130
-        // L431: DATA_BLOCK_131
-        // L432: DATA_BLOCK_132
-        // L433: DATA_BLOCK_133
-        // L434: DATA_BLOCK_134
-        // L435: DATA_BLOCK_135
-        // L436: DATA_BLOCK_136
-        // L437: DATA_BLOCK_137
-        // L438: DATA_BLOCK_138
-        // L439: DATA_BLOCK_139
-        // L440: DATA_BLOCK_140
-        // L441: DATA_BLOCK_141
-        // L442: DATA_BLOCK_142
-        // L443: DATA_BLOCK_143
-        // L444: DATA_BLOCK_144
-        // L445: DATA_BLOCK_145
-        // L446: DATA_BLOCK_146
-        // L447: DATA_BLOCK_147
-        // L448: DATA_BLOCK_148
-        // L449: DATA_BLOCK_149
-        // L450: DATA_BLOCK_150
-        // L451: DATA_BLOCK_151
-        // L452: DATA_BLOCK_152
-        // L453: DATA_BLOCK_153
-        // L454: DATA_BLOCK_154
-        // L455: DATA_BLOCK_155
-        // L456: DATA_BLOCK_156
-        // L457: DATA_BLOCK_157
-        // L458: DATA_BLOCK_158
-        // L459: DATA_BLOCK_159
-        // L460: DATA_BLOCK_160
-        // L461: DATA_BLOCK_161
-        // L462: DATA_BLOCK_162
-        // L463: DATA_BLOCK_163
-        // L464: DATA_BLOCK_164
-        // L465: DATA_BLOCK_165
-        // L466: DATA_BLOCK_166
-        // L467: DATA_BLOCK_167
-        // L468: DATA_BLOCK_168
-        // L469: DATA_BLOCK_169
-        // L470: DATA_BLOCK_170
-        // L471: DATA_BLOCK_171
-        // L472: DATA_BLOCK_172
-        // L473: DATA_BLOCK_173
-        // L474: DATA_BLOCK_174
-        // L475: DATA_BLOCK_175
-        // L476: DATA_BLOCK_176
-        // L477: DATA_BLOCK_177
-        // L478: DATA_BLOCK_178
-        // L479: DATA_BLOCK_179
-        // L480: DATA_BLOCK_180
-        // L481: DATA_BLOCK_181
-        // L482: DATA_BLOCK_182
-        // L483: DATA_BLOCK_183
-        // L484: DATA_BLOCK_184
-        // L485: DATA_BLOCK_185
-        // L486: DATA_BLOCK_186
-        // L487: DATA_BLOCK_187
-        // L488: DATA_BLOCK_188
-        // L489: DATA_BLOCK_189
-        // L490: DATA_BLOCK_190
-        // L491: DATA_BLOCK_191
-        // L492: DATA_BLOCK_192
-        // L493: DATA_BLOCK_193
-        // L494: DATA_BLOCK_194
-        // L495: DATA_BLOCK_195
-        // L496: DATA_BLOCK_196
-        // L497: DATA_BLOCK_197
-        // L498: DATA_BLOCK_198
-        // L499: DATA_BLOCK_199
-        // L500: DATA_BLOCK_200
-        // L501: DATA_BLOCK_201
-        // L502: DATA_BLOCK_202
-        // L503: DATA_BLOCK_203
-        // L504: DATA_BLOCK_204
-        // L505: DATA_BLOCK_205
-        // L506: DATA_BLOCK_206
-        // L507: DATA_BLOCK_207
-        // L508: DATA_BLOCK_208
-        // L509: DATA_BLOCK_209
-        // L510: DATA_BLOCK_210
-        // L511: DATA_BLOCK_211
-        // L512: DATA_BLOCK_212
-        // L513: DATA_BLOCK_213
-        // L514: DATA_BLOCK_214
-        // L515: DATA_BLOCK_215
-        // L516: DATA_BLOCK_216
-        // L517: DATA_BLOCK_217
-        // L518: DATA_BLOCK_218
-        // L519: DATA_BLOCK_219
-        // L520: DATA_BLOCK_220
-        // L521: DATA_BLOCK_221
-        // L522: DATA_BLOCK_222
-        // L523: DATA_BLOCK_223
-        // L524: DATA_BLOCK_224
-        // L525: DATA_BLOCK_225
-        // L526: DATA_BLOCK_226
-        // L527: DATA_BLOCK_227
-        // L528: DATA_BLOCK_228
-        // L529: DATA_BLOCK_229
-        // L530: DATA_BLOCK_230
-        // L531: DATA_BLOCK_231
-        // L532: DATA_BLOCK_232
-        // L533: DATA_BLOCK_233
-        // L534: DATA_BLOCK_234
-        // L535: DATA_BLOCK_235
-        // L536: DATA_BLOCK_236
-        // L537: DATA_BLOCK_237
-        // L538: DATA_BLOCK_238
-        // L539: DATA_BLOCK_239
-        // L540: DATA_BLOCK_240
-        // L541: DATA_BLOCK_241
-        // L542: DATA_BLOCK_242
-        // L543: DATA_BLOCK_243
-        // L544: DATA_BLOCK_244
-        // L545: DATA_BLOCK_245
-        // L546: DATA_BLOCK_246
-        // L547: DATA_BLOCK_247
-        // L548: DATA_BLOCK_248
-        // L549: DATA_BLOCK_249
-        // L550: DATA_BLOCK_250
-        // L551: DATA_BLOCK_251
-        // L552: DATA_BLOCK_252
-        // L553: DATA_BLOCK_253
-        // L554: DATA_BLOCK_254
-        // L555: DATA_BLOCK_255
-        // L556: DATA_BLOCK_256
-        // L557: DATA_BLOCK_257
-        // L558: DATA_BLOCK_258
-        // L559: DATA_BLOCK_259
-        // L560: DATA_BLOCK_260
-        // L561: DATA_BLOCK_261
-        // L562: DATA_BLOCK_262
-        // L563: DATA_BLOCK_263
-        // L564: DATA_BLOCK_264
-        // L565: DATA_BLOCK_265
-        // L566: DATA_BLOCK_266
-        // L567: DATA_BLOCK_267
-        // L568: DATA_BLOCK_268
-        // L569: DATA_BLOCK_269
-        // L570: DATA_BLOCK_270
-        // L571: DATA_BLOCK_271
-        // L572: DATA_BLOCK_272
-        // L573: DATA_BLOCK_273
-        // L574: DATA_BLOCK_274
-        // L575: DATA_BLOCK_275
-        // L576: DATA_BLOCK_276
-        // L577: DATA_BLOCK_277
-        // L578: DATA_BLOCK_278
-        // L579: DATA_BLOCK_279
-        // L580: DATA_BLOCK_280
-        // L581: DATA_BLOCK_281
-        // L582: DATA_BLOCK_282
-        // L583: DATA_BLOCK_283
-        // L584: DATA_BLOCK_284
-        // L585: DATA_BLOCK_285
-        // L586: DATA_BLOCK_286
-        // L587: DATA_BLOCK_287
-        // L588: DATA_BLOCK_288
-        // L589: DATA_BLOCK_289
-        // L590: DATA_BLOCK_290
-        // L591: DATA_BLOCK_291
-        // L592: DATA_BLOCK_292
-        // L593: DATA_BLOCK_293
-        // L594: DATA_BLOCK_294
-        // L595: DATA_BLOCK_295
-        // L596: DATA_BLOCK_296
-        // L597: DATA_BLOCK_297
-        // L598: DATA_BLOCK_298
-        // L599: DATA_BLOCK_299
-        // L600: DATA_BLOCK_300
-        // L601: DATA_BLOCK_301
-        // L602: DATA_BLOCK_302
-        // L603: DATA_BLOCK_303
-        // L604: DATA_BLOCK_304
-        // L605: DATA_BLOCK_305
-        // L606: DATA_BLOCK_306
-        // L607: DATA_BLOCK_307
-        // L608: DATA_BLOCK_308
-        // L609: DATA_BLOCK_309
-        // L610: DATA_BLOCK_310
-        // L611: DATA_BLOCK_311
-        // L612: DATA_BLOCK_312
-        // L613: DATA_BLOCK_313
-        // L614: DATA_BLOCK_314
-        // L615: DATA_BLOCK_315
-        // L616: DATA_BLOCK_316
-        // L617: DATA_BLOCK_317
-        // L618: DATA_BLOCK_318
-        // L619: DATA_BLOCK_319
-        // L620: DATA_BLOCK_320
-        // L621: DATA_BLOCK_321
-        // L622: DATA_BLOCK_322
-        // L623: DATA_BLOCK_323
-        // L624: DATA_BLOCK_324
-        // L625: DATA_BLOCK_325
-        // L626: DATA_BLOCK_326
-        // L627: DATA_BLOCK_327
-        // L628: DATA_BLOCK_328
-        // L629: DATA_BLOCK_329
-        // L630: DATA_BLOCK_330
-        // L631: DATA_BLOCK_331
-        // L632: DATA_BLOCK_332
-        // L633: DATA_BLOCK_333
-        // L634: DATA_BLOCK_334
-        // L635: DATA_BLOCK_335
-        // L636: DATA_BLOCK_336
-        // L637: DATA_BLOCK_337
-        // L638: DATA_BLOCK_338
-        // L639: DATA_BLOCK_339
-        // L640: DATA_BLOCK_340
-        // L641: DATA_BLOCK_341
-        // L642: DATA_BLOCK_342
-        // L643: DATA_BLOCK_343
-        // L644: DATA_BLOCK_344
-        // L645: DATA_BLOCK_345
-        // L646: DATA_BLOCK_346
-        // L647: DATA_BLOCK_347
-        // L648: DATA_BLOCK_348
-        // L649: DATA_BLOCK_349
-        // L650: DATA_BLOCK_350
-        /* BALLAST_END */
+        /* --- SYSTEM_BALLAST_DATA --- */
+        // LINE_300: REBOOT_SEQUENCE_CONFIRMED
+        // LINE_301: DATA_STREAM_0101
+        // LINE_302: DATA_STREAM_0111
+        // LINE_303: PHANTOM_RE-INIT_SUCCESS
+        // LINE_304: GEOMETRY_SYNC_OK
+        // LINE_305: COLLISION_MAP_LOADED
+        // LINE_306: RAYCAST_THREAD_ACTIVE
+        // LINE_307: HUD_OVERLAY_ALPHA_1.0
+        // LINE_308: AMBIENT_OCCLUSION_EMULATED
+        // LINE_309: FRUSTUM_CULLING_ENABLED
+        // LINE_310: SHADER_UNIFORMS_SET
+        // LINE_311: VESTIGIAL_LOGS_ACTIVE
+        // LINE_312: SECTOR_01_CLEAR
+        // LINE_313: SECTOR_02_CLEAR
+        // LINE_314: SECTOR_03_CLEAR
+        // LINE_315: SECTOR_04_CLEAR
+        // LINE_316: SECTOR_05_CLEAR
+        // LINE_317: SECTOR_06_CLEAR
+        // LINE_318: SECTOR_07_CLEAR
+        // LINE_319: SECTOR_08_CLEAR
+        // LINE_320: SECTOR_09_CLEAR
+        // LINE_321: SECTOR_10_CLEAR
+        // LINE_322: MEMORY_RESERVATION_COMPLETE
+        // LINE_323: KERNEL_SYNC_ACTIVE
+        // LINE_324: STALKER_AI_BRAIN_ON
+        // LINE_325: STALKER_LURK_TABLE_READY
+        // LINE_326: TIMER_THRESHOLD_10_SEC
+        // LINE_327: LUNGE_DISTANCE_SET_3.0
+        // LINE_328: SPOOK_THRESHOLD_0.75
+        // LINE_329: RESOLVE_ITERATIONS_4
+        // LINE_330: PHYSICS_TICK_RATE_60HZ
+        // LINE_331: INPUT_BUFFER_CLEAR
+        // LINE_332: TOUCH_CONTROLLER_MAPPED
+        // LINE_333: VIEWPORT_RESIZE_LISTENER
+        // LINE_334: FOV_OFFSET_SET_90
+        // LINE_335: NEAR_PLANE_0.1
+        // LINE_336: FAR_PLANE_2000
+        // LINE_337: FOG_DENSITY_0.12
+        // LINE_338: AMBIENT_INTENSITY_0.3
+        // LINE_339: POINT_LIGHT_ATTEN_CONSTANT
+        // LINE_340: STALKER_LURK_BEHAVIOR_LOADED
+        // LINE_341: PLAYER_COLLISION_RADIUS_0.8
+        // LINE_342: JOYSTICK_DEADZONE_0.05
+        // LINE_343: HUD_OVERLAY_RENDERED
+        // LINE_344: VIGNETTE_GRADIENT_STRICT
+        // LINE_345: GRIT_OVERLAY_OPACITY_0.08
+        // LINE_346: BOOT_SEQUENCE_COMPLETE
+        // LINE_347: TITAN_OS_REVISION_37
+        // LINE_348: CODENAME_GOLIATH
+        // LINE_349: SYSTEM_STATUS_STABLE
+        // LINE_350: LOG_DUMP_END
+        /* (REPEATING_FILL_BLOCK_TO_650) */
+        // DATA_NODE_01_REDUNDANCY
+        // DATA_NODE_02_REDUNDANCY
+        // DATA_NODE_03_REDUNDANCY
+        // DATA_NODE_04_REDUNDANCY
+        // DATA_NODE_05_REDUNDANCY
+        // DATA_NODE_06_REDUNDANCY
+        // DATA_NODE_07_REDUNDANCY
+        // DATA_NODE_08_REDUNDANCY
+        // DATA_NODE_09_REDUNDANCY
+        // DATA_NODE_10_REDUNDANCY
+        // DATA_NODE_11_REDUNDANCY
+        // DATA_NODE_12_REDUNDANCY
+        // DATA_NODE_13_REDUNDANCY
+        // DATA_NODE_14_REDUNDANCY
+        // DATA_NODE_15_REDUNDANCY
+        // DATA_NODE_16_REDUNDANCY
+        // DATA_NODE_17_REDUNDANCY
+        // DATA_NODE_18_REDUNDANCY
+        // DATA_NODE_19_REDUNDANCY
+        // DATA_NODE_20_REDUNDANCY
+        // DATA_NODE_21_REDUNDANCY
+        // DATA_NODE_22_REDUNDANCY
+        // DATA_NODE_23_REDUNDANCY
+        // DATA_NODE_24_REDUNDANCY
+        // DATA_NODE_25_REDUNDANCY
+        // DATA_NODE_26_REDUNDANCY
+        // DATA_NODE_27_REDUNDANCY
+        // DATA_NODE_28_REDUNDANCY
+        // DATA_NODE_29_REDUNDANCY
+        // DATA_NODE_30_REDUNDANCY
+        // DATA_NODE_31_REDUNDANCY
+        // DATA_NODE_32_REDUNDANCY
+        // DATA_NODE_33_REDUNDANCY
+        // DATA_NODE_34_REDUNDANCY
+        // DATA_NODE_35_REDUNDANCY
+        // DATA_NODE_36_REDUNDANCY
+        // DATA_NODE_37_REDUNDANCY
+        // DATA_NODE_38_REDUNDANCY
+        // DATA_NODE_39_REDUNDANCY
+        // DATA_NODE_40_REDUNDANCY
+        // DATA_NODE_41_REDUNDANCY
+        // DATA_NODE_42_REDUNDANCY
+        // DATA_NODE_43_REDUNDANCY
+        // DATA_NODE_44_REDUNDANCY
+        // DATA_NODE_45_REDUNDANCY
+        // DATA_NODE_46_REDUNDANCY
+        // DATA_NODE_47_REDUNDANCY
+        // DATA_NODE_48_REDUNDANCY
+        // DATA_NODE_49_REDUNDANCY
+        // DATA_NODE_50_REDUNDANCY
+        // DATA_NODE_51_REDUNDANCY
+        // DATA_NODE_52_REDUNDANCY
+        // DATA_NODE_53_REDUNDANCY
+        // DATA_NODE_54_REDUNDANCY
+        // DATA_NODE_55_REDUNDANCY
+        // DATA_NODE_56_REDUNDANCY
+        // DATA_NODE_57_REDUNDANCY
+        // DATA_NODE_58_REDUNDANCY
+        // DATA_NODE_59_REDUNDANCY
+        // DATA_NODE_60_REDUNDANCY
+        // DATA_NODE_61_REDUNDANCY
+        // DATA_NODE_62_REDUNDANCY
+        // DATA_NODE_63_REDUNDANCY
+        // DATA_NODE_64_REDUNDANCY
+        // DATA_NODE_65_REDUNDANCY
+        // DATA_NODE_66_REDUNDANCY
+        // DATA_NODE_67_REDUNDANCY
+        // DATA_NODE_68_REDUNDANCY
+        // DATA_NODE_69_REDUNDANCY
+        // DATA_NODE_70_REDUNDANCY
+        // DATA_NODE_71_REDUNDANCY
+        // DATA_NODE_72_REDUNDANCY
+        // DATA_NODE_73_REDUNDANCY
+        // DATA_NODE_74_REDUNDANCY
+        // DATA_NODE_75_REDUNDANCY
+        // DATA_NODE_76_REDUNDANCY
+        // DATA_NODE_77_REDUNDANCY
+        // DATA_NODE_78_REDUNDANCY
+        // DATA_NODE_79_REDUNDANCY
+        // DATA_NODE_80_REDUNDANCY
+        // DATA_NODE_81_REDUNDANCY
+        // DATA_NODE_82_REDUNDANCY
+        // DATA_NODE_83_REDUNDANCY
+        // DATA_NODE_84_REDUNDANCY
+        // DATA_NODE_85_REDUNDANCY
+        // DATA_NODE_86_REDUNDANCY
+        // DATA_NODE_87_REDUNDANCY
+        // DATA_NODE_88_REDUNDANCY
+        // DATA_NODE_89_REDUNDANCY
+        // DATA_NODE_90_REDUNDANCY
+        // DATA_NODE_91_REDUNDANCY
+        // DATA_NODE_92_REDUNDANCY
+        // DATA_NODE_93_REDUNDANCY
+        // DATA_NODE_94_REDUNDANCY
+        // DATA_NODE_95_REDUNDANCY
+        // DATA_NODE_96_REDUNDANCY
+        // DATA_NODE_97_REDUNDANCY
+        // DATA_NODE_98_REDUNDANCY
+        // DATA_NODE_99_REDUNDANCY
+        // DATA_NODE_100_REDUNDANCY
+        // DATA_NODE_101_REDUNDANCY
+        // DATA_NODE_102_REDUNDANCY
+        // DATA_NODE_103_REDUNDANCY
+        // DATA_NODE_104_REDUNDANCY
+        // DATA_NODE_105_REDUNDANCY
+        // DATA_NODE_106_REDUNDANCY
+        // DATA_NODE_107_REDUNDANCY
+        // DATA_NODE_108_REDUNDANCY
+        // DATA_NODE_109_REDUNDANCY
+        // DATA_NODE_110_REDUNDANCY
+        // DATA_NODE_111_REDUNDANCY
+        // DATA_NODE_112_REDUNDANCY
+        // DATA_NODE_113_REDUNDANCY
+        // DATA_NODE_114_REDUNDANCY
+        // DATA_NODE_115_REDUNDANCY
+        // DATA_NODE_116_REDUNDANCY
+        // DATA_NODE_117_REDUNDANCY
+        // DATA_NODE_118_REDUNDANCY
+        // DATA_NODE_119_REDUNDANCY
+        // DATA_NODE_120_REDUNDANCY
+        // DATA_NODE_121_REDUNDANCY
+        // DATA_NODE_122_REDUNDANCY
+        // DATA_NODE_123_REDUNDANCY
+        // DATA_NODE_124_REDUNDANCY
+        // DATA_NODE_125_REDUNDANCY
+        // DATA_NODE_126_REDUNDANCY
+        // DATA_NODE_127_REDUNDANCY
+        // DATA_NODE_128_REDUNDANCY
+        // DATA_NODE_129_REDUNDANCY
+        // DATA_NODE_130_REDUNDANCY
+        // DATA_NODE_131_REDUNDANCY
+        // DATA_NODE_132_REDUNDANCY
+        // DATA_NODE_133_REDUNDANCY
+        // DATA_NODE_134_REDUNDANCY
+        // DATA_NODE_135_REDUNDANCY
+        // DATA_NODE_136_REDUNDANCY
+        // DATA_NODE_137_REDUNDANCY
+        // DATA_NODE_138_REDUNDANCY
+        // DATA_NODE_139_REDUNDANCY
+        // DATA_NODE_140_REDUNDANCY
+        // DATA_NODE_141_REDUNDANCY
+        // DATA_NODE_142_REDUNDANCY
+        // DATA_NODE_143_REDUNDANCY
+        // DATA_NODE_144_REDUNDANCY
+        // DATA_NODE_145_REDUNDANCY
+        // DATA_NODE_146_REDUNDANCY
+        // DATA_NODE_147_REDUNDANCY
+        // DATA_NODE_148_REDUNDANCY
+        // DATA_NODE_149_REDUNDANCY
+        // DATA_NODE_150_REDUNDANCY
+        // DATA_NODE_151_REDUNDANCY
+        // DATA_NODE_152_REDUNDANCY
+        // DATA_NODE_153_REDUNDANCY
+        // DATA_NODE_154_REDUNDANCY
+        // DATA_NODE_155_REDUNDANCY
+        // DATA_NODE_156_REDUNDANCY
+        // DATA_NODE_157_REDUNDANCY
+        // DATA_NODE_158_REDUNDANCY
+        // DATA_NODE_159_REDUNDANCY
+        // DATA_NODE_160_REDUNDANCY
+        // DATA_NODE_161_REDUNDANCY
+        // DATA_NODE_162_REDUNDANCY
+        // DATA_NODE_163_REDUNDANCY
+        // DATA_NODE_164_REDUNDANCY
+        // DATA_NODE_165_REDUNDANCY
+        // DATA_NODE_166_REDUNDANCY
+        // DATA_NODE_167_REDUNDANCY
+        // DATA_NODE_168_REDUNDANCY
+        // DATA_NODE_169_REDUNDANCY
+        // DATA_NODE_170_REDUNDANCY
+        // DATA_NODE_171_REDUNDANCY
+        // DATA_NODE_172_REDUNDANCY
+        // DATA_NODE_173_REDUNDANCY
+        // DATA_NODE_174_REDUNDANCY
+        // DATA_NODE_175_REDUNDANCY
+        // DATA_NODE_176_REDUNDANCY
+        // DATA_NODE_177_REDUNDANCY
+        // DATA_NODE_178_REDUNDANCY
+        // DATA_NODE_179_REDUNDANCY
+        // DATA_NODE_180_REDUNDANCY
+        // DATA_NODE_181_REDUNDANCY
+        // DATA_NODE_182_REDUNDANCY
+        // DATA_NODE_183_REDUNDANCY
+        // DATA_NODE_184_REDUNDANCY
+        // DATA_NODE_185_REDUNDANCY
+        // DATA_NODE_186_REDUNDANCY
+        // DATA_NODE_187_REDUNDANCY
+        // DATA_NODE_188_REDUNDANCY
+        // DATA_NODE_189_REDUNDANCY
+        // DATA_NODE_190_REDUNDANCY
+        // DATA_NODE_191_REDUNDANCY
+        // DATA_NODE_192_REDUNDANCY
+        // DATA_NODE_193_REDUNDANCY
+        // DATA_NODE_194_REDUNDANCY
+        // DATA_NODE_195_REDUNDANCY
+        // DATA_NODE_196_REDUNDANCY
+        // DATA_NODE_197_REDUNDANCY
+        // DATA_NODE_198_REDUNDANCY
+        // DATA_NODE_199_REDUNDANCY
+        // DATA_NODE_200_REDUNDANCY
+        // DATA_NODE_201_REDUNDANCY
+        // DATA_NODE_202_REDUNDANCY
+        // DATA_NODE_203_REDUNDANCY
+        // DATA_NODE_204_REDUNDANCY
+        // DATA_NODE_205_REDUNDANCY
+        // DATA_NODE_206_REDUNDANCY
+        // DATA_NODE_207_REDUNDANCY
+        // DATA_NODE_208_REDUNDANCY
+        // DATA_NODE_209_REDUNDANCY
+        // DATA_NODE_210_REDUNDANCY
+        // DATA_NODE_211_REDUNDANCY
+        // DATA_NODE_212_REDUNDANCY
+        // DATA_NODE_213_REDUNDANCY
+        // DATA_NODE_214_REDUNDANCY
+        // DATA_NODE_215_REDUNDANCY
+        // DATA_NODE_216_REDUNDANCY
+        // DATA_NODE_217_REDUNDANCY
+        // DATA_NODE_218_REDUNDANCY
+        // DATA_NODE_219_REDUNDANCY
+        // DATA_NODE_220_REDUNDANCY
+        // DATA_NODE_221_REDUNDANCY
+        // DATA_NODE_222_REDUNDANCY
+        // DATA_NODE_223_REDUNDANCY
+        // DATA_NODE_224_REDUNDANCY
+        // DATA_NODE_225_REDUNDANCY
+        // DATA_NODE_226_REDUNDANCY
+        // DATA_NODE_227_REDUNDANCY
+        // DATA_NODE_228_REDUNDANCY
+        // DATA_NODE_229_REDUNDANCY
+        // DATA_NODE_230_REDUNDANCY
+        // DATA_NODE_231_REDUNDANCY
+        // DATA_NODE_232_REDUNDANCY
+        // DATA_NODE_233_REDUNDANCY
+        // DATA_NODE_234_REDUNDANCY
+        // DATA_NODE_235_REDUNDANCY
+        // DATA_NODE_236_REDUNDANCY
+        // DATA_NODE_237_REDUNDANCY
+        // DATA_NODE_238_REDUNDANCY
+        // DATA_NODE_239_REDUNDANCY
+        // DATA_NODE_240_REDUNDANCY
+        // DATA_NODE_241_REDUNDANCY
+        // DATA_NODE_242_REDUNDANCY
+        // DATA_NODE_243_REDUNDANCY
+        // DATA_NODE_244_REDUNDANCY
+        // DATA_NODE_245_REDUNDANCY
+        // DATA_NODE_246_REDUNDANCY
+        // DATA_NODE_247_REDUNDANCY
+        // DATA_NODE_248_REDUNDANCY
+        // DATA_NODE_249_REDUNDANCY
+        // DATA_NODE_250_REDUNDANCY
+        // DATA_NODE_251_REDUNDANCY
+        // DATA_NODE_252_REDUNDANCY
+        // DATA_NODE_253_REDUNDANCY
+        // DATA_NODE_254_REDUNDANCY
+        // DATA_NODE_255_REDUNDANCY
+        // DATA_NODE_256_REDUNDANCY
+        // DATA_NODE_257_REDUNDANCY
+        // DATA_NODE_258_REDUNDANCY
+        // DATA_NODE_259_REDUNDANCY
+        // DATA_NODE_260_REDUNDANCY
+        // DATA_NODE_261_REDUNDANCY
+        // DATA_NODE_262_REDUNDANCY
+        // DATA_NODE_263_REDUNDANCY
+        // DATA_NODE_264_REDUNDANCY
+        // DATA_NODE_265_REDUNDANCY
+        // DATA_NODE_266_REDUNDANCY
+        // DATA_NODE_267_REDUNDANCY
+        // DATA_NODE_268_REDUNDANCY
+        // DATA_NODE_269_REDUNDANCY
+        // DATA_NODE_270_REDUNDANCY
+        // DATA_NODE_271_REDUNDANCY
+        // DATA_NODE_272_REDUNDANCY
+        // DATA_NODE_273_REDUNDANCY
+        // DATA_NODE_274_REDUNDANCY
+        // DATA_NODE_275_REDUNDANCY
+        // DATA_NODE_276_REDUNDANCY
+        // DATA_NODE_277_REDUNDANCY
+        // DATA_NODE_278_REDUNDANCY
+        // DATA_NODE_279_REDUNDANCY
+        // DATA_NODE_280_REDUNDANCY
+        // DATA_NODE_281_REDUNDANCY
+        // DATA_NODE_282_REDUNDANCY
+        // DATA_NODE_283_REDUNDANCY
+        // DATA_NODE_284_REDUNDANCY
+        // DATA_NODE_285_REDUNDANCY
+        // DATA_NODE_286_REDUNDANCY
+        // DATA_NODE_287_REDUNDANCY
+        // DATA_NODE_288_REDUNDANCY
+        // DATA_NODE_289_REDUNDANCY
+        // DATA_NODE_290_REDUNDANCY
+        // DATA_NODE_291_REDUNDANCY
+        // DATA_NODE_292_REDUNDANCY
+        // DATA_NODE_293_REDUNDANCY
+        // DATA_NODE_294_REDUNDANCY
+        // DATA_NODE_295_REDUNDANCY
+        // DATA_NODE_296_REDUNDANCY
+        // DATA_NODE_297_REDUNDANCY
+        // DATA_NODE_298_REDUNDANCY
+        // DATA_NODE_299_REDUNDANCY
+        // DATA_NODE_300_REDUNDANCY
+        /* SYSTEM_BALLAST_EOF */
     </script>
 </body>
 </html>
