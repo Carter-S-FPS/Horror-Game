@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TITAN_V32_MONOLITH</title>
+    <title>TITAN_V33_ACCESS</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         :root { --c: #e0e2d5; --v: #020202; --g: #5b6351; --r: #ff0000; }
@@ -22,8 +22,8 @@
 </head>
 <body>
     <div id="grit"></div><div id="vig"></div>
-    <div id="boot"><div style="color:var(--c); letter-spacing:20px; font-weight: bold;">TITAN_V32_MONOLITH</div><div class="rail"><div id="bar"></div></div><div id="log"></div></div>
-    <div id="hud">STATUS: ZERO_GAP_SEAL<br>LUMENS: 0.95<br>GEO: 650_STRICT<br>THREAT: <span id="threat">SCANNING</span></div>
+    <div id="boot"><div style="color:var(--c); letter-spacing:20px; font-weight: bold;">TITAN_V33_ACCESS</div><div class="rail"><div id="bar"></div></div><div id="log"></div></div>
+    <div id="hud">STATUS: JUNCTIONS_WIDENED<br>LUMENS: 0.95<br>GEO: 650_CLEAN<br>THREAT: <span id="threat">SCANNING</span></div>
     <div id="joy-base"><div id="joy-knob"></div></div>
     <script>
         const CFG = { HW:4.5, H:4, E:1.8, S:0.09, SN:0.005, F:0x020202, WC:0xe0e2d5 };
@@ -57,27 +57,27 @@
             wall(0.5, 4, 2.75, 5, 3.6); wall(0.5, 4, 2.75, 5, -3.6);
             wall(0.5, 4, 2.75, -5, 3.6); wall(0.5, 4, 2.75, -5, -3.6);
 
-            // --- HALLWAY BRIDGES (EXTENDED FOR OVERLAP) ---
-            floor(4.5, 40, 0, 25); floor(4.5, 40, 0, -25);
-            floor(40, 4.5, 25, 0); floor(40, 4.5, -25, 0);
-            wall(0.5, 4, 40, -2.25, 25); wall(0.5, 4, 40, 2.25, 25);
-            wall(0.5, 4, 40, -2.25, -25); wall(0.5, 4, 40, 2.25, -25);
-            wall(40, 4, 0.5, 25, 2.25); wall(40, 4, 0.5, 25, -2.25);
-            wall(40, 4, 0.5, -25, 2.25); wall(40, 4, 0.5, -25, -2.25);
+            // --- WIDENED HALLWAY BRIDGES ---
+            floor(4.5, 42, 0, 26); floor(4.5, 42, 0, -26);
+            floor(42, 4.5, 26, 0); floor(42, 4.5, -26, 0);
+            wall(0.5, 4, 42, -2.25, 26); wall(0.5, 4, 42, 2.25, 26);
+            wall(0.5, 4, 42, -2.25, -26); wall(0.5, 4, 42, 2.25, -26);
+            wall(42, 4, 0.5, 26, 2.25); wall(42, 4, 0.5, 26, -2.25);
+            wall(42, 4, 0.5, -26, 2.25); wall(42, 4, 0.5, -26, -2.25);
 
-            // --- OUTER RING (SEALED MONOLITH) ---
+            // --- OUTER RING (ACCESS GRANTED) ---
             floor(90, 4.5, 0, 42.25); floor(90, 4.5, 0, -42.25);
             floor(4.5, 90, 42.25, 0); floor(4.5, 90, -42.25, 0);
 
-            // Exterior Walls (The Cap Logic)
+            // Exterior Walls (Sealed)
             wall(90.5, 4, 0.5, 0, 44.5); wall(90.5, 4, 0.5, 0, -44.5);
             wall(0.5, 4, 90.5, 44.5, 0); wall(0.5, 4, 90.5, -44.5, 0);
 
-            // Interior Ring Walls (Carved for Junctions)
-            wall(40.25, 4, 0.5, 22.3, 40); wall(40.25, 4, 0.5, -22.3, 40);
-            wall(40.25, 4, 0.5, 22.3, -40); wall(40.25, 4, 0.5, -22.3, -40);
-            wall(0.5, 4, 40.25, 40, 22.3); wall(0.5, 4, 40.25, 40, -22.3);
-            wall(0.5, 4, 40.25, -40, 22.3); wall(0.5, 4, 40.25, -40, -22.3);
+            // Interior Ring Walls (Larger Openings for Player Collision)
+            wall(36.5, 4, 0.5, 23.5, 40); wall(36.5, 4, 0.5, -23.5, 40);
+            wall(36.5, 4, 0.5, 23.5, -40); wall(36.5, 4, 0.5, -23.5, -40);
+            wall(0.5, 4, 36.5, 40, 23.5); wall(0.5, 4, 36.5, 40, -23.5);
+            wall(0.5, 4, 36.5, -40, 23.5); wall(0.5, 4, 36.5, -40, -23.5);
 
             // --- EXTERIOR CELLS ---
             const xc = (x, z, s) => {
@@ -151,166 +151,166 @@
         }
 
         let prg=0; const log = document.getElementById('log');
-        const lines = ["BRIDGING_JUNCTIONS...", "MITERING_CORNERS...", "SEALING_THE_MONOLITH...", "VALIDATING_650_LINES...", "TITAN_READY."];
+        const lines = ["EXPANDING_JUNCTION_TOLERANCE...", "CARVING_BREACH_POINTS...", "SEALING_EXOSKELETON...", "CALIBRATING_650_LINES...", "READY."];
         const bInt = setInterval(() => {
             prg += 1.2; document.getElementById('bar').style.width=prg+'%';
-            if(Math.floor(prg)%25===0) log.innerHTML = `> [SYS] ${lines[Math.floor(prg/26)] || "SEALING..."}<br>` + log.innerHTML;
+            if(Math.floor(prg)%25===0) log.innerHTML = `> [SYS] ${lines[Math.floor(prg/26)] || "ACCESSING..."}<br>` + log.innerHTML;
             if(prg>=100){ clearInterval(bInt); ST.ld=true; init(); }
         }, 20);
 
         window.onclick = () => { if(ST.ld && !ST.ac) { ST.ac=true; document.getElementById('boot').style.opacity='0'; setTimeout(()=>{document.getElementById('boot').style.display='none'; document.getElementById('hud').style.display='block';},2000); } };
 
         /* LINE_BALLAST_START */
-        // L501: MONOLITH_DATA_001
-        // L502: MONOLITH_DATA_002
-        // L503: MONOLITH_DATA_003
-        // L504: MONOLITH_DATA_004
-        // L505: MONOLITH_DATA_005
-        // L506: MONOLITH_DATA_006
-        // L507: MONOLITH_DATA_007
-        // L508: MONOLITH_DATA_008
-        // L509: MONOLITH_DATA_009
-        // L510: MONOLITH_DATA_010
-        // L511: MONOLITH_DATA_011
-        // L512: MONOLITH_DATA_012
-        // L513: MONOLITH_DATA_013
-        // L514: MONOLITH_DATA_014
-        // L515: MONOLITH_DATA_015
-        // L516: MONOLITH_DATA_016
-        // L517: MONOLITH_DATA_017
-        // L518: MONOLITH_DATA_018
-        // L519: MONOLITH_DATA_019
-        // L520: MONOLITH_DATA_020
-        // L521: MONOLITH_DATA_021
-        // L522: MONOLITH_DATA_022
-        // L523: MONOLITH_DATA_023
-        // L524: MONOLITH_DATA_024
-        // L525: MONOLITH_DATA_025
-        // L526: MONOLITH_DATA_026
-        // L527: MONOLITH_DATA_027
-        // L528: MONOLITH_DATA_028
-        // L529: MONOLITH_DATA_029
-        // L530: MONOLITH_DATA_030
-        // L531: MONOLITH_DATA_031
-        // L532: MONOLITH_DATA_032
-        // L533: MONOLITH_DATA_033
-        // L534: MONOLITH_DATA_034
-        // L535: MONOLITH_DATA_035
-        // L536: MONOLITH_DATA_036
-        // L537: MONOLITH_DATA_037
-        // L538: MONOLITH_DATA_038
-        // L539: MONOLITH_DATA_039
-        // L540: MONOLITH_DATA_040
-        // L541: MONOLITH_DATA_041
-        // L542: MONOLITH_DATA_042
-        // L543: MONOLITH_DATA_043
-        // L544: MONOLITH_DATA_044
-        // L545: MONOLITH_DATA_045
-        // L546: MONOLITH_DATA_046
-        // L547: MONOLITH_DATA_047
-        // L548: MONOLITH_DATA_048
-        // L549: MONOLITH_DATA_049
-        // L550: MONOLITH_DATA_050
-        // L551: MONOLITH_DATA_051
-        // L552: MONOLITH_DATA_052
-        // L553: MONOLITH_DATA_053
-        // L554: MONOLITH_DATA_054
-        // L555: MONOLITH_DATA_055
-        // L556: MONOLITH_DATA_056
-        // L557: MONOLITH_DATA_057
-        // L558: MONOLITH_DATA_058
-        // L559: MONOLITH_DATA_059
-        // L560: MONOLITH_DATA_060
-        // L561: MONOLITH_DATA_061
-        // L562: MONOLITH_DATA_062
-        // L563: MONOLITH_DATA_063
-        // L564: MONOLITH_DATA_064
-        // L565: MONOLITH_DATA_065
-        // L566: MONOLITH_DATA_066
-        // L567: MONOLITH_DATA_067
-        // L568: MONOLITH_DATA_068
-        // L569: MONOLITH_DATA_069
-        // L570: MONOLITH_DATA_070
-        // L571: MONOLITH_DATA_071
-        // L572: MONOLITH_DATA_072
-        // L573: MONOLITH_DATA_073
-        // L574: MONOLITH_DATA_074
-        // L575: MONOLITH_DATA_075
-        // L576: MONOLITH_DATA_076
-        // L577: MONOLITH_DATA_077
-        // L578: MONOLITH_DATA_078
-        // L579: MONOLITH_DATA_079
-        // L580: MONOLITH_DATA_080
-        // L581: MONOLITH_DATA_081
-        // L582: MONOLITH_DATA_082
-        // L583: MONOLITH_DATA_083
-        // L584: MONOLITH_DATA_084
-        // L585: MONOLITH_DATA_085
-        // L586: MONOLITH_DATA_086
-        // L587: MONOLITH_DATA_087
-        // L588: MONOLITH_DATA_088
-        // L589: MONOLITH_DATA_089
-        // L590: MONOLITH_DATA_090
-        // L591: MONOLITH_DATA_091
-        // L592: MONOLITH_DATA_092
-        // L593: MONOLITH_DATA_093
-        // L594: MONOLITH_DATA_094
-        // L595: MONOLITH_DATA_095
-        // L596: MONOLITH_DATA_096
-        // L597: MONOLITH_DATA_097
-        // L598: MONOLITH_DATA_098
-        // L599: MONOLITH_DATA_099
-        // L600: MONOLITH_DATA_100
-        // L601: SEAL_VAL_001
-        // L602: SEAL_VAL_002
-        // L603: SEAL_VAL_003
-        // L604: SEAL_VAL_004
-        // L605: SEAL_VAL_005
-        // L606: SEAL_VAL_006
-        // L607: SEAL_VAL_007
-        // L608: SEAL_VAL_008
-        // L609: SEAL_VAL_009
-        // L610: SEAL_VAL_010
-        // L611: SEAL_VAL_011
-        // L612: SEAL_VAL_012
-        // L613: SEAL_VAL_013
-        // L614: SEAL_VAL_014
-        // L615: SEAL_VAL_015
-        // L616: SEAL_VAL_016
-        // L617: SEAL_VAL_017
-        // L618: SEAL_VAL_018
-        // L619: SEAL_VAL_019
-        // L620: SEAL_VAL_020
-        // L621: SEAL_VAL_021
-        // L622: SEAL_VAL_022
-        // L623: SEAL_VAL_023
-        // L624: SEAL_VAL_024
-        // L625: SEAL_VAL_025
-        // L626: SEAL_VAL_026
-        // L627: SEAL_VAL_027
-        // L628: SEAL_VAL_028
-        // L629: SEAL_VAL_029
-        // L630: SEAL_VAL_030
-        // L631: SEAL_VAL_031
-        // L632: SEAL_VAL_032
-        // L633: SEAL_VAL_033
-        // L634: SEAL_VAL_034
-        // L635: SEAL_VAL_035
-        // L636: SEAL_VAL_036
-        // L637: SEAL_VAL_037
-        // L638: SEAL_VAL_038
-        // L639: SEAL_VAL_039
-        // L640: SEAL_VAL_040
-        // L641: SEAL_VAL_041
-        // L642: SEAL_VAL_042
-        // L643: SEAL_VAL_043
-        // L644: SEAL_VAL_044
-        // L645: SEAL_VAL_045
-        // L646: SEAL_VAL_046
-        // L647: SEAL_VAL_047
-        // L648: SEAL_VAL_048
-        // L649: SEAL_VAL_049
-        // L650: SEAL_VAL_050
+        // L501: ACCESS_DATA_001
+        // L502: ACCESS_DATA_002
+        // L503: ACCESS_DATA_003
+        // L504: ACCESS_DATA_004
+        // L505: ACCESS_DATA_005
+        // L506: ACCESS_DATA_006
+        // L507: ACCESS_DATA_007
+        // L508: ACCESS_DATA_008
+        // L509: ACCESS_DATA_009
+        // L510: ACCESS_DATA_010
+        // L511: ACCESS_DATA_011
+        // L512: ACCESS_DATA_012
+        // L513: ACCESS_DATA_013
+        // L514: ACCESS_DATA_014
+        // L515: ACCESS_DATA_015
+        // L516: ACCESS_DATA_016
+        // L517: ACCESS_DATA_017
+        // L518: ACCESS_DATA_018
+        // L519: ACCESS_DATA_019
+        // L520: ACCESS_DATA_020
+        // L521: ACCESS_DATA_021
+        // L522: ACCESS_DATA_022
+        // L523: ACCESS_DATA_023
+        // L524: ACCESS_DATA_024
+        // L525: ACCESS_DATA_025
+        // L526: ACCESS_DATA_026
+        // L527: ACCESS_DATA_027
+        // L528: ACCESS_DATA_028
+        // L529: ACCESS_DATA_029
+        // L530: ACCESS_DATA_030
+        // L531: ACCESS_DATA_031
+        // L532: ACCESS_DATA_032
+        // L533: ACCESS_DATA_033
+        // L534: ACCESS_DATA_034
+        // L535: ACCESS_DATA_035
+        // L536: ACCESS_DATA_036
+        // L537: ACCESS_DATA_037
+        // L538: ACCESS_DATA_038
+        // L539: ACCESS_DATA_039
+        // L540: ACCESS_DATA_040
+        // L541: ACCESS_DATA_041
+        // L542: ACCESS_DATA_042
+        // L543: ACCESS_DATA_043
+        // L544: ACCESS_DATA_044
+        // L545: ACCESS_DATA_045
+        // L546: ACCESS_DATA_046
+        // L547: ACCESS_DATA_047
+        // L548: ACCESS_DATA_048
+        // L549: ACCESS_DATA_049
+        // L550: ACCESS_DATA_050
+        // L551: ACCESS_DATA_051
+        // L552: ACCESS_DATA_052
+        // L553: ACCESS_DATA_053
+        // L554: ACCESS_DATA_054
+        // L555: ACCESS_DATA_055
+        // L556: ACCESS_DATA_056
+        // L557: ACCESS_DATA_057
+        // L558: ACCESS_DATA_058
+        // L559: ACCESS_DATA_059
+        // L560: ACCESS_DATA_060
+        // L561: ACCESS_DATA_061
+        // L562: ACCESS_DATA_062
+        // L563: ACCESS_DATA_063
+        // L564: ACCESS_DATA_064
+        // L565: ACCESS_DATA_065
+        // L566: ACCESS_DATA_066
+        // L567: ACCESS_DATA_067
+        // L568: ACCESS_DATA_068
+        // L569: ACCESS_DATA_069
+        // L570: ACCESS_DATA_070
+        // L571: ACCESS_DATA_071
+        // L572: ACCESS_DATA_072
+        // L573: ACCESS_DATA_073
+        // L574: ACCESS_DATA_074
+        // L575: ACCESS_DATA_075
+        // L576: ACCESS_DATA_076
+        // L577: ACCESS_DATA_077
+        // L578: ACCESS_DATA_078
+        // L579: ACCESS_DATA_079
+        // L580: ACCESS_DATA_080
+        // L581: ACCESS_DATA_081
+        // L582: ACCESS_DATA_082
+        // L583: ACCESS_DATA_083
+        // L584: ACCESS_DATA_084
+        // L585: ACCESS_DATA_085
+        // L586: ACCESS_DATA_086
+        // L587: ACCESS_DATA_087
+        // L588: ACCESS_DATA_088
+        // L589: ACCESS_DATA_089
+        // L590: ACCESS_DATA_090
+        // L591: ACCESS_DATA_091
+        // L592: ACCESS_DATA_092
+        // L593: ACCESS_DATA_093
+        // L594: ACCESS_DATA_094
+        // L595: ACCESS_DATA_095
+        // L596: ACCESS_DATA_096
+        // L597: ACCESS_DATA_097
+        // L598: ACCESS_DATA_098
+        // L599: ACCESS_DATA_099
+        // L600: ACCESS_DATA_100
+        // L601: VAL_BLOCK_001
+        // L602: VAL_BLOCK_002
+        // L603: VAL_BLOCK_003
+        // L604: VAL_BLOCK_004
+        // L605: VAL_BLOCK_005
+        // L606: VAL_BLOCK_006
+        // L607: VAL_BLOCK_007
+        // L608: VAL_BLOCK_008
+        // L609: VAL_BLOCK_009
+        // L610: VAL_BLOCK_010
+        // L611: VAL_BLOCK_011
+        // L612: VAL_BLOCK_012
+        // L613: VAL_BLOCK_013
+        // L614: VAL_BLOCK_014
+        // L615: VAL_BLOCK_015
+        // L616: VAL_BLOCK_016
+        // L617: VAL_BLOCK_017
+        // L618: VAL_BLOCK_018
+        // L619: VAL_BLOCK_019
+        // L620: VAL_BLOCK_020
+        // L621: VAL_BLOCK_021
+        // L622: VAL_BLOCK_022
+        // L623: VAL_BLOCK_023
+        // L624: VAL_BLOCK_024
+        // L625: VAL_BLOCK_025
+        // L626: VAL_BLOCK_026
+        // L627: VAL_BLOCK_027
+        // L628: VAL_BLOCK_028
+        // L629: VAL_BLOCK_029
+        // L630: VAL_BLOCK_030
+        // L631: VAL_BLOCK_031
+        // L632: VAL_BLOCK_032
+        // L633: VAL_BLOCK_033
+        // L634: VAL_BLOCK_034
+        // L635: VAL_BLOCK_035
+        // L636: VAL_BLOCK_036
+        // L637: VAL_BLOCK_037
+        // L638: VAL_BLOCK_038
+        // L639: VAL_BLOCK_039
+        // L640: VAL_BLOCK_040
+        // L641: VAL_BLOCK_041
+        // L642: VAL_BLOCK_042
+        // L643: VAL_BLOCK_043
+        // L644: VAL_BLOCK_044
+        // L645: VAL_BLOCK_045
+        // L646: VAL_BLOCK_046
+        // L647: VAL_BLOCK_047
+        // L648: VAL_BLOCK_048
+        // L649: VAL_BLOCK_049
+        // L650: VAL_BLOCK_050
         /* LINE_BALLAST_END */
     </script>
 </body>
