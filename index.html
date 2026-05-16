@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASYLUM_NO_HIDING_V56</title>
+    <title>ASYLUM_CORNER_STALKER_V57</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
@@ -20,10 +20,10 @@
 </head>
 <body>
     <div id="blink"></div>
-    <div id="ui">HIDING_DISABLED</div>
-    <div id="msg">TOO LATE.<br><span style="font-size:14px; color:#333;">Refresh to try again</span></div>
+    <div id="ui">STALKER_PLACED_IN_CORNER</div>
+    <div id="msg">CAUGHT.<br><span style="font-size:14px; color:#333;">Refresh to try again</span></div>
     <div id="boot">
-        <div id="status">INIT_PERSISTENT_HUNT...</div>
+        <div id="status">RANDOMIZING_SPAWN_POINT...</div>
         <div id="btn" class="btn">AWAKEN</div>
     </div>
 
@@ -62,7 +62,7 @@
                 wallObjects.push(m);
             };
             
-            // Map Geometry
+            // Map Geometry (44x44 Ward)
             buildWall(0, 22, 44.5, 0.5); buildWall(0, -22, 44.5, 0.5);
             buildWall(22, 0, 0.5, 44.5); buildWall(-22, 0, 0.5, 44.5);
             const bSz = 16; buildWall(10, 10, bSz, bSz); buildWall(-10, 10, bSz, bSz);
@@ -72,11 +72,20 @@
             floor.rotation.x = -Math.PI/2;
             scene.add(floor);
 
+            // STALKER RANDOM SPAWN IN OUTER CORNER
+            const corners = [
+                {x: 19, z: 19},   // NE
+                {x: -19, z: 19},  // NW
+                {x: 19, z: -19},  // SE
+                {x: -19, z: -19}  // SW
+            ];
+            const spawn = corners[Math.floor(Math.random() * corners.length)];
+
             stalker = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 2, 4, 8), new THREE.MeshBasicMaterial({ color: 0x010101 }));
-            stalker.position.set(15, 1.3, 0);
+            stalker.position.set(spawn.x, 1.3, spawn.z);
             scene.add(stalker);
 
-            camera.position.set(0, 1.6, 18);
+            camera.position.set(0, 1.6, 0); // Spawn player in center hub
             loop();
         }
 
@@ -121,33 +130,32 @@
                 }
             }
 
-            // Stalker Logic
             const dist = camera.position.distanceTo(stalker.position);
             const toStalker = new THREE.Vector3().subVectors(stalker.position, camera.position).normalize();
             const camDir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
             const isLookingAtStalker = camDir.angleTo(toStalker) < 0.5;
 
             if (inGrace) {
-                document.getElementById('ui').innerText = `BOOTING: ${Math.ceil(GRACE_PERIOD - elapsed)}s`;
-                stalker.position.x += Math.sin(now) * 0.01; 
+                document.getElementById('ui').innerText = `SAFE_PERIOD: ${Math.ceil(GRACE_PERIOD - elapsed)}s`;
+                // Stalker idles in its corner
+                stalker.position.y = 1.3 + Math.sin(now * 2) * 0.05;
             } else {
                 if (stalkerState === 'WANDER') {
                     document.getElementById('blink').style.opacity = 0;
-                    document.getElementById('ui').innerText = "STATUS: SCANNING";
+                    document.getElementById('ui').innerText = "STATUS: SEARCHING";
                     
-                    stalker.position.addScaledVector(toStalker, -0.01); 
+                    // Wander slowly toward player center
+                    stalker.position.addScaledVector(toStalker, -0.008); 
 
-                    // Initial trigger requires LoS
-                    if(dist < 15 && checkInitialSight()) {
+                    if(dist < 16 && checkInitialSight()) {
                         stalkerState = 'HUNT';
                     }
                 } else if (stalkerState === 'HUNT') {
-                    document.getElementById('ui').innerText = `HUNT_ACTIVE: ${Math.ceil(HUNT_LIMIT - huntTimer)}s | LOOK TO RESET`;
-                    document.getElementById('blink').style.opacity = (Math.sin(Date.now() * 0.03) > 0) ? 0.85 : 0;
+                    document.getElementById('ui').innerText = `BREATHING_STOPS: ${Math.ceil(HUNT_LIMIT - huntTimer)}s`;
+                    document.getElementById('blink').style.opacity = (Math.sin(Date.now() * 0.035) > 0) ? 0.9 : 0;
                     
-                    stalker.position.addScaledVector(toStalker, -0.03); 
+                    stalker.position.addScaledVector(toStalker, -0.02); 
 
-                    // ONLY looking at it will reset it. Walls don't matter now.
                     if (isLookingAtStalker) {
                         stalkerState = 'WANDER';
                         huntTimer = 0;
