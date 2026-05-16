@@ -3,28 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASYLUM_STABLE_V58</title>
+    <title>ASYLUM_STABLE_V59</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
         #blink { position: fixed; inset: 0; background: #000; z-index: 50; opacity: 0; pointer-events: none; }
         #boot { 
-            position: fixed; inset: 0; z-index: 100; background: #0a0a0a; 
+            position: fixed; inset: 0; z-index: 100; background: #111; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            color: #dbd2ae; font-family: serif;
+            color: #dbd2ae; font-family: monospace;
         }
         .btn { border: 1px solid #444; padding: 15px 40px; cursor: pointer; display: none; color: #dbd2ae; margin-top: 20px; }
-        #ui { position: fixed; top: 20px; left: 20px; color: #666; font-family: monospace; z-index: 10; font-size: 11px; }
-        #msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #f00; font-family: serif; font-size: 30px; display: none; z-index: 200; text-align: center; }
+        #ui { position: fixed; top: 20px; left: 20px; color: #444; font-family: monospace; z-index: 10; font-size: 10px; }
+        #msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #f00; font-family: serif; font-size: 24px; display: none; z-index: 200; text-align: center; }
     </style>
 </head>
 <body>
     <div id="blink"></div>
-    <div id="ui">STABILITY_PATCH_V58</div>
-    <div id="msg">SYSTEM FAILURE.<br><span style="font-size:14px; color:#444;">Refresh to reset.</span></div>
+    <div id="ui">FIX_V59: COLLISION_SLIDE_ENABLED</div>
+    <div id="msg">CONNECTION LOST.<br><span style="font-size:12px; color:#444;">Tap to retry</span></div>
     <div id="boot">
-        <div id="status">CALIBRATING_SENSORS...</div>
-        <div id="btn" class="btn">AWAKEN</div>
+        <div id="status">LOADING_CORE_ASYLUM...</div>
+        <div id="btn" class="btn">BEGIN</div>
     </div>
 
     <script>
@@ -36,9 +36,9 @@
         let stalker, stalkerState = 'WANDER', huntTimer = 0, detectionMeter = 0;
         const GRACE_PERIOD = 20; 
         const HUNT_LIMIT = 10; 
+        const PLAYER_RADIUS = 0.25; 
 
-        const wallObjects = []; 
-        const PLAYER_RADIUS = 0.35; // Thinner hitbox for better movement
+        const wallBoxes = [];
 
         function init() {
             scene = new THREE.Scene();
@@ -47,7 +47,6 @@
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
-            
             raycaster = new THREE.Raycaster();
 
             flashlight = new THREE.SpotLight(0xfff5d4, 80, 25, Math.PI/7, 0.5, 2);
@@ -59,20 +58,18 @@
                 const m = new THREE.Mesh(new THREE.BoxGeometry(w, 3.2, d), wallMat);
                 m.position.set(x, 1.6, z);
                 scene.add(m);
-                wallObjects.push(m);
+                const b = new THREE.Box3().setFromObject(m);
+                wallBoxes.push(b);
             };
             
-            // Map Boundaries
             buildWall(0, 22, 44.5, 0.5); buildWall(0, -22, 44.5, 0.5);
             buildWall(22, 0, 0.5, 44.5); buildWall(-22, 0, 0.5, 44.5);
-            // Inner Blocks
             const bSz = 16; buildWall(10, 10, bSz, bSz); buildWall(-10, 10, bSz, bSz);
             buildWall(10, -10, bSz, bSz); buildWall(-10, -10, bSz, bSz);
 
             scene.add(new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ color: 0x111111 })));
 
-            // Random Corner Spawn
-            const corners = [{x: 20, z: 20}, {x: -20, z: 20}, {x: 20, z: -20}, {x: -20, z: -20}];
+            const corners = [{x: 18, z: 18}, {x: -18, z: 18}, {x: 18, z: -18}, {x: -18, z: -18}];
             const spawn = corners[Math.floor(Math.random() * corners.length)];
             stalker = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 2, 4, 8), new THREE.MeshBasicMaterial({ color: 0x000000 }));
             stalker.position.set(spawn.x, 1.3, spawn.z);
@@ -83,11 +80,17 @@
         }
 
         function hasLoS() {
-            const dir = new THREE.Vector3().subVectors(camera.position, stalker.position).normalize();
-            raycaster.set(stalker.position, dir);
-            const hits = raycaster.intersectObjects(wallObjects);
-            const d = stalker.position.distanceTo(camera.position);
-            return !(hits.length > 0 && hits[0].distance < d);
+            const start = stalker.position.clone().add(new THREE.Vector3(0, 1, 0));
+            const target = camera.position.clone();
+            const dir = new THREE.Vector3().subVectors(target, start).normalize();
+            raycaster.set(start, dir);
+            
+            // Check only against bounding boxes for speed
+            for (let box of wallBoxes) {
+                const hit = raycaster.ray.intersectBox(box, new THREE.Vector3());
+                if (hit && start.distanceTo(hit) < start.distanceTo(target)) return false;
+            }
+            return true;
         }
 
         function loop() {
@@ -98,48 +101,58 @@
             const elapsed = (Date.now() / 1000) - gameStartTime;
             camera.rotation.set(rot.y, rot.x, 0, 'YXZ');
             
-            // Movement
             if(mv.active) {
                 const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
                 dir.y = 0; dir.normalize();
                 const side = new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion);
                 side.y = 0; side.normalize();
-                const next = camera.position.clone().addScaledVector(dir, -mv.f * 0.06).addScaledVector(side, mv.s * 0.06);
                 
-                // Optimized Collision Check
-                const pBox = new THREE.Box3().setFromCenterAndSize(next, new THREE.Vector3(PLAYER_RADIUS, 1, PLAYER_RADIUS));
-                let hit = false;
-                for(let w of wallObjects) { if(pBox.intersectsBox(new THREE.Box3().setFromObject(w))) { hit = true; break; } }
-                
-                if(!hit) {
-                    camera.position.copy(next);
+                const moveX = (dir.x * -mv.f * 0.07) + (side.x * mv.s * 0.07);
+                const moveZ = (dir.z * -mv.f * 0.07) + (side.z * mv.s * 0.07);
+
+                // Axis-independent collision (Sliding)
+                const nextX = camera.position.x + moveX;
+                const nextZ = camera.position.z + moveZ;
+
+                let canMoveX = true, canMoveZ = true;
+                const pBoxX = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(nextX, 1.6, camera.position.z), new THREE.Vector3(PLAYER_RADIUS*2, 1, PLAYER_RADIUS*2));
+                const pBoxZ = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(camera.position.x, 1.6, nextZ), new THREE.Vector3(PLAYER_RADIUS*2, 1, PLAYER_RADIUS*2));
+
+                for(let b of wallBoxes) {
+                    if(pBoxX.intersectsBox(b)) canMoveX = false;
+                    if(pBoxZ.intersectsBox(b)) canMoveZ = false;
+                }
+
+                if(canMoveX) camera.position.x = nextX;
+                if(canMoveZ) camera.position.z = nextZ;
+
+                if(canMoveX || canMoveZ) {
                     walkCycle += 0.08;
-                    camera.position.y = 1.6 + Math.sin(walkCycle) * 0.02;
+                    camera.position.y = 1.6 + Math.sin(walkCycle) * 0.015;
                 }
             }
 
             const toS = new THREE.Vector3().subVectors(stalker.position, camera.position).normalize();
-            const isLooking = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).angleTo(toS) < 0.5;
+            const isLooking = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).angleTo(toS) < 0.6;
 
             if (elapsed < GRACE_PERIOD) {
-                document.getElementById('ui').innerText = `GRACE_PROTOCOL: ${Math.ceil(GRACE_PERIOD - elapsed)}s`;
-                stalker.position.y = 1.3 + Math.sin(Date.now()*0.005)*0.1; // Float in place
+                document.getElementById('ui').innerText = `SAFE: ${Math.ceil(GRACE_PERIOD - elapsed)}s`;
             } else {
                 if (stalkerState === 'WANDER') {
-                    document.getElementById('ui').innerText = "STATUS: IDLE_SCAN";
+                    document.getElementById('ui').innerText = "STATUS: SEARCHING";
                     document.getElementById('blink').style.opacity = 0;
                     stalker.position.addScaledVector(toS, -0.01); 
 
-                    if(camera.position.distanceTo(stalker.position) < 16 && hasLoS()) {
-                        detectionMeter += 0.016; // Requires ~0.5s of sight to trigger
-                        if(detectionMeter > 0.5) stalkerState = 'HUNT';
+                    if(camera.position.distanceTo(stalker.position) < 18 && hasLoS()) {
+                        detectionMeter += 0.016; 
+                        if(detectionMeter > 1.0) stalkerState = 'HUNT'; // Full 1 second of LoS to trigger
                     } else {
-                        detectionMeter = Math.max(0, detectionMeter - 0.01);
+                        detectionMeter = Math.max(0, detectionMeter - 0.005);
                     }
                 } else {
-                    document.getElementById('ui').innerText = `ENTITY_LOCK: ${Math.ceil(HUNT_LIMIT - huntTimer)}s`;
-                    document.getElementById('blink').style.opacity = (Math.sin(Date.now() * 0.03) > 0) ? 0.8 : 0;
-                    stalker.position.addScaledVector(toS, -0.03); 
+                    document.getElementById('ui').innerText = `DANGER: ${Math.ceil(HUNT_LIMIT - huntTimer)}s | LOOK AT IT`;
+                    document.getElementById('blink').style.opacity = (Math.sin(Date.now() * 0.03) > 0) ? 0.7 : 0;
+                    stalker.position.addScaledVector(toS, -0.035); 
 
                     if (isLooking) {
                         stalkerState = 'WANDER';
@@ -178,6 +191,7 @@
             for(let t of e.changedTouches) { if(t.identifier === mv.id){mv.active=false;mv.f=0;mv.s=0;} if(t.identifier === rot.id)rot.id=null; }
         });
 
+        document.getElementById('msg').onclick = () => location.reload();
         setTimeout(() => { document.getElementById('btn').style.display = "block"; init(); }, 500);
         document.getElementById('btn').onclick = () => { 
             active = true; gameStartTime = Date.now() / 1000;
