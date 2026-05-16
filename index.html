@@ -3,108 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ABANDONED_WARD_V46</title>
+    <title>ASYLUM_COLLISION_V47</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
-        #overlay { 
-            position: fixed; inset: 0; z-index: 10; 
-            background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.95) 90%);
-            pointer-events: none; 
-        }
         #boot { 
             position: fixed; inset: 0; z-index: 100; background: #0a0a0a; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            color: #555; font-family: serif;
+            color: #dbd2ae; font-family: serif;
         }
-        .btn { border: 1px solid #333; padding: 12px 35px; cursor: pointer; display: none; color: #888; margin-top: 20px; }
+        .btn { border: 1px solid #dbd2ae; padding: 12px 35px; cursor: pointer; display: none; color: #dbd2ae; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div id="overlay"></div>
     <div id="boot">
-        <div id="status">Entering Abandoned Block...</div>
-        <div id="btn" class="btn">PROCEED</div>
+        <div id="status">Locking Doors...</div>
+        <div id="btn" class="btn">WAKE UP</div>
     </div>
 
     <script>
         let scene, camera, renderer, active = false, flashlight;
         let mv = { f: 0, s: 0, active: false, id: null };
         let rot = { x: 0, y: 0, lx: 0, ly: 0, id: null };
+        
+        const walls = []; // Collision array
+        const PLAYER_RADIUS = 0.6;
 
         function init() {
             scene = new THREE.Scene();
-            scene.fog = new THREE.Fog(0x000000, 1, 14); // Tight fog for isolation
+            scene.fog = new THREE.Fog(0x000000, 0.5, 12);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100);
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
             document.body.appendChild(renderer.domElement);
 
-            // Flashlight - Narrower and dimmer for "abandoned" feel
-            flashlight = new THREE.SpotLight(0xfff5d4, 1.2, 18, Math.PI/7, 0.3, 1);
+            // 3D LIGHT EFFECT (The actual flashlight)
+            flashlight = new THREE.SpotLight(0xfff5d4, 40, 20, Math.PI/6, 0.5, 2);
             scene.add(flashlight);
             scene.add(flashlight.target);
 
             // Textures
             const wallTex = createWallTex();
-            const tileTex = createOfficeCeiling();
+            const ceilTex = createOfficeCeiling();
 
             const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 1 });
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x222522, roughness: 0.1, metalness: 0.2 }); // Epoxy look
-            const ceilMat = new THREE.MeshStandardMaterial({ map: tileTex, color: 0x888888 }); // Dead ceiling
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1c1a, roughness: 0.1, metalness: 0.3 }); 
+            const ceilMat = new THREE.MeshStandardMaterial({ map: ceilTex, color: 0x777777 });
 
             const h = 3.0; 
-            const size = 44; 
+            const size = 40; 
             const hw = 4.0; // Hallway width
 
             const addWall = (w, d, x, z) => {
-                const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+                const box = new THREE.BoxGeometry(w, h, d);
+                const m = new THREE.Mesh(box, wallMat);
                 m.position.set(x, h/2, z);
                 scene.add(m);
+                // Create a bounding box for collision
+                walls.push(new THREE.Box3().setFromObject(m));
             };
 
-            // Floor (Epoxy)
-            const fGeo = new THREE.PlaneGeometry(size + 10, size + 10);
-            const floor = new THREE.Mesh(fGeo, floorMat);
+            // Floor & Ceiling
+            const planeGeo = new THREE.PlaneGeometry(size + 10, size + 10);
+            const floor = new THREE.Mesh(planeGeo, floorMat);
             floor.rotation.x = -Math.PI/2;
             scene.add(floor);
 
-            // Office Ceiling
-            const cGeo = new THREE.PlaneGeometry(size + 6, size + 6);
-            const ceiling = new THREE.Mesh(cGeo, ceilMat);
+            const ceiling = new THREE.Mesh(planeGeo, ceilMat);
             ceiling.rotation.x = Math.PI/2;
             ceiling.position.y = h;
             scene.add(ceiling);
 
-            // GEOMETRY: Square Perimeter Hall + Inner Cross
-            // 1. OUTER WALLS
-            addWall(size+2, 0.5, 0, size/2);  
-            addWall(size+2, 0.5, 0, -size/2); 
-            addWall(0.5, size+2, size/2, 0);  
-            addWall(0.5, size+2, -size/2, 0); 
+            // ASYLUM GEOMETRY
+            // Outer boundaries
+            addWall(size, 1, 0, size/2);  
+            addWall(size, 1, 0, -size/2); 
+            addWall(1, size, size/2, 0);  
+            addWall(1, size, -size/2, 0); 
 
-            // 2. INNER SQUARE WALLS (The hallway loop)
+            // Inner square for the perimeter hallway
             const inner = size/2 - hw;
-            addWall(inner, 0.5, (inner/2) + hw/2, inner); 
-            addWall(inner, 0.5, -(inner/2) - hw/2, inner);
-            addWall(inner, 0.5, (inner/2) + hw/2, -inner);
-            addWall(inner, 0.5, -(inner/2) - hw/2, -inner);
-            addWall(0.5, inner, inner, (inner/2) + hw/2);
-            addWall(0.5, inner, inner, -(inner/2) - hw/2);
-            addWall(0.5, inner, -inner, (inner/2) + hw/2);
-            addWall(0.5, inner, -inner, -(inner/2) - hw/2);
+            addWall(inner, 1, (inner/2) + hw/2, inner); 
+            addWall(inner, 1, -(inner/2) - hw/2, inner);
+            addWall(inner, 1, (inner/2) + hw/2, -inner);
+            addWall(inner, 1, -(inner/2) - hw/2, -inner);
+            addWall(1, inner, inner, (inner/2) + hw/2);
+            addWall(1, inner, inner, -(inner/2) - hw/2);
+            addWall(1, inner, -inner, (inner/2) + hw/2);
+            addWall(1, inner, -inner, -(inner/2) - hw/2);
 
-            // 3. INNER CROSS
-            addWall(0.2, inner*2, hw/2, 0);
-            addWall(0.2, inner*2, -hw/2, 0);
-            addWall(inner*2, 0.2, 0, hw/2);
-            addWall(inner*2, 0.2, 0, -hw/2);
+            // Inner Cross
+            addWall(0.5, inner*2, 2, 0);
+            addWall(0.5, inner*2, -2, 0);
+            addWall(inner*2, 0.5, 0, 2);
+            addWall(inner*2, 0.5, 0, -2);
 
-            camera.position.set(0, 1.6, 0);
+            // Start player in the hallway
+            camera.position.set(inner + 2, 1.6, inner + 2);
 
-            // Controls
+            // Touch logic
             window.addEventListener('touchstart', (e) => {
                 for(let t of e.changedTouches) {
                     if(t.clientX < window.innerWidth/2) {
@@ -121,11 +121,11 @@
                 e.preventDefault();
                 for(let t of e.changedTouches) {
                     if(t.identifier === mv.id) {
-                        mv.s = (t.clientX - mv.ox) / 50;
-                        mv.f = (t.clientY - mv.oy) / 50;
+                        mv.s = (t.clientX - mv.ox) / 60;
+                        mv.f = (t.clientY - mv.oy) / 60;
                     } else if(t.identifier === rot.id) {
-                        rot.x -= (t.clientX - rot.lx) * 0.005;
-                        rot.y -= (t.clientY - rot.ly) * 0.005;
+                        rot.x -= (t.clientX - rot.lx) * 0.006;
+                        rot.y -= (t.clientY - rot.ly) * 0.006;
                         rot.y = Math.max(-1.1, Math.min(1.1, rot.y));
                         rot.lx = t.clientX; rot.ly = t.clientY;
                     }
@@ -142,29 +142,42 @@
             loop();
         }
 
+        function checkCollision(newPos) {
+            const playerBox = new THREE.Box3().setFromCenterAndSize(
+                newPos, 
+                new THREE.Vector3(PLAYER_RADIUS, 2, PLAYER_RADIUS)
+            );
+            for(let wall of walls) {
+                if(playerBox.intersectsBox(wall)) return true;
+            }
+            return false;
+        }
+
         function createWallTex() {
             const canv = document.createElement('canvas');
-            canv.width = 256; canv.height = 256;
+            canv.width = 512; canv.height = 512;
             const ctx = canv.getContext('2d');
-            ctx.fillStyle = '#dbd2ae'; // Cream
-            ctx.fillRect(0,0,256,256);
-            // Dirt/Grime
-            for(let i=0; i<300; i++) {
-                ctx.fillStyle = `rgba(50,40,20,${Math.random()*0.2})`;
-                ctx.fillRect(Math.random()*256, Math.random()*256, 5, 20);
+            ctx.fillStyle = '#dbd2ae'; ctx.fillRect(0,0,512,512);
+            for(let i=0; i<400; i++) {
+                ctx.fillStyle = `rgba(60,50,30,${Math.random()*0.15})`;
+                ctx.fillRect(Math.random()*512, Math.random()*512, 2, 40);
             }
-            return new THREE.CanvasTexture(canv);
+            const t = new THREE.CanvasTexture(canv);
+            t.wrapS = t.wrapT = THREE.RepeatWrapping;
+            t.repeat.set(2, 1);
+            return t;
         }
 
         function createOfficeCeiling() {
             const canv = document.createElement('canvas');
-            canv.width = 128; canv.height = 128;
+            canv.width = 256; canv.height = 256;
             const ctx = canv.getContext('2d');
-            ctx.fillStyle = '#d1d1d1'; ctx.fillRect(0,0,128,128);
-            ctx.strokeStyle = '#999'; ctx.strokeRect(0,0,128,128);
+            ctx.fillStyle = '#ccc'; ctx.fillRect(0,0,256,256);
+            ctx.strokeStyle = '#999'; ctx.lineWidth = 2;
+            ctx.strokeRect(0,0,256,256);
             const t = new THREE.CanvasTexture(canv);
             t.wrapS = t.wrapT = THREE.RepeatWrapping;
-            t.repeat.set(12, 12);
+            t.repeat.set(10, 10);
             return t;
         }
 
@@ -173,17 +186,25 @@
             if(!active) return;
 
             camera.rotation.set(rot.y, rot.x, 0, 'YXZ');
+            
+            // Flashlight logic - pinned to camera but with a slight delay/smoothness
             flashlight.position.copy(camera.position);
             const targetPos = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
-            flashlight.target.position.copy(targetPos);
+            flashlight.target.position.lerp(targetPos, 0.2);
 
             if(mv.active) {
                 const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
                 dir.y = 0; dir.normalize();
                 const side = new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion);
                 side.y = 0; side.normalize();
-                camera.position.addScaledVector(dir, -mv.f * 0.12);
-                camera.position.addScaledVector(side, mv.s * 0.12);
+
+                const nextPos = camera.position.clone();
+                nextPos.addScaledVector(dir, -mv.f * 0.1);
+                nextPos.addScaledVector(side, mv.s * 0.1);
+
+                if(!checkCollision(nextPos)) {
+                    camera.position.copy(nextPos);
+                }
             }
             renderer.render(scene, camera);
         }
@@ -191,7 +212,7 @@
         setTimeout(() => {
             document.getElementById('btn').style.display = "block";
             init();
-        }, 500);
+        }, 800);
 
         document.getElementById('btn').onclick = () => {
             active = true;
